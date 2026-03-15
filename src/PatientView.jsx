@@ -1,6 +1,11 @@
 import { useMemo, useState } from "react";
 
-export default function PatientView({ patient, onBack }) {
+export default function PatientView({
+  patient,
+  onBack,
+  onOpenDuo,
+  onTriggerCrisis,
+}) {
   const [editablePatient, setEditablePatient] = useState({
     ...patient,
     notes: normalizeNotes(patient.notes || []),
@@ -10,6 +15,7 @@ export default function PatientView({ patient, onBack }) {
   const [copiedPhone, setCopiedPhone] = useState("");
 
   const status = useMemo(() => {
+    if (!editablePatient) return { label: "", tone: "neutral" };
     if (editablePatient.score >= 8) return { label: "Bloqué", tone: "red" };
     if (editablePatient.score >= 6) return { label: "Risque", tone: "amber" };
     return { label: "Suivi", tone: "green" };
@@ -87,72 +93,111 @@ export default function PatientView({ patient, onBack }) {
     try {
       await navigator.clipboard.writeText(phone);
       setCopiedPhone(label);
-      setTimeout(() => setCopiedPhone(""), 1500);
+      setTimeout(() => setCopiedPhone(""), 1400);
     } catch {
       // no-op
     }
   }
 
-  if (!patient) return null;
+  if (!editablePatient) return null;
 
   const stayDays = computeStayDays(editablePatient.entryDate);
   const unreadCount = (editablePatient.notes || []).filter((n) => n.unread).length;
   const urgentCount = (editablePatient.notes || []).filter((n) => n.type === "urgent").length;
 
+  const canEscalate =
+    editablePatient.sortantMedicalement &&
+    (editablePatient.score >= 8 || editablePatient.joursEvitables >= 5);
+
   return (
     <div style={styles.page}>
-      <div style={styles.topBar}>
-        <button onClick={onBack} style={styles.backButton}>
-          ← Retour au cockpit
-        </button>
+      <header style={styles.appHeader}>
+        <div style={styles.appHeaderLeft}>
+          <button style={styles.burgerButton} aria-label="Menu">
+            <span style={styles.burgerLine} />
+            <span style={styles.burgerLine} />
+            <span style={styles.burgerLine} />
+          </button>
 
-        <div style={styles.topRight}>
-          <div style={styles.topBarTitle}>Fiche patient</div>
-          {urgentCount > 0 ? (
-            <div style={styles.urgentPill}>{urgentCount} note(s) urgente(s)</div>
-          ) : null}
-          {unreadCount > 0 ? (
-            <div style={styles.unreadPill}>{unreadCount} non lue(s)</div>
-          ) : null}
+          <div>
+            <div style={styles.appTitle}>CARABBAS</div>
+            <div style={styles.appSubtitle}>Pilotage des sorties hospitalières complexes</div>
+          </div>
         </div>
-      </div>
 
-      <section style={styles.identityHero}>
-        <div style={styles.identityLeft}>
-          <div style={styles.patientName}>
+        <button onClick={onBack} style={styles.headerBackButton}>
+          Retour cockpit
+        </button>
+      </header>
+
+      <section style={styles.identityStrip}>
+        <div style={styles.identityMain}>
+          <div style={styles.patientNameCompact}>
             {editablePatient.nom} {editablePatient.prenom}
           </div>
 
-          <div style={styles.identityMeta}>
-            {editablePatient.birthDate} • {editablePatient.age} ans
+          <div style={styles.identityLine}>
+            {editablePatient.birthDate} • {editablePatient.age} ans • INS {editablePatient.ins} • IEP {editablePatient.iep}
           </div>
 
-          <div style={styles.identityMeta}>
-            INS {editablePatient.ins} • IEP {editablePatient.iep}
-          </div>
-
-          <div style={styles.identityMeta}>
+          <div style={styles.identityLine}>
             {editablePatient.service} • chambre {editablePatient.chambre} • lit {editablePatient.lit}
           </div>
         </div>
 
-        <div style={styles.identityRight}>
+        <div style={styles.identityActions}>
           <StatusBadge label={status.label} tone={status.tone} />
+
+          {urgentCount > 0 ? (
+            <div style={styles.urgentPill}>{urgentCount} urgent(es)</div>
+          ) : null}
+
+          {unreadCount > 0 ? (
+            <div style={styles.unreadPill}>{unreadCount} non lue(s)</div>
+          ) : null}
+
+          <button
+            type="button"
+            style={styles.heroSecondaryButton}
+            onClick={() =>
+              onOpenDuo
+                ? onOpenDuo(editablePatient)
+                : quickAction("Ouverture vue DUO demandée", "action")
+            }
+          >
+            Vue DUO
+          </button>
+
+          <button
+            type="button"
+            style={{
+              ...styles.heroDangerButton,
+              ...(canEscalate ? {} : styles.heroDangerButtonMuted),
+            }}
+            onClick={() =>
+              onTriggerCrisis
+                ? onTriggerCrisis(editablePatient)
+                : quickAction("Déclenchement cellule de crise demandé", "urgent")
+            }
+          >
+            Cellule de crise
+          </button>
         </div>
       </section>
 
-      {editablePatient.sortantMedicalement && editablePatient.joursEvitables >= 5 ? (
+      {canEscalate ? (
         <div style={styles.alertBanner}>
-          <div style={styles.alertTitle}>Sortie prioritaire à sécuriser</div>
+          <div style={styles.alertTitle}>Situation à escalade rapide</div>
           <div style={styles.alertText}>
-            {editablePatient.joursEvitables} jours évitables cumulés, frein principal : {editablePatient.blocage}.
+            {editablePatient.joursEvitables} jours évitables • frein principal :{" "}
+            {editablePatient.blocage} • patient médicalement sortant.
           </div>
         </div>
       ) : null}
 
       <section style={styles.mainGrid}>
         <div style={styles.leftColumn}>
-          <Panel title="Pilotage sortie" subtitle="Lecture clinique et capacitaire">
+          <Panel title="Pilotage sortie" subtitle="Lecture décisionnelle">
             <div style={styles.kpiGrid}>
               <MiniKpi label="Admission" value={editablePatient.entryDate || "—"} />
               <MiniKpi label="Présence" value={`${stayDays} j`} />
@@ -168,31 +213,60 @@ export default function PatientView({ patient, onBack }) {
               />
             </div>
 
-            <div style={styles.formGrid}>
-              <EditableField
-                label="Frein principal"
-                value={editablePatient.blocage || ""}
-                onChange={(value) => updateField("blocage", value)}
-              />
-              <EditableField
-                label="Destination prévue"
-                value={editablePatient.destinationPrevue || ""}
-                onChange={(value) => updateField("destinationPrevue", value)}
-              />
-              <EditableField
-                label="Transport"
-                value={editablePatient.transport || ""}
-                onChange={(value) => updateField("transport", value)}
-              />
-              <EditableField
-                label="Documents sortie"
-                value={editablePatient.documentsSortie || ""}
-                onChange={(value) => updateField("documentsSortie", value)}
-              />
+            <div style={styles.pilotageGrid}>
+              <div style={styles.primaryFocusCard}>
+                <div style={styles.primaryFocusLabel}>Frein principal</div>
+                <div style={styles.primaryFocusValue}>
+                  {editablePatient.blocage || "Non renseigné"}
+                </div>
+                <div style={styles.primaryFocusSub}>
+                  Élément prioritaire à lever pour sécuriser la sortie.
+                </div>
+              </div>
+
+              <div style={styles.planCard}>
+                <div style={styles.planHeader}>Plan de sortie</div>
+
+                <div style={styles.planRow}>
+                  <span style={styles.planKey}>Destination</span>
+                  <input
+                    value={editablePatient.destinationPrevue || ""}
+                    onChange={(e) => updateField("destinationPrevue", e.target.value)}
+                    style={styles.inlineInput}
+                  />
+                </div>
+
+                <div style={styles.planRow}>
+                  <span style={styles.planKey}>Transport</span>
+                  <input
+                    value={editablePatient.transport || ""}
+                    onChange={(e) => updateField("transport", e.target.value)}
+                    style={styles.inlineInput}
+                  />
+                </div>
+
+                <div style={styles.planRow}>
+                  <span style={styles.planKey}>Documents</span>
+                  <input
+                    value={editablePatient.documentsSortie || ""}
+                    onChange={(e) => updateField("documentsSortie", e.target.value)}
+                    style={styles.inlineInput}
+                  />
+                </div>
+
+                <div style={styles.planRow}>
+                  <span style={styles.planKey}>Prochaine action</span>
+                  <input
+                    value={editablePatient.nextStep || ""}
+                    onChange={(e) => updateField("nextStep", e.target.value)}
+                    style={styles.inlineInput}
+                  />
+                </div>
+              </div>
             </div>
 
             <div style={styles.toggleRow}>
-              <div style={styles.toggleCard}>
+              <div style={styles.toggleCardStrong}>
                 <div style={styles.fieldLabel}>Sortant médical</div>
                 <label style={styles.checkboxWrap}>
                   <input
@@ -205,21 +279,44 @@ export default function PatientView({ patient, onBack }) {
               </div>
 
               <div style={styles.toggleCard}>
-                <div style={styles.fieldLabel}>Prochaine action</div>
-                <div style={styles.fieldValue}>{editablePatient.nextStep || "Non renseignée"}</div>
+                <div style={styles.fieldLabel}>Destination opérationnelle</div>
+                <div style={styles.fieldValue}>
+                  {editablePatient.destinationPrevue || "Non renseignée"}
+                </div>
+              </div>
+
+              <div style={styles.toggleCard}>
+                <div style={styles.fieldLabel}>Transport</div>
+                <div style={styles.fieldValue}>
+                  {editablePatient.transport || "Non renseigné"}
+                </div>
               </div>
             </div>
           </Panel>
 
-          <Panel title="Parcours et aval" subtitle="Organisation de la sortie">
-            <InfoGrid
-              items={[
-                ["Besoin d’aval", editablePatient.besoinAval || "Non renseigné"],
-                ["Référent médical", editablePatient.referentMedical || "Non renseigné"],
-                ["Cadre", editablePatient.cadre || "Non renseigné"],
-                ["Assistante sociale", editablePatient.assistanteSociale || "Non renseignée"],
-              ]}
-            />
+          <Panel title="Parcours et aval" subtitle="Organisation concrète">
+            <div style={styles.dualInfoSection}>
+              <div style={styles.infoZone}>
+                <div style={styles.zoneTitle}>Organisation aval</div>
+                <InfoGrid
+                  items={[
+                    ["Besoin d’aval", editablePatient.besoinAval || "Non renseigné"],
+                    ["Documents de sortie", editablePatient.documentsSortie || "Non renseignés"],
+                  ]}
+                />
+              </div>
+
+              <div style={styles.infoZone}>
+                <div style={styles.zoneTitle}>Réseau de coordination</div>
+                <InfoGrid
+                  items={[
+                    ["Référent médical", editablePatient.referentMedical || "Non renseigné"],
+                    ["Cadre", editablePatient.cadre || "Non renseigné"],
+                    ["Assistante sociale", editablePatient.assistanteSociale || "Non renseignée"],
+                  ]}
+                />
+              </div>
+            </div>
           </Panel>
 
           <Panel title="Entourage et protection" subtitle="Coordonnées immédiatement exploitables">
@@ -233,6 +330,7 @@ export default function PatientView({ patient, onBack }) {
                   copyPhone("confiance", editablePatient.personneConfiancePhone || "")
                 }
               />
+
               <ContactCard
                 title="Personne à prévenir"
                 name={editablePatient.personneAPrevenir || "Non renseignée"}
@@ -242,6 +340,7 @@ export default function PatientView({ patient, onBack }) {
                   copyPhone("prevenir", editablePatient.personneAPrevenirPhone || "")
                 }
               />
+
               <ContactCard
                 title="Tutelle / curatelle"
                 name={editablePatient.protectionJuridique || "Non renseignée"}
@@ -288,19 +387,22 @@ export default function PatientView({ patient, onBack }) {
             </div>
           </Panel>
 
-          <Panel title="Ajouter une note" subtitle="Type, priorité et suivi non lu">
+          <Panel title="Ajouter une note" subtitle="Sans liste déroulante">
             <div style={styles.noteComposer}>
-              <div style={styles.noteTypeRow}>
-                <select
-                  value={newNoteType}
-                  onChange={(e) => setNewNoteType(e.target.value)}
-                  style={styles.select}
-                >
-                  <option value="info">Info</option>
-                  <option value="action">Action</option>
-                  <option value="famille">Famille</option>
-                  <option value="urgent">Urgent</option>
-                </select>
+              <div style={styles.noteTypePills}>
+                {["info", "action", "famille", "urgent"].map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setNewNoteType(type)}
+                    style={{
+                      ...styles.noteTypePill,
+                      ...(newNoteType === type ? activeNotePillStyle(type) : {}),
+                    }}
+                  >
+                    {labelForType(type)}
+                  </button>
+                ))}
               </div>
 
               <textarea
@@ -368,8 +470,6 @@ function MiniKpi({ label, value, tone = "neutral" }) {
     neutral: { bg: "#FFFFFF", color: "#0F172A", border: "#E5E7EB" },
     blue: { bg: "#EFF6FF", color: "#1D4ED8", border: "#BFDBFE" },
     amber: { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A" },
-    red: { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA" },
-    green: { bg: "#ECFDF5", color: "#059669", border: "#A7F3D0" },
   };
 
   const t = toneStyles[tone] || toneStyles.neutral;
@@ -382,27 +482,15 @@ function MiniKpi({ label, value, tone = "neutral" }) {
   );
 }
 
-function EditableField({ label, value, onChange }) {
-  return (
-    <div style={styles.editableCard}>
-      <div style={styles.fieldLabel}>{label}</div>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={styles.input}
-      />
-    </div>
-  );
-}
-
 function ContactCard({ title, name, phone, onCopy, copied }) {
   const canCall = phone && phone !== "Non renseigné" && phone !== "Non concerné";
-  const telHref = canCall ? `tel:${phone.replace(/\s+/g, "")}` : undefined;
+  const telHref = canCall ? `tel:${phone}` : undefined;
 
   return (
     <div style={styles.contactCard}>
       <div style={styles.infoLabel}>{title}</div>
       <div style={styles.contactName}>{name}</div>
+
       <div style={styles.contactPhoneRow}>
         {canCall ? (
           <a href={telHref} style={styles.contactPhoneLink}>
@@ -509,6 +597,26 @@ function noteTypeColor(type) {
   return colors[type] || "#2563EB";
 }
 
+function labelForType(type) {
+  const labels = {
+    info: "Info",
+    action: "Action",
+    famille: "Famille",
+    urgent: "Urgent",
+  };
+  return labels[type] || type;
+}
+
+function activeNotePillStyle(type) {
+  const stylesByType = {
+    info: { background: "#EFF6FF", color: "#1D4ED8", borderColor: "#BFDBFE" },
+    action: { background: "#ECFDF5", color: "#059669", borderColor: "#A7F3D0" },
+    famille: { background: "#FFF7ED", color: "#EA580C", borderColor: "#FED7AA" },
+    urgent: { background: "#FEF2F2", color: "#DC2626", borderColor: "#FECACA" },
+  };
+  return stylesByType[type] || {};
+}
+
 const styles = {
   page: {
     maxWidth: 1360,
@@ -518,16 +626,108 @@ const styles = {
     minHeight: "100vh",
   },
 
-  topBar: {
+  appHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     gap: 12,
-    marginBottom: 16,
+    background: "linear-gradient(90deg, #1E3A8A 0%, #2563EB 100%)",
+    color: "#FFFFFF",
+    padding: "12px 16px",
+    borderRadius: 18,
+    marginBottom: 14,
+    boxShadow: "0 14px 30px rgba(37,99,235,0.14)",
     flexWrap: "wrap",
   },
 
-  topRight: {
+  appHeaderLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+  },
+
+  burgerButton: {
+    width: 36,
+    height: 36,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    gap: 4,
+    background: "rgba(255,255,255,0.10)",
+    border: "1px solid rgba(255,255,255,0.16)",
+    borderRadius: 10,
+    padding: "0 8px",
+  },
+
+  burgerLine: {
+    height: 2,
+    background: "#FFFFFF",
+    borderRadius: 999,
+  },
+
+  appTitle: {
+    fontWeight: 800,
+    fontSize: 20,
+    letterSpacing: 0.2,
+  },
+
+  appSubtitle: {
+    fontSize: 12,
+    opacity: 0.92,
+    marginTop: 2,
+  },
+
+  headerBackButton: {
+    border: "1px solid rgba(255,255,255,0.22)",
+    background: "rgba(255,255,255,0.12)",
+    color: "#FFFFFF",
+    borderRadius: 12,
+    padding: "9px 12px",
+    fontWeight: 700,
+    fontSize: 12,
+  },
+
+  identityStrip: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 14,
+    background: "#FFFFFF",
+    border: "1px solid #E5E7EB",
+    borderRadius: 18,
+    padding: "14px 16px",
+    marginBottom: 14,
+    boxShadow: "0 10px 24px rgba(15,23,42,0.04)",
+    flexWrap: "wrap",
+  },
+
+  identityMain: {
+    minWidth: 0,
+  },
+
+  patientNameCompact: {
+    fontSize: 24,
+    fontWeight: 900,
+    color: "#0F172A",
+    lineHeight: 1.1,
+  },
+
+  identityLine: {
+    marginTop: 5,
+    fontSize: 13,
+    color: "#475569",
+    lineHeight: 1.4,
+  },
+
+  identityActions: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+  },
+
+  topBarRight: {
     display: "flex",
     alignItems: "center",
     gap: 10,
@@ -554,55 +754,28 @@ const styles = {
     border: "1px solid #FED7AA",
   },
 
-  backButton: {
+  heroSecondaryButton: {
     border: "1px solid #CBD5E1",
     background: "#FFFFFF",
+    color: "#1D4ED8",
     borderRadius: 12,
-    padding: "10px 14px",
+    padding: "10px 12px",
     fontWeight: 700,
-    color: "#334155",
+    fontSize: 12,
   },
 
-  topBarTitle: {
-    fontSize: 14,
-    color: "#64748B",
-    fontWeight: 700,
+  heroDangerButton: {
+    border: "1px solid #FECACA",
+    background: "#FFF1F2",
+    color: "#B91C1C",
+    borderRadius: 12,
+    padding: "10px 12px",
+    fontWeight: 800,
+    fontSize: 12,
   },
 
-  identityHero: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 16,
-    background: "linear-gradient(90deg, #1E3A8A 0%, #2563EB 100%)",
-    color: "#FFFFFF",
-    borderRadius: 22,
-    padding: 22,
-    boxShadow: "0 20px 44px rgba(37,99,235,0.18)",
-    marginBottom: 14,
-    flexWrap: "wrap",
-  },
-
-  identityLeft: {
-    minWidth: 0,
-  },
-
-  patientName: {
-    fontSize: 34,
-    fontWeight: 900,
-    lineHeight: 1.05,
-  },
-
-  identityMeta: {
-    marginTop: 8,
-    fontSize: 14,
+  heroDangerButtonMuted: {
     opacity: 0.95,
-    lineHeight: 1.5,
-  },
-
-  identityRight: {
-    display: "flex",
-    alignItems: "flex-start",
   },
 
   badge: {
@@ -698,37 +871,72 @@ const styles = {
     lineHeight: 1.1,
   },
 
-  formGrid: {
+  pilotageGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gridTemplateColumns: "1fr 1.2fr",
     gap: 12,
     marginTop: 12,
   },
 
-  editableCard: {
-    border: "1px solid #E5E7EB",
-    borderRadius: 16,
-    padding: 14,
-    background: "#FFFFFF",
+  primaryFocusCard: {
+    borderRadius: 18,
+    padding: 16,
+    background: "linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)",
+    border: "1px solid #BFDBFE",
   },
 
-  fieldLabel: {
+  primaryFocusLabel: {
     fontSize: 11,
+    color: "#1E40AF",
+    fontWeight: 800,
     textTransform: "uppercase",
     letterSpacing: 0.2,
-    color: "#64748B",
-    fontWeight: 800,
-    marginBottom: 6,
+    marginBottom: 8,
   },
 
-  fieldValue: {
-    fontSize: 14,
+  primaryFocusValue: {
+    fontSize: 24,
+    lineHeight: 1.2,
+    fontWeight: 900,
     color: "#0F172A",
-    fontWeight: 600,
-    lineHeight: 1.45,
   },
 
-  input: {
+  primaryFocusSub: {
+    marginTop: 8,
+    fontSize: 13,
+    color: "#475569",
+    lineHeight: 1.4,
+  },
+
+  planCard: {
+    borderRadius: 18,
+    padding: 16,
+    background: "#FFFFFF",
+    border: "1px solid #E5E7EB",
+  },
+
+  planHeader: {
+    fontSize: 13,
+    fontWeight: 800,
+    color: "#0F172A",
+    marginBottom: 10,
+  },
+
+  planRow: {
+    display: "grid",
+    gridTemplateColumns: "130px 1fr",
+    gap: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  planKey: {
+    fontSize: 12,
+    color: "#64748B",
+    fontWeight: 700,
+  },
+
+  inlineInput: {
     width: "100%",
     border: "1px solid #CBD5E1",
     borderRadius: 10,
@@ -751,12 +959,54 @@ const styles = {
     background: "#FFFFFF",
   },
 
+  toggleCardStrong: {
+    border: "1px solid #BFDBFE",
+    borderRadius: 16,
+    padding: 14,
+    background: "#F8FBFF",
+  },
+
+  fieldLabel: {
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.2,
+    color: "#64748B",
+    fontWeight: 800,
+    marginBottom: 6,
+  },
+
+  fieldValue: {
+    fontSize: 14,
+    color: "#0F172A",
+    fontWeight: 600,
+    lineHeight: 1.45,
+  },
+
   checkboxWrap: {
     display: "inline-flex",
     alignItems: "center",
     gap: 6,
     fontSize: 13,
     color: "#0F172A",
+  },
+
+  dualInfoSection: {
+    display: "grid",
+    gap: 14,
+  },
+
+  infoZone: {
+    border: "1px solid #E5E7EB",
+    borderRadius: 16,
+    padding: 14,
+    background: "#FFFFFF",
+  },
+
+  zoneTitle: {
+    fontSize: 13,
+    fontWeight: 800,
+    color: "#0F172A",
+    marginBottom: 10,
   },
 
   infoGrid: {
@@ -805,7 +1055,6 @@ const styles = {
     fontSize: 15,
     fontWeight: 800,
     color: "#0F172A",
-    lineHeight: 1.35,
   },
 
   contactPhoneRow: {
@@ -861,19 +1110,20 @@ const styles = {
     gap: 10,
   },
 
-  noteTypeRow: {
+  noteTypePills: {
     display: "flex",
-    gap: 10,
+    gap: 8,
+    flexWrap: "wrap",
   },
 
-  select: {
-    width: "100%",
+  noteTypePill: {
+    padding: "8px 11px",
+    borderRadius: 999,
     border: "1px solid #CBD5E1",
-    borderRadius: 10,
-    padding: "10px 12px",
-    fontSize: 14,
     background: "#FFFFFF",
-    boxSizing: "border-box",
+    color: "#334155",
+    fontSize: 12,
+    fontWeight: 700,
   },
 
   textarea: {
