@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function Dashboard({ patients = [], onOpenPatient }) {
   const [service, setService] = useState("Tous");
@@ -6,6 +6,10 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
   const [barrier, setBarrier] = useState("Tous");
   const [search, setSearch] = useState("");
   const [localPatients, setLocalPatients] = useState(patients);
+
+  useEffect(() => {
+    setLocalPatients(patients);
+  }, [patients]);
 
   const services = useMemo(
     () => ["Tous", ...new Set(localPatients.map((p) => p.service))],
@@ -21,10 +25,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
     setLocalPatients((prev) =>
       prev.map((p) =>
         p.id === patientId
-          ? {
-              ...p,
-              sortantMedicalement: !p.sortantMedicalement,
-            }
+          ? { ...p, sortantMedicalement: !p.sortantMedicalement }
           : p
       )
     );
@@ -35,10 +36,10 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
       .filter((p) => {
         if (service !== "Tous" && p.service !== service) return false;
 
+        if (status === "Sortant médical" && !p.sortantMedicalement) return false;
         if (status === "Bloqué" && p.score < 8) return false;
         if (status === "Risque" && (p.score < 6 || p.score >= 8)) return false;
         if (status === "Suivi" && p.score >= 6) return false;
-        if (status === "Sortant médical" && !p.sortantMedicalement) return false;
 
         if (barrier !== "Tous" && p.blocage !== barrier) return false;
 
@@ -59,67 +60,110 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
           return (b.sortantMedicalement ? 1 : 0) - (a.sortantMedicalement ? 1 : 0);
         }
         if (b.score !== a.score) return b.score - a.score;
-        return b.joursEvitables - a.joursEvitables;
+        return (b.joursEvitables || 0) - (a.joursEvitables || 0);
       });
   }, [localPatients, service, status, barrier, search]);
 
-  const medicalReadyPatients = filtered.filter((p) => p.sortantMedicalement);
-  const medicalReadyCount = medicalReadyPatients.length;
-  const blocked = filtered.filter((p) => p.score >= 8).length;
-  const risk = filtered.filter((p) => p.score >= 6 && p.score < 8).length;
-  const avoidableDays = medicalReadyPatients.reduce(
-    (sum, p) => sum + (p.joursEvitables || 0),
-    0
+  const medicalReadyPatients = useMemo(
+    () => filtered.filter((p) => p.sortantMedicalement),
+    [filtered]
   );
-  const recoverableBeds = Math.max(0, Math.round(avoidableDays / 7));
+
+  const stats = useMemo(() => {
+    const medicalReady = medicalReadyPatients.length;
+    const blocked = medicalReadyPatients.filter((p) => p.score >= 8).length;
+    const risk = medicalReadyPatients.filter((p) => p.score >= 6 && p.score < 8).length;
+    const avoidableDays = medicalReadyPatients.reduce(
+      (sum, p) => sum + (p.joursEvitables || 0),
+      0
+    );
+    const recoverableBeds = Math.max(0, Math.round(avoidableDays / 7));
+
+    return {
+      medicalReady,
+      blocked,
+      risk,
+      avoidableDays,
+      recoverableBeds,
+      tension:
+        blocked >= 2 ? "Élevée" : blocked === 1 ? "Sous tension" : "Modérée",
+    };
+  }, [medicalReadyPatients]);
 
   const blockingReasons = useMemo(() => {
     const map = {};
     medicalReadyPatients.forEach((p) => {
-      map[p.blocage] = (map[p.blocage] || 0) + 1;
+      if (!map[p.blocage]) {
+        map[p.blocage] = { label: p.blocage, count: 0, days: 0 };
+      }
+      map[p.blocage].count += 1;
+      map[p.blocage].days += p.joursEvitables || 0;
     });
 
-    return Object.entries(map)
-      .map(([label, count]) => ({ label, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
+    return Object.values(map)
+      .sort((a, b) => b.days - a.days || b.count - a.count)
+      .slice(0, 4);
   }, [medicalReadyPatients]);
 
   const servicesInTension = useMemo(() => {
-    const grouped = {};
+    const map = {};
 
     medicalReadyPatients.forEach((p) => {
-      if (!grouped[p.service]) {
-        grouped[p.service] = {
+      if (!map[p.service]) {
+        map[p.service] = {
           name: p.service,
           medicalReady: 0,
           blocked: 0,
-          avoidableDays: 0,
+          days: 0,
         };
       }
-
-      grouped[p.service].medicalReady += 1;
-      grouped[p.service].avoidableDays += p.joursEvitables || 0;
-      if (p.score >= 8) grouped[p.service].blocked += 1;
+      map[p.service].medicalReady += 1;
+      map[p.service].days += p.joursEvitables || 0;
+      if (p.score >= 8) map[p.service].blocked += 1;
     });
 
-    return Object.values(grouped)
-      .map((serviceItem) => ({
-        ...serviceItem,
+    return Object.values(map)
+      .map((s) => ({
+        ...s,
         level:
-          serviceItem.blocked >= 2
+          s.blocked >= 2
             ? "critical"
-            : serviceItem.blocked >= 1
+            : s.blocked >= 1
               ? "high"
-              : serviceItem.medicalReady >= 2
+              : s.medicalReady >= 2
                 ? "medium"
                 : "low",
       }))
       .sort((a, b) => {
         const rank = { critical: 4, high: 3, medium: 2, low: 1 };
-        return rank[b.level] - rank[a.level] || b.avoidableDays - a.avoidableDays;
-      });
+        return rank[b.level] - rank[a.level] || b.days - a.days;
+      })
+      .slice(0, 4);
   }, [medicalReadyPatients]);
+
+  const priorityAction = useMemo(() => {
+    const topService = servicesInTension[0];
+    const topBarrier = blockingReasons[0];
+
+    if (!topService && !topBarrier) {
+      return {
+        title: "Surveillance courante",
+        text: "Aucun blocage capacitaire majeur détecté. Maintenir l’anticipation des sorties.",
+      };
+    }
+
+    if (topService && topBarrier) {
+      return {
+        title: `Priorité : ${topService.name}`,
+        text: `Concentrer les relances sur ${topService.name} : ${topService.medicalReady} sortant(s) médical(aux), ${topService.days} jours évitables. Frein dominant : ${topBarrier.label}.`,
+      };
+    }
+
+    return {
+      title: "Priorité parcours",
+      text: "Relancer les solutions d’aval en attente et sécuriser les sorties médicalement prêtes.",
+    };
+  }, [servicesInTension, blockingReasons]);
 
   return (
     <div style={pageStyle}>
@@ -141,11 +185,11 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
       </header>
 
       <section style={kpiStripStyle}>
-        <KpiTile label="Sortants médicaux" value={medicalReadyCount} tone="blue" />
-        <KpiTile label="Bloqués" value={blocked} tone="red" />
-        <KpiTile label="Risque" value={risk} tone="amber" />
-        <KpiTile label="Jours évitables" value={avoidableDays} tone="blue" />
-        <KpiTile label="Lits récupérables" value={recoverableBeds} tone="blue" />
+        <KpiTile label="Sortants médicaux" value={stats.medicalReady} tone="blue" />
+        <KpiTile label="Bloqués" value={stats.blocked} tone="red" />
+        <KpiTile label="Risque" value={stats.risk} tone="amber" />
+        <KpiTile label="Jours évitables" value={stats.avoidableDays} tone="blue" />
+        <KpiTile label="Lits récupérables" value={stats.recoverableBeds} tone="blue" />
       </section>
 
       <section style={filtersPanelStyle}>
@@ -223,9 +267,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
                     {p.service} • ch {p.chambre} • lit {p.lit}
                   </div>
 
-                  <div style={tableCellStyle}>
-                    {p.blocage}
-                  </div>
+                  <div style={tableCellStyle}>{p.blocage}</div>
 
                   <div style={tableCellStyle}>
                     {p.sortantMedicalement ? `${p.joursEvitables} j` : "—"}
@@ -253,67 +295,44 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
                 </div>
               ))}
             </div>
-
-            <div style={mobileCardsStyle}>
-              {filtered.map((p) => (
-                <div key={p.id} style={mobilePatientCardStyle}>
-                  <div style={mobileCardTopStyle}>
-                    <div>
-                      <div style={patientNameStyle}>
-                        {p.nom} {p.prenom}
-                      </div>
-                      <div style={metaLineStyle}>
-                        {p.birthDate} • {p.age} ans
-                      </div>
-                    </div>
-                    <StatusBadge score={p.score} />
-                  </div>
-
-                  <div style={metaLineStyle}>INS {p.ins} • IEP {p.iep}</div>
-                  <div style={mobileLineStyle}>
-                    {p.service} • chambre {p.chambre} • lit {p.lit}
-                  </div>
-                  <div style={mobileLineStyle}>
-                    <strong>Frein :</strong> {p.blocage}
-                  </div>
-                  <div style={mobileLineStyle}>
-                    <strong>Impact :</strong> {p.sortantMedicalement ? `${p.joursEvitables} jours évitables` : "non décompté"}
-                  </div>
-
-                  <div style={mobileCardBottomStyle}>
-                    <label style={checkboxWrapStyle}>
-                      <input
-                        type="checkbox"
-                        checked={p.sortantMedicalement}
-                        onChange={() => toggleMedicalReady(p.id)}
-                      />
-                      <span>Sortant médical</span>
-                    </label>
-
-                    <button style={openButtonStyle} onClick={() => onOpenPatient(p)}>
-                      Ouvrir dossier
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
           </section>
         </div>
 
         <div style={sideColumnStyle}>
-          <Panel title="Lecture rapide">
-            <Line label="Sortants médicaux" value={medicalReadyCount} />
-            <Line label="Patients bloqués" value={blocked} />
-            <Line label="Patients à risque" value={risk} />
-            <Line label="Jours évitables" value={avoidableDays} />
-            <Line label="Tension" value={blocked > 1 ? "Élevée" : blocked === 1 ? "Sous tension" : "Modérée"} />
+          <Panel title="Lecture opérationnelle">
+            <div style={summaryBoxStyle}>
+              <div style={summaryTitleStyle}>Situation actuelle</div>
+              <div style={summaryTextStyle}>
+                {stats.medicalReady} patient(s) médicalement sortant(s), {stats.blocked} bloqué(s),{" "}
+                {stats.avoidableDays} jours évitables, soit environ {stats.recoverableBeds} lit(s) récupérable(s).
+              </div>
+            </div>
+
+            <MetricGrid
+              items={[
+                { label: "Sortants médicaux", value: stats.medicalReady },
+                { label: "Patients bloqués", value: stats.blocked },
+                { label: "Patients à risque", value: stats.risk },
+                { label: "Tension capacitaire", value: stats.tension },
+              ]}
+            />
           </Panel>
 
-          <Panel title="Blocages principaux">
+          <Panel title="Freins dominants">
             {blockingReasons.length === 0 ? (
-              <div style={emptyTextStyle}>Aucun blocage en cours.</div>
+              <div style={emptyTextStyle}>Aucun frein dominant.</div>
             ) : (
-              blockingReasons.map((b) => <Line key={b.label} label={b.label} value={b.count} />)
+              <div style={stackStyle}>
+                {blockingReasons.map((b) => (
+                  <div key={b.label} style={insightCardStyle}>
+                    <div style={insightTopStyle}>
+                      <div style={insightTitleStyle}>{b.label}</div>
+                      <div style={insightCountStyle}>{b.count}</div>
+                    </div>
+                    <div style={insightMetaStyle}>{b.days} jours évitables associés</div>
+                  </div>
+                ))}
+              </div>
             )}
           </Panel>
 
@@ -321,26 +340,28 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
             {servicesInTension.length === 0 ? (
               <div style={emptyTextStyle}>Aucun service en tension.</div>
             ) : (
-              servicesInTension.map((s) => (
-                <div key={s.name} style={serviceItemStyle}>
-                  <div>
-                    <div style={serviceNameStyle}>{s.name}</div>
+              <div style={stackStyle}>
+                {servicesInTension.map((s) => (
+                  <div key={s.name} style={serviceInsightStyle}>
+                    <div style={insightTopStyle}>
+                      <div style={serviceNameStyle}>{s.name}</div>
+                      <ServiceBadge level={s.level} />
+                    </div>
                     <div style={serviceMetaStyle}>
-                      {s.medicalReady} sortant(s) médical(aux) • {s.avoidableDays} j évitables
+                      {s.medicalReady} sortant(s) médical(aux) • {s.days} jours évitables
+                    </div>
+                    <div style={serviceMetaStyle}>
+                      {s.blocked} patient(s) bloqué(s)
                     </div>
                   </div>
-                  <ServiceBadge level={s.level} />
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </Panel>
 
-          <Panel title="Action du jour">
-            <div style={actionBoxStyle}>
-              {blocked > 0
-                ? "Relancer les solutions d’aval des patients bloqués et concentrer les actions sur les services les plus exposés."
-                : "Anticiper les sorties dès l’entrée et sécuriser les situations à risque avant blocage."}
-            </div>
+          <Panel title="Action prioritaire">
+            <div style={actionHeaderStyle}>{priorityAction.title}</div>
+            <div style={actionBoxStyle}>{priorityAction.text}</div>
           </Panel>
         </div>
       </section>
@@ -381,11 +402,15 @@ function Panel({ title, children }) {
   );
 }
 
-function Line({ label, value }) {
+function MetricGrid({ items }) {
   return (
-    <div style={lineStyle}>
-      <span>{label}</span>
-      <strong>{value}</strong>
+    <div style={metricGridStyle}>
+      {items.map((item) => (
+        <div key={item.label} style={metricCardStyle}>
+          <div style={metricCardLabelStyle}>{item.label}</div>
+          <div style={metricCardValueStyle}>{item.value}</div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -545,7 +570,7 @@ const fieldInputStyle = {
 
 const desktopGridStyle = {
   display: "grid",
-  gridTemplateColumns: "minmax(0,1.9fr) minmax(280px,0.9fr)",
+  gridTemplateColumns: "minmax(0,1.9fr) minmax(300px,0.95fr)",
   gap: 12,
   alignItems: "start",
 };
@@ -659,57 +684,94 @@ const openButtonStyle = {
   fontWeight: 700,
 };
 
-const mobileCardsStyle = {
-  display: "none",
-};
-
-const mobilePatientCardStyle = {
+const summaryBoxStyle = {
   border: "1px solid #E5E7EB",
-  borderRadius: 12,
-  padding: 12,
+  background: "#F8FAFC",
+  borderRadius: 10,
+  padding: 10,
   marginBottom: 10,
 };
 
-const mobileCardTopStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 10,
-  alignItems: "flex-start",
-  marginBottom: 8,
-};
-
-const mobileLineStyle = {
-  fontSize: 13,
+const summaryTitleStyle = {
+  fontSize: 12,
+  fontWeight: 800,
   color: "#111827",
-  lineHeight: 1.45,
-  marginTop: 5,
+  marginBottom: 6,
 };
 
-const mobileCardBottomStyle = {
-  marginTop: 10,
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 10,
-  alignItems: "center",
-  flexWrap: "wrap",
-};
-
-const lineStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 12,
-  padding: "7px 0",
-  borderBottom: "1px solid #F1F5F9",
+const summaryTextStyle = {
   fontSize: 13,
+  lineHeight: 1.5,
+  color: "#111827",
 };
 
-const serviceItemStyle = {
+const metricGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 8,
+};
+
+const metricCardStyle = {
+  border: "1px solid #E5E7EB",
+  borderRadius: 10,
+  padding: 10,
+  background: "#FFFFFF",
+};
+
+const metricCardLabelStyle = {
+  fontSize: 11,
+  color: "#6B7280",
+  marginBottom: 4,
+};
+
+const metricCardValueStyle = {
+  fontSize: 15,
+  fontWeight: 800,
+  color: "#111827",
+};
+
+const stackStyle = {
+  display: "grid",
+  gap: 8,
+};
+
+const insightCardStyle = {
+  border: "1px solid #E5E7EB",
+  borderRadius: 10,
+  padding: 10,
+  background: "#FFFFFF",
+};
+
+const insightTopStyle = {
   display: "flex",
   justifyContent: "space-between",
   gap: 10,
   alignItems: "center",
-  padding: "8px 0",
-  borderBottom: "1px solid #F1F5F9",
+};
+
+const insightTitleStyle = {
+  fontSize: 13,
+  fontWeight: 700,
+  color: "#111827",
+};
+
+const insightCountStyle = {
+  fontSize: 16,
+  fontWeight: 800,
+  color: "#1D4ED8",
+};
+
+const insightMetaStyle = {
+  marginTop: 4,
+  fontSize: 12,
+  color: "#6B7280",
+};
+
+const serviceInsightStyle = {
+  border: "1px solid #E5E7EB",
+  borderRadius: 10,
+  padding: 10,
+  background: "#FFFFFF",
 };
 
 const serviceNameStyle = {
@@ -721,7 +783,14 @@ const serviceNameStyle = {
 const serviceMetaStyle = {
   fontSize: 12,
   color: "#6B7280",
-  marginTop: 2,
+  marginTop: 4,
+};
+
+const actionHeaderStyle = {
+  fontSize: 13,
+  fontWeight: 800,
+  color: "#111827",
+  marginBottom: 8,
 };
 
 const actionBoxStyle = {
