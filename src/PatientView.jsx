@@ -17,14 +17,12 @@ export default function PatientView({
           echeance: "15 mai",
           action: "Évaluation sociale",
           responsable: patient.assistanteSociale || "Assistante sociale",
-          statut: "En cours",
         },
         {
           id: "a2",
           echeance: "16 mai",
           action: "Validation sortie",
           responsable: "IDE parcours",
-          statut: "À faire",
         },
       ],
     acteurs:
@@ -138,6 +136,7 @@ export default function PatientView({
       ...prev,
       freins: [...prev.freins, value],
     }));
+
     setNewFrein("");
     quickAction(`Frein ajouté : ${value}`, "action");
   }
@@ -157,9 +156,6 @@ export default function PatientView({
   const unreadCount = editablePatient.notes.filter((n) => n.unread).length;
   const urgentCount = editablePatient.notes.filter((n) => n.type === "urgent").length;
   const actionsOpen = editablePatient.actions.length;
-  const canEscalate =
-    editablePatient.sortantMedicalement &&
-    (editablePatient.score >= 8 || editablePatient.joursEvitables >= 5);
 
   const scoreParcours = useMemo(() => {
     const base = editablePatient.score * 18;
@@ -167,6 +163,10 @@ export default function PatientView({
     const freins = editablePatient.freins.length * 8;
     return base + days + freins;
   }, [editablePatient]);
+
+  const canEscalate =
+    editablePatient.sortantMedicalement &&
+    (editablePatient.score >= 8 || editablePatient.joursEvitables >= 5);
 
   const riskLabel =
     editablePatient.score >= 8
@@ -222,24 +222,9 @@ export default function PatientView({
         <div style={styles.patientStatusBlock}>
           <StatusBadge label={status.label} tone={status.tone} />
 
-          <div style={styles.inlineMetric}>
-            <span style={styles.inlineMetricLabel}>Sortant médical</span>
-            <span style={styles.inlineMetricValue}>
-              {editablePatient.sortantMedicalement ? "Oui" : "Non"}
-            </span>
-          </div>
-
-          <div style={styles.inlineMetric}>
-            <span style={styles.inlineMetricLabel}>Jours évitables</span>
-            <span style={styles.inlineMetricValueAlert}>
-              {editablePatient.joursEvitables}
-            </span>
-          </div>
-
-          <div style={styles.inlineMetric}>
-            <span style={styles.inlineMetricLabel}>Score parcours</span>
-            <span style={styles.inlineMetricValue}>{scoreParcours}</span>
-          </div>
+          <MetricPill label="Sortant médical" value={editablePatient.sortantMedicalement ? "Oui" : "Non"} />
+          <MetricPill label="Jours évitables" value={editablePatient.joursEvitables} alert />
+          <MetricPill label="Score parcours" value={scoreParcours} />
 
           {unreadCount > 0 ? (
             <span style={styles.unreadPill}>{unreadCount} non lue(s)</span>
@@ -272,108 +257,87 @@ export default function PatientView({
         </section>
       ) : null}
 
-      <section style={styles.gridTop}>
-        <Card title="Plan de sortie">
-          <div style={styles.compactList}>
-            <InlineField
-              label="Orientation prévue"
-              value={editablePatient.destinationPrevue || ""}
-              onChange={(value) => updateField("destinationPrevue", value)}
-            />
-            <InlineField
-              label="Date cible"
-              value={editablePatient.dateCible || "20/02/2026"}
-              onChange={(value) => updateField("dateCible", value)}
-            />
-            <InlineField
-              label="Plan de sortie"
-              value={editablePatient.sortantMedicalement ? "En préparation" : "En attente"}
-              readOnly
-            />
-          </div>
-
-          <div style={styles.cardFooterAction}>
-            <button
-              style={styles.smallActionButton}
-              onClick={() => quickAction("Sortie intégrée au plan", "action")}
-            >
-              Intégrer sortie →
-            </button>
-          </div>
-        </Card>
-
-        <Card title="Freins à la sortie">
-          <div style={styles.tagsList}>
-            {editablePatient.freins.map((frein, index) => (
-              <div key={`${frein}-${index}`} style={styles.freinTag}>
-                <span style={styles.freinDot} />
-                <span>{frein}</span>
-              </div>
-            ))}
-          </div>
-
-          <div style={styles.addRow}>
-            <input
-              value={newFrein}
-              onChange={(e) => setNewFrein(e.target.value)}
-              placeholder="Ajouter un frein"
-              style={styles.addInput}
-            />
-            <button style={styles.addMiniButton} onClick={addFrein}>
-              +
-            </button>
-          </div>
-        </Card>
-
-        <Card title="Acteurs du parcours">
-          <div style={styles.actorList}>
-            {editablePatient.acteurs.map((acteur) => (
-              <div key={acteur.id} style={styles.actorRow}>
-                <span style={styles.actorRole}>{acteur.role}</span>
-                <span style={styles.actorName}>{acteur.nom}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </section>
-
-      <section style={styles.gridBottom}>
-        <Card title="Actions">
-          <div style={styles.actionTable}>
-            <div style={styles.actionTableHeader}>
-              <span>Échéance</span>
-              <span>Action</span>
-              <span>Responsable</span>
+      <section style={styles.topRow}>
+        <Card title="Situation de sortie" subtitle="Décision et préparation">
+          <div style={styles.situationGrid}>
+            <div style={styles.focusCard}>
+              <div style={styles.focusLabel}>Frein principal</div>
+              <div style={styles.focusValue}>{editablePatient.blocage || "Non renseigné"}</div>
+              <div style={styles.focusSub}>Point prioritaire à lever pour débloquer la sortie.</div>
             </div>
 
-            {editablePatient.actions.map((action) => (
-              <div key={action.id} style={styles.actionTableRow}>
-                <span>{action.echeance}</span>
-                <span>{action.action}</span>
-                <span>{action.responsable}</span>
-              </div>
-            ))}
-          </div>
-
-          <div style={styles.cardFooterAction}>
-            <button
-              style={styles.smallActionButton}
-              onClick={() => quickAction("Nouvelle action ajoutée au parcours", "action")}
-            >
-              + Ajouter une action
-            </button>
+            <div style={styles.planStack}>
+              <InlineField
+                label="Orientation prévue"
+                value={editablePatient.destinationPrevue || ""}
+                onChange={(value) => updateField("destinationPrevue", value)}
+              />
+              <InlineField
+                label="Date cible"
+                value={editablePatient.dateCible || "20/02/2026"}
+                onChange={(value) => updateField("dateCible", value)}
+              />
+              <InlineField
+                label="Transport"
+                value={editablePatient.transport || ""}
+                onChange={(value) => updateField("transport", value)}
+              />
+              <InlineField
+                label="Documents de sortie"
+                value={editablePatient.documentsSortie || ""}
+                onChange={(value) => updateField("documentsSortie", value)}
+              />
+              <InlineField
+                label="Prochaine action"
+                value={editablePatient.nextStep || ""}
+                onChange={(value) => updateField("nextStep", value)}
+              />
+            </div>
           </div>
         </Card>
 
-        <Card title="Coordination">
+        <Card title="Coordination" subtitle="Centre opérationnel">
           <div style={styles.coordCard}>
-            <div style={styles.coordTypeBadge}>POST-IT ({labelForType(newNoteType)})</div>
+            <div style={styles.coordHeader}>
+              <span style={styles.coordTypeBadge}>POST-IT</span>
+              <span style={styles.coordTypeMeta}>{labelForType(newNoteType)}</span>
+            </div>
             <div style={styles.coordText}>
               {editablePatient.notes[0]?.text || "Aucune note récente."}
             </div>
             <div style={styles.coordMeta}>
               {editablePatient.referentMedical || "Non renseigné"} • il y a 3 h
             </div>
+          </div>
+
+          <div style={styles.actionsGrid}>
+            <button
+              style={styles.actionButton}
+              onClick={() => quickAction("Assistante sociale contactée", "action")}
+            >
+              Contacter assistante sociale
+            </button>
+
+            <button
+              style={styles.actionButton}
+              onClick={() => quickAction("Sortie à programmer", "action")}
+            >
+              Programmer sortie
+            </button>
+
+            <button
+              style={styles.actionButton}
+              onClick={() => quickAction("Réunion de coordination demandée", "action")}
+            >
+              Réunion coordination
+            </button>
+
+            <button
+              style={styles.actionButton}
+              onClick={() => quickAction("Famille relancée", "famille")}
+            >
+              Relancer famille
+            </button>
           </div>
 
           <div style={styles.noteComposer}>
@@ -413,11 +377,47 @@ export default function PatientView({
             </div>
           </div>
         </Card>
+      </section>
+
+      <section style={styles.middleRow}>
+        <Card title="Freins à la sortie">
+          <div style={styles.tagsList}>
+            {editablePatient.freins.map((frein, index) => (
+              <div key={`${frein}-${index}`} style={styles.freinTag}>
+                <span style={styles.freinDot} />
+                <span>{frein}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={styles.addRow}>
+            <input
+              value={newFrein}
+              onChange={(e) => setNewFrein(e.target.value)}
+              placeholder="Ajouter un frein"
+              style={styles.addInput}
+            />
+            <button style={styles.addMiniButton} onClick={addFrein}>
+              +
+            </button>
+          </div>
+        </Card>
+
+        <Card title="Acteurs du parcours">
+          <div style={styles.actorList}>
+            {editablePatient.acteurs.map((acteur) => (
+              <div key={acteur.id} style={styles.actorRow}>
+                <span style={styles.actorRole}>{acteur.role}</span>
+                <span style={styles.actorName}>{acteur.nom}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
 
         <Card title="Synthèse CARABBAS">
           <div style={styles.summaryBlock}>
             <div style={styles.summaryRow}>
-              <span>Derrière activité</span>
+              <span>Dernière activité</span>
               <strong>il y a 48h</strong>
             </div>
             <div style={styles.summaryRow}>
@@ -514,24 +514,21 @@ export default function PatientView({
   );
 }
 
-function Card({ title, children }) {
+function Card({ title, subtitle, children }) {
   return (
     <section style={styles.card}>
       <div style={styles.cardTitle}>{title}</div>
+      {subtitle ? <div style={styles.cardSubtitle}>{subtitle}</div> : null}
       <div style={{ marginTop: 12 }}>{children}</div>
     </section>
   );
 }
 
-function InlineField({ label, value, onChange, readOnly = false }) {
+function InlineField({ label, value, onChange }) {
   return (
     <div style={styles.inlineField}>
       <div style={styles.inlineFieldLabel}>{label}</div>
-      {readOnly ? (
-        <div style={styles.inlineFieldReadOnly}>{value}</div>
-      ) : (
-        <input value={value} onChange={(e) => onChange(e.target.value)} style={styles.inlineFieldInput} />
-      )}
+      <input value={value} onChange={(e) => onChange(e.target.value)} style={styles.inlineFieldInput} />
     </div>
   );
 }
@@ -575,6 +572,15 @@ function StatusBadge({ label, tone = "neutral" }) {
     <span style={{ ...styles.statusBadge, background: t.bg, color: t.color }}>
       {label}
     </span>
+  );
+}
+
+function MetricPill({ label, value, alert = false }) {
+  return (
+    <div style={styles.metricPill}>
+      <span style={styles.metricPillLabel}>{label}</span>
+      <span style={alert ? styles.metricPillValueAlert : styles.metricPillValue}>{value}</span>
+    </div>
   );
 }
 
@@ -663,7 +669,7 @@ function activeNotePillStyle(type) {
 
 const styles = {
   page: {
-    maxWidth: 1360,
+    maxWidth: 1440,
     margin: "0 auto",
     padding: 18,
     background: "#F8FAFC",
@@ -755,7 +761,7 @@ const styles = {
     background: "#FFFFFF",
     border: "1px solid #E5E7EB",
     borderRadius: 18,
-    padding: "14px 16px",
+    padding: "16px 18px",
     marginBottom: 14,
     boxShadow: "0 10px 24px rgba(15,23,42,0.04)",
     flexWrap: "wrap",
@@ -766,17 +772,17 @@ const styles = {
   },
 
   patientName: {
-    fontSize: 24,
+    fontSize: 34,
     fontWeight: 900,
     color: "#0F172A",
-    lineHeight: 1.1,
+    lineHeight: 1.05,
   },
 
   patientMeta: {
-    marginTop: 5,
-    fontSize: 13,
+    marginTop: 6,
+    fontSize: 14,
     color: "#475569",
-    lineHeight: 1.4,
+    lineHeight: 1.45,
   },
 
   patientStatusBlock: {
@@ -789,34 +795,34 @@ const styles = {
 
   statusBadge: {
     display: "inline-block",
-    padding: "8px 12px",
+    padding: "9px 13px",
     borderRadius: 999,
     fontSize: 12,
     fontWeight: 800,
   },
 
-  inlineMetric: {
+  metricPill: {
     display: "grid",
     gap: 2,
-    padding: "7px 10px",
+    padding: "8px 11px",
     borderRadius: 12,
     background: "#F8FAFC",
     border: "1px solid #E5E7EB",
   },
 
-  inlineMetricLabel: {
+  metricPillLabel: {
     fontSize: 11,
     color: "#64748B",
     fontWeight: 700,
   },
 
-  inlineMetricValue: {
+  metricPillValue: {
     fontSize: 14,
     color: "#0F172A",
     fontWeight: 800,
   },
 
-  inlineMetricValueAlert: {
+  metricPillValueAlert: {
     fontSize: 14,
     color: "#D97706",
     fontWeight: 800,
@@ -873,26 +879,26 @@ const styles = {
     lineHeight: 1.45,
   },
 
-  gridTop: {
+  topRow: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: 16,
-    marginBottom: 16,
+    gridTemplateColumns: "1.3fr 1fr",
+    gap: 18,
+    marginBottom: 18,
     alignItems: "start",
   },
 
-  gridBottom: {
+  middleRow: {
     display: "grid",
-    gridTemplateColumns: "1.15fr 1fr 0.9fr",
-    gap: 16,
-    marginBottom: 16,
+    gridTemplateColumns: "1fr 1fr 0.9fr",
+    gap: 18,
+    marginBottom: 18,
     alignItems: "start",
   },
 
   bottomRow: {
     display: "grid",
-    gridTemplateColumns: "1.2fr 1fr",
-    gap: 16,
+    gridTemplateColumns: "1.1fr 1fr",
+    gap: 18,
     alignItems: "start",
   },
 
@@ -905,12 +911,57 @@ const styles = {
   },
 
   cardTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 800,
+    color: "#0F172A",
+    lineHeight: 1.1,
+  },
+
+  cardSubtitle: {
+    marginTop: 4,
+    fontSize: 13,
+    color: "#64748B",
+  },
+
+  situationGrid: {
+    display: "grid",
+    gridTemplateColumns: "0.95fr 1.15fr",
+    gap: 14,
+    alignItems: "start",
+  },
+
+  focusCard: {
+    borderRadius: 18,
+    padding: 18,
+    background: "linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)",
+    border: "1px solid #BFDBFE",
+    minHeight: 240,
+  },
+
+  focusLabel: {
+    fontSize: 11,
+    color: "#1E40AF",
+    fontWeight: 800,
+    textTransform: "uppercase",
+    letterSpacing: 0.2,
+    marginBottom: 10,
+  },
+
+  focusValue: {
+    fontSize: 34,
+    lineHeight: 1.1,
+    fontWeight: 900,
     color: "#0F172A",
   },
 
-  compactList: {
+  focusSub: {
+    marginTop: 10,
+    fontSize: 14,
+    color: "#475569",
+    lineHeight: 1.45,
+  },
+
+  planStack: {
     display: "grid",
     gap: 10,
   },
@@ -935,129 +986,8 @@ const styles = {
     border: "1px solid #CBD5E1",
     borderRadius: 10,
     padding: "10px 12px",
-    fontSize: 14,
-    boxSizing: "border-box",
-  },
-
-  inlineFieldReadOnly: {
     fontSize: 15,
-    fontWeight: 700,
-    color: "#0F172A",
-  },
-
-  cardFooterAction: {
-    marginTop: 12,
-  },
-
-  smallActionButton: {
-    border: "1px solid #CBD5E1",
-    background: "#F8FAFC",
-    color: "#1D4ED8",
-    borderRadius: 12,
-    padding: "10px 12px",
-    fontWeight: 700,
-    fontSize: 13,
-  },
-
-  tagsList: {
-    display: "grid",
-    gap: 10,
-  },
-
-  freinTag: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "10px 12px",
-    borderRadius: 12,
-    background: "#FFF7F7",
-    border: "1px solid #FEE2E2",
-    color: "#0F172A",
-    fontWeight: 600,
-  },
-
-  freinDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    background: "#FB7185",
-    flexShrink: 0,
-  },
-
-  addRow: {
-    display: "grid",
-    gridTemplateColumns: "1fr 44px",
-    gap: 8,
-    marginTop: 12,
-  },
-
-  addInput: {
-    width: "100%",
-    border: "1px solid #CBD5E1",
-    borderRadius: 10,
-    padding: "10px 12px",
-    fontSize: 14,
     boxSizing: "border-box",
-  },
-
-  addMiniButton: {
-    border: "1px solid #CBD5E1",
-    background: "#FFFFFF",
-    color: "#1D4ED8",
-    borderRadius: 10,
-    fontSize: 22,
-    fontWeight: 700,
-  },
-
-  actorList: {
-    display: "grid",
-    gap: 10,
-  },
-
-  actorRow: {
-    display: "grid",
-    gap: 2,
-    padding: "10px 12px",
-    borderRadius: 12,
-    background: "#F8FAFC",
-    border: "1px solid #E5E7EB",
-  },
-
-  actorRole: {
-    fontSize: 12,
-    color: "#64748B",
-    fontWeight: 700,
-  },
-
-  actorName: {
-    fontSize: 15,
-    color: "#0F172A",
-    fontWeight: 700,
-  },
-
-  actionTable: {
-    display: "grid",
-    gap: 8,
-  },
-
-  actionTableHeader: {
-    display: "grid",
-    gridTemplateColumns: "90px 1fr 140px",
-    gap: 10,
-    fontSize: 12,
-    color: "#64748B",
-    fontWeight: 800,
-    paddingBottom: 4,
-  },
-
-  actionTableRow: {
-    display: "grid",
-    gridTemplateColumns: "90px 1fr 140px",
-    gap: 10,
-    padding: "10px 0",
-    borderTop: "1px solid #EEF2F7",
-    fontSize: 14,
-    color: "#0F172A",
   },
 
   coordCard: {
@@ -1068,6 +998,14 @@ const styles = {
     marginBottom: 12,
   },
 
+  coordHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+    flexWrap: "wrap",
+  },
+
   coordTypeBadge: {
     display: "inline-block",
     padding: "4px 8px",
@@ -1076,11 +1014,16 @@ const styles = {
     color: "#FFFFFF",
     fontSize: 11,
     fontWeight: 800,
-    marginBottom: 8,
+  },
+
+  coordTypeMeta: {
+    fontSize: 12,
+    color: "#92400E",
+    fontWeight: 700,
   },
 
   coordText: {
-    fontSize: 15,
+    fontSize: 16,
     color: "#0F172A",
     fontWeight: 700,
     lineHeight: 1.45,
@@ -1090,6 +1033,24 @@ const styles = {
     marginTop: 8,
     fontSize: 12,
     color: "#64748B",
+  },
+
+  actionsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 10,
+    marginBottom: 12,
+  },
+
+  actionButton: {
+    padding: 12,
+    borderRadius: 12,
+    border: "1px solid #CBD5E1",
+    background: "#EFF6FF",
+    color: "#1D4ED8",
+    fontWeight: 700,
+    cursor: "pointer",
+    fontSize: 14,
   },
 
   noteComposer: {
@@ -1150,6 +1111,83 @@ const styles = {
     cursor: "pointer",
   },
 
+  tagsList: {
+    display: "grid",
+    gap: 10,
+  },
+
+  freinTag: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "11px 12px",
+    borderRadius: 12,
+    background: "#FFF7F7",
+    border: "1px solid #FEE2E2",
+    color: "#0F172A",
+    fontWeight: 600,
+    fontSize: 15,
+  },
+
+  freinDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    background: "#FB7185",
+    flexShrink: 0,
+  },
+
+  addRow: {
+    display: "grid",
+    gridTemplateColumns: "1fr 44px",
+    gap: 8,
+    marginTop: 12,
+  },
+
+  addInput: {
+    width: "100%",
+    border: "1px solid #CBD5E1",
+    borderRadius: 10,
+    padding: "10px 12px",
+    fontSize: 14,
+    boxSizing: "border-box",
+  },
+
+  addMiniButton: {
+    border: "1px solid #CBD5E1",
+    background: "#FFFFFF",
+    color: "#1D4ED8",
+    borderRadius: 10,
+    fontSize: 22,
+    fontWeight: 700,
+  },
+
+  actorList: {
+    display: "grid",
+    gap: 10,
+  },
+
+  actorRow: {
+    display: "grid",
+    gap: 2,
+    padding: "12px 12px",
+    borderRadius: 12,
+    background: "#F8FAFC",
+    border: "1px solid #E5E7EB",
+  },
+
+  actorRole: {
+    fontSize: 12,
+    color: "#64748B",
+    fontWeight: 700,
+  },
+
+  actorName: {
+    fontSize: 16,
+    color: "#0F172A",
+    fontWeight: 700,
+  },
+
   summaryBlock: {
     display: "grid",
     gap: 12,
@@ -1186,6 +1224,31 @@ const styles = {
     padding: "12px 14px",
     fontWeight: 800,
     textAlign: "left",
+  },
+
+  actionTable: {
+    display: "grid",
+    gap: 8,
+  },
+
+  actionTableHeader: {
+    display: "grid",
+    gridTemplateColumns: "90px 1fr 140px",
+    gap: 10,
+    fontSize: 12,
+    color: "#64748B",
+    fontWeight: 800,
+    paddingBottom: 4,
+  },
+
+  actionTableRow: {
+    display: "grid",
+    gridTemplateColumns: "90px 1fr 140px",
+    gap: 10,
+    padding: "10px 0",
+    borderTop: "1px solid #EEF2F7",
+    fontSize: 14,
+    color: "#0F172A",
   },
 
   contactGrid: {
