@@ -25,18 +25,18 @@ export default function Dashboard({ patients, onOpenPatient }) {
           <NavPill>Patient en fiche</NavPill>
           <NavPill>Vue DUO</NavPill>
           <NavPill>Équipe Vue</NavPill>
-          <NavDanger>Déclencher cellule de crise</NavDanger>
+          <NavDanger>Cellule de crise</NavDanger>
         </div>
       </header>
 
-      <section style={heroStyle}>
-        <div style={heroEyebrowStyle}>Impact du jour</div>
-        <h1 style={heroTitleStyle}>Pilotage capacitaire et coordination</h1>
-        <p style={heroTextStyle}>
-          {patients.filter((p) => p.sortantMedicalement).length} patient(s) sortant(s)
-          médicalement encore présent(s), {blockedPatients} bloqué(s), {avoidableDays} jours
-          évitables estimés, soit environ {recoverableBeds} lit(s) récupérable(s).
-        </p>
+      <section style={summaryBarStyle}>
+        <div style={summaryLabelStyle}>Lecture immédiate</div>
+        <div style={summaryTextStyle}>
+          <strong>{patients.filter((p) => p.sortantMedicalement).length}</strong> sortants médicaux présents ·{" "}
+          <strong>{blockedPatients}</strong> bloqués ·{" "}
+          <strong>{avoidableDays}</strong> jours évitables ·{" "}
+          <strong>{recoverableBeds}</strong> lits récupérables
+        </div>
       </section>
 
       <section style={kpiGridStyle}>
@@ -128,15 +128,14 @@ function NavPill({ children, active = false }) {
   return (
     <div
       style={{
-        padding: "9px 13px",
-        borderRadius: 14,
+        padding: "8px 12px",
+        borderRadius: 12,
         border: active ? "2px solid #1f2937" : "1px solid #e5e7eb",
         background: active ? "#6d28d9" : "#ffffff",
         color: active ? "#ffffff" : "#374151",
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: 600,
         whiteSpace: "nowrap",
-        boxShadow: active ? "0 3px 10px rgba(0,0,0,0.08)" : "none",
       }}
     >
       {children}
@@ -148,12 +147,12 @@ function NavDanger({ children }) {
   return (
     <div
       style={{
-        padding: "9px 13px",
-        borderRadius: 14,
+        padding: "8px 12px",
+        borderRadius: 12,
         border: "1px solid #fecaca",
         background: "#fff7f7",
         color: "#b91c1c",
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: 700,
         whiteSpace: "nowrap",
       }}
@@ -176,8 +175,8 @@ function KpiCard({ title, value, tone }) {
       style={{
         background: "#ffffff",
         border: "1px solid #e5e7eb",
-        borderRadius: 18,
-        padding: 18,
+        borderRadius: 16,
+        padding: 16,
         boxShadow: "0 3px 12px rgba(15,23,42,0.04)",
       }}
     >
@@ -187,11 +186,11 @@ function KpiCard({ title, value, tone }) {
           display: "inline-block",
           background: tones[tone].bg,
           color: tones[tone].color,
-          borderRadius: 14,
-          padding: "10px 14px",
-          fontSize: 28,
+          borderRadius: 12,
+          padding: "8px 12px",
+          fontSize: 26,
           fontWeight: 800,
-          minWidth: 64,
+          minWidth: 56,
         }}
       >
         {value}
@@ -263,9 +262,9 @@ const pageStyle = {
 const headerStyle = {
   background: "linear-gradient(135deg,#5b54c7,#6d66d8)",
   color: "#ffffff",
-  borderRadius: 24,
-  padding: "16px",
-  marginBottom: 16,
+  borderRadius: 22,
+  padding: "14px 16px",
+  marginBottom: 12,
 };
 
 const brandStyle = {
@@ -277,7 +276,7 @@ const brandStyle = {
 
 const subtitleStyle = {
   marginTop: 4,
-  fontSize: 15,
+  fontSize: 14,
   opacity: 0.92,
 };
 
@@ -285,37 +284,30 @@ const navWrapStyle = {
   display: "flex",
   gap: 8,
   flexWrap: "wrap",
-  marginTop: 14,
+  marginTop: 12,
 };
 
-const heroStyle = {
-  background: "linear-gradient(135deg,#4f46e5,#7c3aed)",
-  color: "#ffffff",
-  borderRadius: 24,
-  padding: "20px",
-  marginBottom: 16,
+const summaryBarStyle = {
+  background: "#ffffff",
+  border: "1px solid #e5e7eb",
+  borderRadius: 18,
+  padding: "14px 16px",
+  marginBottom: 14,
+  boxShadow: "0 3px 12px rgba(15,23,42,0.04)",
 };
 
-const heroEyebrowStyle = {
+const summaryLabelStyle = {
   fontSize: 12,
   textTransform: "uppercase",
-  letterSpacing: 1.4,
-  opacity: 0.75,
+  letterSpacing: 1.2,
+  color: "#6b7280",
+  marginBottom: 6,
 };
 
-const heroTitleStyle = {
-  fontSize: "clamp(26px, 6vw, 40px)",
-  lineHeight: 1.15,
-  margin: "8px 0 10px 0",
-  fontWeight: 800,
-  maxWidth: 700,
-};
-
-const heroTextStyle = {
-  fontSize: 16,
-  lineHeight: 1.6,
-  margin: 0,
-  maxWidth: 880,
+const summaryTextStyle = {
+  fontSize: 15,
+  lineHeight: 1.5,
+  color: "#111827",
 };
 
 const kpiGridStyle = {
