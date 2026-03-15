@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Dashboard from "./Dashboard";
+import PatientView from "./PatientView";
 
 const patientsData = [
   {
@@ -18,6 +19,22 @@ const patientsData = [
     joursEvitables: 8,
     score: 9,
     sortantMedicalement: true,
+    destinationPrevue: "Domicile avec aides",
+    besoinAval: "Aide au retour + coordination sociale",
+    transport: "Transport assis à confirmer",
+    documentsSortie: "Ordonnance en cours",
+    referentMedical: "Dr Martin",
+    cadre: "Mme Leroy",
+    assistanteSociale: "Mme Bernard",
+    nextStep: "Relancer solution logement aujourd’hui",
+    personneConfiance: "Marie Dubois",
+    personneAPrevenir: "Paul Dubois",
+    protectionJuridique: "Aucune mesure connue",
+    notes: [
+      "Patient médicalement stabilisé.",
+      "Frein social majeur à la sortie.",
+      "Relance assistante sociale prévue ce jour.",
+    ],
   },
   {
     id: 2,
@@ -35,6 +52,22 @@ const patientsData = [
     joursEvitables: 6,
     score: 8,
     sortantMedicalement: true,
+    destinationPrevue: "Domicile",
+    besoinAval: "SSIAD",
+    transport: "Famille",
+    documentsSortie: "Lettre de sortie à finaliser",
+    referentMedical: "Dr Faure",
+    cadre: "Mme Colin",
+    assistanteSociale: "Mme Perez",
+    nextStep: "Valider SSIAD avant 16h",
+    personneConfiance: "Anne Martin",
+    personneAPrevenir: "Anne Martin",
+    protectionJuridique: "Aucune mesure connue",
+    notes: [
+      "Retour domicile envisagé.",
+      "SSIAD non confirmé.",
+      "Patient et famille informés.",
+    ],
   },
   {
     id: 3,
@@ -52,6 +85,10 @@ const patientsData = [
     joursEvitables: 3,
     score: 6,
     sortantMedicalement: true,
+    notes: [
+      "Coordination IDEL à organiser.",
+      "Besoin de sécuriser relais ville.",
+    ],
   },
   {
     id: 4,
@@ -69,6 +106,10 @@ const patientsData = [
     joursEvitables: 0,
     score: 5,
     sortantMedicalement: false,
+    notes: [
+      "Patient non médicalement sortant à ce stade.",
+      "Surveillance sociale à maintenir.",
+    ],
   },
   {
     id: 5,
@@ -86,6 +127,10 @@ const patientsData = [
     joursEvitables: 7,
     score: 8,
     sortantMedicalement: true,
+    notes: [
+      "Indication SSR validée.",
+      "Attente de place disponible.",
+    ],
   },
   {
     id: 6,
@@ -103,6 +148,10 @@ const patientsData = [
     joursEvitables: 2,
     score: 6,
     sortantMedicalement: true,
+    notes: [
+      "Bon état clinique.",
+      "Transport non planifié.",
+    ],
   },
   {
     id: 7,
@@ -120,6 +169,10 @@ const patientsData = [
     joursEvitables: 5,
     score: 7,
     sortantMedicalement: true,
+    notes: [
+      "Besoin d’aides renforcées au domicile.",
+      "Famille peu disponible.",
+    ],
   },
   {
     id: 8,
@@ -137,6 +190,10 @@ const patientsData = [
     joursEvitables: 9,
     score: 9,
     sortantMedicalement: true,
+    notes: [
+      "Patient médicalement sortant depuis plusieurs jours.",
+      "Recherche EHPAD prioritaire.",
+    ],
   },
   {
     id: 9,
@@ -154,6 +211,10 @@ const patientsData = [
     joursEvitables: 4,
     score: 7,
     sortantMedicalement: true,
+    notes: [
+      "Besoins de rééducation identifiés.",
+      "Attente organisation parcours aval.",
+    ],
   },
   {
     id: 10,
@@ -171,6 +232,10 @@ const patientsData = [
     joursEvitables: 3,
     score: 6,
     sortantMedicalement: true,
+    notes: [
+      "Famille hésitante sur le projet de sortie.",
+      "Nécessité d’une réunion de coordination.",
+    ],
   },
   {
     id: 11,
@@ -188,6 +253,10 @@ const patientsData = [
     joursEvitables: 2,
     score: 6,
     sortantMedicalement: true,
+    notes: [
+      "Éducation thérapeutique à finaliser.",
+      "Sortie possible rapidement après validation.",
+    ],
   },
   {
     id: 12,
@@ -205,6 +274,10 @@ const patientsData = [
     joursEvitables: 6,
     score: 8,
     sortantMedicalement: true,
+    notes: [
+      "Indication HAD discutée.",
+      "Attente confirmation structure.",
+    ],
   },
   {
     id: 13,
@@ -222,6 +295,10 @@ const patientsData = [
     joursEvitables: 1,
     score: 5,
     sortantMedicalement: false,
+    notes: [
+      "Sortie pas encore validée.",
+      "Ordonnances à compléter.",
+    ],
   },
   {
     id: 14,
@@ -239,6 +316,10 @@ const patientsData = [
     joursEvitables: 4,
     score: 7,
     sortantMedicalement: true,
+    notes: [
+      "Matériel de retour attendu.",
+      "Sortie retardée pour raison logistique.",
+    ],
   },
   {
     id: 15,
@@ -256,6 +337,10 @@ const patientsData = [
     joursEvitables: 5,
     score: 8,
     sortantMedicalement: true,
+    notes: [
+      "Situation administrative complexe.",
+      "Mesure de protection à clarifier.",
+    ],
   },
   {
     id: 16,
@@ -273,6 +358,10 @@ const patientsData = [
     joursEvitables: 2,
     score: 6,
     sortantMedicalement: true,
+    notes: [
+      "Aides humaines non encore sécurisées.",
+      "Relance domicile nécessaire.",
+    ],
   },
   {
     id: 17,
@@ -290,6 +379,10 @@ const patientsData = [
     joursEvitables: 8,
     score: 9,
     sortantMedicalement: true,
+    notes: [
+      "Patient en attente d’orientation EHPAD.",
+      "Situation prioritaire au regard de la durée de séjour.",
+    ],
   },
   {
     id: 18,
@@ -307,142 +400,36 @@ const patientsData = [
     joursEvitables: 1,
     score: 5,
     sortantMedicalement: false,
+    notes: [
+      "Patient proche de la sortie.",
+      "Validation médicale en attente.",
+    ],
   },
 ];
-
-function PatientSheet({ patient, onClose }) {
-  if (!patient) return null;
-
-  return (
-    <div style={sheetStyles.overlay}>
-      <div style={sheetStyles.sheet}>
-        <div style={sheetStyles.header}>
-          <div>
-            <div style={sheetStyles.title}>
-              {patient.nom} {patient.prenom}
-            </div>
-            <div style={sheetStyles.subtitle}>
-              {patient.birthDate} • {patient.age} ans • INS {patient.ins} • IEP {patient.iep}
-            </div>
-          </div>
-
-          <button onClick={onClose} style={sheetStyles.closeButton}>
-            Fermer
-          </button>
-        </div>
-
-        <div style={sheetStyles.grid}>
-          <Info label="Service" value={patient.service} />
-          <Info label="Chambre / lit" value={`${patient.chambre} • lit ${patient.lit}`} />
-          <Info label="Admission" value={patient.entryDate} />
-          <Info label="Frein principal" value={patient.blocage} />
-          <Info
-            label="Sortant médical"
-            value={patient.sortantMedicalement ? "Oui" : "Non"}
-          />
-          <Info label="Jours évitables" value={`${patient.joursEvitables} j`} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Info({ label, value }) {
-  return (
-    <div style={sheetStyles.infoCard}>
-      <div style={sheetStyles.infoLabel}>{label}</div>
-      <div style={sheetStyles.infoValue}>{value}</div>
-    </div>
-  );
-}
 
 export default function App() {
   const [selectedPatient, setSelectedPatient] = useState(null);
 
   return (
-    <div style={appStyles.page}>
-      <Dashboard patients={patientsData} onOpenPatient={setSelectedPatient} />
-      <PatientSheet
-        patient={selectedPatient}
-        onClose={() => setSelectedPatient(null)}
-      />
+    <div style={styles.page}>
+      {selectedPatient ? (
+        <PatientView
+          patient={selectedPatient}
+          onBack={() => setSelectedPatient(null)}
+        />
+      ) : (
+        <Dashboard
+          patients={patientsData}
+          onOpenPatient={setSelectedPatient}
+        />
+      )}
     </div>
   );
 }
 
-const appStyles = {
+const styles = {
   page: {
     minHeight: "100vh",
     background: "#F8FAFC",
-  },
-};
-
-const sheetStyles = {
-  overlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(15, 23, 42, 0.28)",
-    display: "flex",
-    justifyContent: "flex-end",
-    zIndex: 50,
-  },
-  sheet: {
-    width: "min(520px, 100%)",
-    height: "100%",
-    background: "#FFFFFF",
-    boxShadow: "-12px 0 40px rgba(15,23,42,0.18)",
-    padding: 20,
-    boxSizing: "border-box",
-    overflowY: "auto",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 12,
-    marginBottom: 18,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 800,
-    color: "#0F172A",
-  },
-  subtitle: {
-    marginTop: 6,
-    fontSize: 13,
-    color: "#64748B",
-    lineHeight: 1.45,
-  },
-  closeButton: {
-    border: "1px solid #CBD5E1",
-    background: "#FFFFFF",
-    borderRadius: 10,
-    padding: "8px 12px",
-    fontWeight: 700,
-    color: "#334155",
-  },
-  grid: {
-    display: "grid",
-    gap: 12,
-  },
-  infoCard: {
-    border: "1px solid #E5E7EB",
-    borderRadius: 14,
-    padding: 14,
-    background: "#FFFFFF",
-  },
-  infoLabel: {
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: 0.2,
-    color: "#64748B",
-    fontWeight: 800,
-    marginBottom: 6,
-  },
-  infoValue: {
-    fontSize: 14,
-    color: "#0F172A",
-    fontWeight: 600,
-    lineHeight: 1.45,
   },
 };
