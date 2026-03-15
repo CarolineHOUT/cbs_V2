@@ -8,15 +8,15 @@ export default function PatientView({
 }) {
   const [editablePatient, setEditablePatient] = useState({
     ...patient,
-    notes: normalizeNotes(patient.notes || []),
-    freins: patient.freins || buildFreinsFromPatient(patient),
+    notes: normalizeNotes(patient?.notes || []),
+    freins: patient?.freins || buildFreinsFromPatient(patient || {}),
     actions:
-      patient.actions || [
+      patient?.actions || [
         {
           id: "a1",
           echeance: "15 mai",
           action: "Évaluation sociale",
-          responsable: patient.assistanteSociale || "Assistante sociale",
+          responsable: patient?.assistanteSociale || "Assistante sociale",
         },
         {
           id: "a2",
@@ -26,21 +26,21 @@ export default function PatientView({
         },
       ],
     acteurs:
-      patient.acteurs || [
+      patient?.acteurs || [
         {
           id: "ac1",
           role: "Médecin référent",
-          nom: patient.referentMedical || "Non renseigné",
+          nom: patient?.referentMedical || "Non renseigné",
         },
         {
           id: "ac2",
           role: "Assistante sociale",
-          nom: patient.assistanteSociale || "Non renseignée",
+          nom: patient?.assistanteSociale || "Non renseignée",
         },
         {
           id: "ac3",
           role: "Cadre",
-          nom: patient.cadre || "Non renseigné",
+          nom: patient?.cadre || "Non renseigné",
         },
         {
           id: "ac4",
@@ -59,7 +59,7 @@ export default function PatientView({
     if (editablePatient.score >= 8) return { label: "Bloqué", tone: "red" };
     if (editablePatient.score >= 6) return { label: "Risque", tone: "amber" };
     return { label: "Suivi", tone: "green" };
-  }, [editablePatient]);
+  }, [editablePatient.score]);
 
   function parseFrenchDate(value) {
     if (!value || typeof value !== "string") return null;
@@ -152,26 +152,28 @@ export default function PatientView({
     }
   }
 
+  if (!editablePatient) return null;
+
   const stayDays = computeStayDays(editablePatient.entryDate);
   const unreadCount = editablePatient.notes.filter((n) => n.unread).length;
   const urgentCount = editablePatient.notes.filter((n) => n.type === "urgent").length;
   const actionsOpen = editablePatient.actions.length;
 
   const scoreParcours = useMemo(() => {
-    const base = editablePatient.score * 18;
-    const days = editablePatient.joursEvitables * 6;
-    const freins = editablePatient.freins.length * 8;
+    const base = (editablePatient.score || 0) * 18;
+    const days = (editablePatient.joursEvitables || 0) * 6;
+    const freins = (editablePatient.freins || []).length * 8;
     return base + days + freins;
-  }, [editablePatient]);
+  }, [editablePatient.score, editablePatient.joursEvitables, editablePatient.freins]);
 
   const canEscalate =
     editablePatient.sortantMedicalement &&
-    (editablePatient.score >= 8 || editablePatient.joursEvitables >= 5);
+    ((editablePatient.score || 0) >= 8 || (editablePatient.joursEvitables || 0) >= 5);
 
   const riskLabel =
-    editablePatient.score >= 8
+    (editablePatient.score || 0) >= 8
       ? "Élevé"
-      : editablePatient.score >= 6
+      : (editablePatient.score || 0) >= 6
         ? "Modéré"
         : "Faible";
 
@@ -195,24 +197,38 @@ export default function PatientView({
           <button onClick={onBack} style={styles.headerGhostButton}>
             Retour cockpit
           </button>
+
           <button
-            style={styles.headerCrisisButton}
+            onClick={() =>
+              onOpenDuo
+                ? onOpenDuo(editablePatient)
+                : quickAction("Ouverture vue DUO demandée", "action")
+            }
+            style={styles.headerDuoButton}
+          >
+            Vue DUO
+          </button>
+
+          <button
             onClick={() =>
               onTriggerCrisis
                 ? onTriggerCrisis(editablePatient)
                 : quickAction("Déclenchement cellule de crise demandé", "urgent")
             }
+            style={styles.headerCrisisButton}
           >
             Cellule de crise
           </button>
         </div>
       </header>
 
-      <section style={styles.identitySection}>
-        <div style={styles.identityCard}>
-          <div style={styles.identityName}>{editablePatient.nom} {editablePatient.prenom}</div>
+      <section style={styles.patientRibbon}>
+        <div style={styles.patientIdentity}>
+          <div style={styles.patientName}>
+            {editablePatient.nom} {editablePatient.prenom}
+          </div>
 
-          <div style={styles.identityMetaRow}>
+          <div style={styles.patientMetaLine}>
             <span>{editablePatient.birthDate}</span>
             <span>•</span>
             <span>{editablePatient.age} ans</span>
@@ -222,41 +238,28 @@ export default function PatientView({
             <span>IEP {editablePatient.iep}</span>
           </div>
 
-          <div style={styles.identityMetaRow}>
+          <div style={styles.patientMetaLine}>
             <span>{editablePatient.service}</span>
             <span>•</span>
             <span>Chambre {editablePatient.chambre}</span>
             <span>•</span>
             <span>Lit {editablePatient.lit}</span>
-          </div>
-
-          <div style={styles.identityMetaRow}>
+            <span>•</span>
             <span>Entrée : {editablePatient.entryDate}</span>
             <span>•</span>
             <span>{stayDays} jours de présence</span>
           </div>
         </div>
 
-        <div style={styles.identitySummaryCard}>
-          <div style={styles.kpiPanel}>
-            <StatusChip label={status.label} tone={status.tone} />
-
-            <KpiMini label="Sortant médical" value={editablePatient.sortantMedicalement ? "Oui" : "Non"} />
-            <KpiMini label="Jours évitables" value={editablePatient.joursEvitables} alert />
-            <KpiMini label="Score parcours" value={scoreParcours} />
-            <KpiMini label="Notes non lues" value={unreadCount} subtle />
-            <button
-              type="button"
-              style={styles.duoButton}
-              onClick={() =>
-                onOpenDuo
-                  ? onOpenDuo(editablePatient)
-                  : quickAction("Ouverture vue DUO demandée", "action")
-              }
-            >
-              Vue DUO
-            </button>
-          </div>
+        <div style={styles.patientMetrics}>
+          <StatusPill label={status.label} tone={status.tone} />
+          <MetricCell label="Sortant médical" value={editablePatient.sortantMedicalement ? "Oui" : "Non"} />
+          <MetricCell label="Jours évitables" value={editablePatient.joursEvitables || 0} accent="amber" />
+          <MetricCell label="Score parcours" value={scoreParcours} />
+          <MetricCell label="Notes non lues" value={unreadCount} accent={unreadCount > 0 ? "red" : "neutral"} />
+          {urgentCount > 0 ? (
+            <MetricCell label="Urgentes" value={urgentCount} accent="red" />
+          ) : null}
         </div>
       </section>
 
@@ -264,56 +267,57 @@ export default function PatientView({
         <section style={styles.alertBanner}>
           <div style={styles.alertTitle}>Situation à escalade rapide</div>
           <div style={styles.alertText}>
-            {editablePatient.joursEvitables} jours évitables • frein principal : {editablePatient.blocage} • patient médicalement sortant.
+            {editablePatient.joursEvitables} jours évitables • frein principal : {editablePatient.blocage} • patient médicalement sortant
           </div>
         </section>
       ) : null}
 
       <section style={styles.topRow}>
         <Card title="Situation de sortie" subtitle="Décision et préparation">
-          <div style={styles.situationGrid}>
-            <div style={styles.focusCard}>
-              <div style={styles.focusLabel}>Frein principal</div>
-              <div style={styles.focusValue}>{editablePatient.blocage || "Non renseigné"}</div>
-              <div style={styles.focusSub}>
-                Point prioritaire à lever pour débloquer la sortie.
+          <div style={styles.situationLayout}>
+            <div style={styles.primaryBlock}>
+              <div style={styles.primaryBlockLabel}>Frein principal</div>
+              <div style={styles.primaryBlockValue}>
+                {editablePatient.blocage || "Non renseigné"}
+              </div>
+              <div style={styles.primaryBlockHint}>
+                Point prioritaire à lever pour débloquer la sortie et récupérer de la capacité.
               </div>
             </div>
 
-            <div style={styles.planGrid}>
-              <InlineField
+            <div style={styles.planBoard}>
+              <PlanRow
                 label="Orientation prévue"
                 value={editablePatient.destinationPrevue || ""}
                 onChange={(value) => updateField("destinationPrevue", value)}
               />
-              <InlineField
+              <PlanRow
                 label="Date cible"
                 value={editablePatient.dateCible || "20/02/2026"}
                 onChange={(value) => updateField("dateCible", value)}
               />
-              <InlineField
+              <PlanRow
                 label="Transport"
                 value={editablePatient.transport || ""}
                 onChange={(value) => updateField("transport", value)}
               />
-              <InlineField
-                label="Documents de sortie"
+              <PlanRow
+                label="Documents"
                 value={editablePatient.documentsSortie || ""}
                 onChange={(value) => updateField("documentsSortie", value)}
               />
-              <div style={styles.planWide}>
-                <InlineField
-                  label="Prochaine action"
-                  value={editablePatient.nextStep || ""}
-                  onChange={(value) => updateField("nextStep", value)}
-                />
-              </div>
+              <PlanRow
+                label="Prochaine action"
+                value={editablePatient.nextStep || ""}
+                onChange={(value) => updateField("nextStep", value)}
+                wide
+              />
             </div>
           </div>
 
           <div style={styles.situationFooter}>
-            <div style={styles.toggleCard}>
-              <div style={styles.toggleLabel}>Sortant médical</div>
+            <div style={styles.toggleInline}>
+              <div style={styles.toggleInlineLabel}>Sortant médical</div>
               <label style={styles.checkboxWrap}>
                 <input
                   type="checkbox"
@@ -325,56 +329,41 @@ export default function PatientView({
             </div>
 
             <button
-              style={styles.smallActionButton}
+              style={styles.integrateButton}
               onClick={() => quickAction("Sortie intégrée au plan", "action")}
             >
-              Intégrer sortie →
+              Intégrer sortie
             </button>
           </div>
         </Card>
 
         <Card title="Coordination" subtitle="Centre opérationnel">
-          <div style={styles.coordCard}>
-            <div style={styles.coordHeader}>
-              <span style={styles.coordTypeBadge}>POST-IT</span>
-              <span style={styles.coordTypeMeta}>{labelForType(newNoteType)}</span>
+          <div style={styles.activeNoteCard}>
+            <div style={styles.activeNoteTop}>
+              <span style={styles.postItBadge}>POST-IT</span>
+              <span style={styles.activeNoteType}>{labelForType(newNoteType)}</span>
             </div>
 
-            <div style={styles.coordText}>
+            <div style={styles.activeNoteText}>
               {editablePatient.notes[0]?.text || "Aucune note récente."}
             </div>
 
-            <div style={styles.coordMeta}>
+            <div style={styles.activeNoteMeta}>
               {editablePatient.referentMedical || "Non renseigné"} • il y a 3 h
             </div>
           </div>
 
-          <div style={styles.actionsGrid}>
-            <button
-              style={styles.actionButton}
-              onClick={() => quickAction("Assistante sociale contactée", "action")}
-            >
+          <div style={styles.quickActions}>
+            <button style={styles.actionButton} onClick={() => quickAction("Assistante sociale contactée", "action")}>
               Contacter assistante sociale
             </button>
-
-            <button
-              style={styles.actionButton}
-              onClick={() => quickAction("Sortie à programmer", "action")}
-            >
+            <button style={styles.actionButton} onClick={() => quickAction("Sortie à programmer", "action")}>
               Programmer sortie
             </button>
-
-            <button
-              style={styles.actionButton}
-              onClick={() => quickAction("Réunion de coordination demandée", "action")}
-            >
+            <button style={styles.actionButton} onClick={() => quickAction("Réunion de coordination demandée", "action")}>
               Réunion coordination
             </button>
-
-            <button
-              style={styles.actionButton}
-              onClick={() => quickAction("Famille relancée", "famille")}
-            >
+            <button style={styles.actionButton} onClick={() => quickAction("Famille relancée", "famille")}>
               Relancer famille
             </button>
           </div>
@@ -469,7 +458,7 @@ export default function PatientView({
                 {riskLabel}
               </strong>
             </div>
-            <div style={styles.summaryNext}>
+            <div style={styles.summaryHighlight}>
               <span>Prochaine étape</span>
               <strong>{editablePatient.nextStep || "Validation sortie médicale"}</strong>
             </div>
@@ -478,7 +467,7 @@ export default function PatientView({
               style={styles.suggestionButton}
               onClick={() => quickAction("Suggestion CARABBAS générée", "info")}
             >
-              Suggestion CARABBAS →
+              Suggestion CARABBAS
             </button>
           </div>
         </Card>
@@ -563,14 +552,14 @@ function Card({ title, subtitle, children }) {
   );
 }
 
-function InlineField({ label, value, onChange }) {
+function PlanRow({ label, value, onChange, wide = false }) {
   return (
-    <div style={styles.inlineField}>
-      <div style={styles.inlineFieldLabel}>{label}</div>
+    <div style={{ ...styles.planRow, ...(wide ? styles.planRowWide : {}) }}>
+      <div style={styles.planRowLabel}>{label}</div>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={styles.inlineFieldInput}
+        style={styles.planRowInput}
       />
     </div>
   );
@@ -600,33 +589,33 @@ function ContactCard({ title, name, phone, onCopy, copied }) {
   );
 }
 
-function StatusChip({ label, tone = "neutral" }) {
+function StatusPill({ label, tone = "neutral" }) {
   const tones = {
-    neutral: { bg: "#E2E8F0", color: "#334155", border: "#CBD5E1" },
-    red: { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA" },
-    amber: { bg: "#FEF3C7", color: "#D97706", border: "#FDE68A" },
-    green: { bg: "#D1FAE5", color: "#059669", border: "#A7F3D0" },
+    neutral: { bg: "#E2E8F0", color: "#334155" },
+    red: { bg: "#FEF2F2", color: "#DC2626" },
+    amber: { bg: "#FEF3C7", color: "#D97706" },
+    green: { bg: "#D1FAE5", color: "#059669" },
   };
   const t = tones[tone] || tones.neutral;
 
   return (
-    <div style={{ ...styles.statusChip, background: t.bg, color: t.color, borderColor: t.border }}>
-      <div style={styles.statusChipLabel}>Statut</div>
-      <div style={styles.statusChipValue}>{label}</div>
+    <div style={{ ...styles.statusPill, background: t.bg, color: t.color }}>
+      {label}
     </div>
   );
 }
 
-function KpiMini({ label, value, alert = false, subtle = false }) {
+function MetricCell({ label, value, accent = "neutral" }) {
+  const colors = {
+    neutral: "#0F172A",
+    amber: "#D97706",
+    red: "#DC2626",
+  };
+
   return (
-    <div style={styles.kpiMini}>
-      <div style={styles.kpiMiniLabel}>{label}</div>
-      <div
-        style={{
-          ...styles.kpiMiniValue,
-          color: alert ? "#D97706" : subtle ? "#DC2626" : "#0F172A",
-        }}
-      >
+    <div style={styles.metricCell}>
+      <div style={styles.metricCellLabel}>{label}</div>
+      <div style={{ ...styles.metricCellValue, color: colors[accent] || colors.neutral }}>
         {value}
       </div>
     </div>
@@ -708,757 +697,4 @@ function labelForType(type) {
 
 function activeNotePillStyle(type) {
   const stylesByType = {
-    info: { background: "#EFF6FF", color: "#1D4ED8", borderColor: "#BFDBFE" },
-    action: { background: "#ECFDF5", color: "#059669", borderColor: "#A7F3D0" },
-    famille: { background: "#FFF7ED", color: "#EA580C", borderColor: "#FED7AA" },
-    urgent: { background: "#FEF2F2", color: "#DC2626", borderColor: "#FECACA" },
-  };
-  return stylesByType[type] || {};
-}
-
-const styles = {
-  page: {
-    maxWidth: 1460,
-    margin: "0 auto",
-    padding: 18,
-    background: "#F8FAFC",
-    minHeight: "100vh",
-  },
-
-  appHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 12,
-    background: "linear-gradient(90deg, #1E3A8A 0%, #2563EB 100%)",
-    color: "#FFFFFF",
-    padding: "12px 16px",
-    borderRadius: 18,
-    marginBottom: 16,
-    boxShadow: "0 14px 30px rgba(37,99,235,0.14)",
-    flexWrap: "wrap",
-  },
-
-  appHeaderLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-  },
-
-  burgerButton: {
-    width: 36,
-    height: 36,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    gap: 4,
-    background: "rgba(255,255,255,0.10)",
-    border: "1px solid rgba(255,255,255,0.16)",
-    borderRadius: 10,
-    padding: "0 8px",
-  },
-
-  burgerLine: {
-    height: 2,
-    background: "#FFFFFF",
-    borderRadius: 999,
-  },
-
-  appTitle: {
-    fontWeight: 800,
-    fontSize: 22,
-    letterSpacing: 0.2,
-  },
-
-  appSubtitle: {
-    fontSize: 12,
-    opacity: 0.92,
-    marginTop: 2,
-  },
-
-  headerActions: {
-    display: "flex",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-
-  headerGhostButton: {
-    border: "1px solid rgba(255,255,255,0.22)",
-    background: "rgba(255,255,255,0.12)",
-    color: "#FFFFFF",
-    borderRadius: 12,
-    padding: "9px 12px",
-    fontWeight: 700,
-    fontSize: 12,
-  },
-
-  headerCrisisButton: {
-    border: "1px solid #FECACA",
-    background: "#FFF1F2",
-    color: "#B91C1C",
-    borderRadius: 12,
-    padding: "9px 12px",
-    fontWeight: 800,
-    fontSize: 12,
-  },
-
-  identitySection: {
-    display: "grid",
-    gridTemplateColumns: "1.18fr 0.92fr",
-    gap: 16,
-    marginBottom: 16,
-    alignItems: "stretch",
-  },
-
-  identityCard: {
-    background: "#FFFFFF",
-    border: "1px solid #E5E7EB",
-    borderRadius: 20,
-    padding: "18px 20px",
-    boxShadow: "0 10px 24px rgba(15,23,42,0.04)",
-  },
-
-  identityName: {
-    fontSize: 34,
-    fontWeight: 900,
-    color: "#0F172A",
-    lineHeight: 1.05,
-  },
-
-  identityMetaRow: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 8,
-    marginTop: 8,
-    fontSize: 14,
-    color: "#475569",
-    lineHeight: 1.45,
-  },
-
-  identitySummaryCard: {
-    background: "linear-gradient(180deg, #FFFFFF 0%, #FBFDFF 100%)",
-    border: "1px solid #E5E7EB",
-    borderRadius: 20,
-    padding: 16,
-    boxShadow: "0 10px 24px rgba(15,23,42,0.04)",
-  },
-
-  kpiPanel: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: 10,
-    height: "100%",
-  },
-
-  statusChip: {
-    border: "1px solid #E5E7EB",
-    borderRadius: 14,
-    padding: "12px 12px",
-    minHeight: 72,
-    display: "grid",
-    alignContent: "space-between",
-  },
-
-  statusChipLabel: {
-    fontSize: 11,
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: 0.2,
-    opacity: 0.8,
-  },
-
-  statusChipValue: {
-    fontSize: 22,
-    fontWeight: 900,
-    lineHeight: 1.1,
-  },
-
-  kpiMini: {
-    background: "#F8FAFC",
-    border: "1px solid #E5E7EB",
-    borderRadius: 14,
-    padding: "12px 12px",
-    minHeight: 72,
-    display: "grid",
-    alignContent: "space-between",
-  },
-
-  kpiMiniLabel: {
-    fontSize: 11,
-    color: "#64748B",
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: 0.2,
-  },
-
-  kpiMiniValue: {
-    fontSize: 22,
-    fontWeight: 900,
-    lineHeight: 1.1,
-  },
-
-  duoButton: {
-    border: "1px solid #BFDBFE",
-    background: "#EFF6FF",
-    color: "#1D4ED8",
-    borderRadius: 14,
-    minHeight: 72,
-    fontWeight: 800,
-    fontSize: 16,
-  },
-
-  alertBanner: {
-    marginBottom: 18,
-    borderRadius: 16,
-    padding: 14,
-    background: "linear-gradient(180deg, #FFF7ED 0%, #FFFFFF 100%)",
-    border: "1px solid #FED7AA",
-  },
-
-  alertTitle: {
-    fontSize: 13,
-    fontWeight: 800,
-    color: "#C2410C",
-    marginBottom: 4,
-  },
-
-  alertText: {
-    fontSize: 14,
-    color: "#7C2D12",
-    lineHeight: 1.45,
-  },
-
-  topRow: {
-    display: "grid",
-    gridTemplateColumns: "1.28fr 0.95fr",
-    gap: 18,
-    marginBottom: 18,
-    alignItems: "start",
-  },
-
-  middleRow: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 0.95fr",
-    gap: 18,
-    marginBottom: 18,
-    alignItems: "start",
-  },
-
-  bottomRow: {
-    display: "grid",
-    gridTemplateColumns: "1.1fr 1fr",
-    gap: 18,
-    alignItems: "start",
-  },
-
-  card: {
-    background: "#FFFFFF",
-    border: "1px solid #E5E7EB",
-    borderRadius: 20,
-    padding: 18,
-    boxShadow: "0 12px 28px rgba(15,23,42,0.05)",
-  },
-
-  cardTitle: {
-    fontSize: 24,
-    fontWeight: 800,
-    color: "#0F172A",
-    lineHeight: 1.1,
-  },
-
-  cardSubtitle: {
-    marginTop: 4,
-    fontSize: 13,
-    color: "#64748B",
-  },
-
-  situationGrid: {
-    display: "grid",
-    gridTemplateColumns: "0.78fr 1.22fr",
-    gap: 16,
-    alignItems: "start",
-  },
-
-  focusCard: {
-    borderRadius: 18,
-    padding: 18,
-    background: "linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)",
-    border: "1px solid #BFDBFE",
-    minHeight: 168,
-  },
-
-  focusLabel: {
-    fontSize: 11,
-    color: "#1E40AF",
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: 0.2,
-    marginBottom: 10,
-  },
-
-  focusValue: {
-    fontSize: 28,
-    lineHeight: 1.1,
-    fontWeight: 900,
-    color: "#0F172A",
-  },
-
-  focusSub: {
-    marginTop: 10,
-    fontSize: 14,
-    color: "#475569",
-    lineHeight: 1.45,
-  },
-
-  planGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 12,
-  },
-
-  planWide: {
-    gridColumn: "1 / -1",
-  },
-
-  inlineField: {
-    border: "1px solid #E5E7EB",
-    borderRadius: 14,
-    padding: 12,
-    background: "#FFFFFF",
-  },
-
-  inlineFieldLabel: {
-    fontSize: 11,
-    color: "#64748B",
-    fontWeight: 800,
-    textTransform: "uppercase",
-    marginBottom: 6,
-  },
-
-  inlineFieldInput: {
-    width: "100%",
-    border: "1px solid #CBD5E1",
-    borderRadius: 10,
-    padding: "10px 12px",
-    fontSize: 14,
-    boxSizing: "border-box",
-  },
-
-  situationFooter: {
-    marginTop: 14,
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 12,
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-
-  toggleCard: {
-    border: "1px solid #BFDBFE",
-    borderRadius: 14,
-    padding: "10px 12px",
-    background: "#F8FBFF",
-  },
-
-  toggleLabel: {
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: 0.2,
-    color: "#64748B",
-    fontWeight: 800,
-    marginBottom: 6,
-  },
-
-  checkboxWrap: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    fontSize: 13,
-    color: "#0F172A",
-  },
-
-  smallActionButton: {
-    border: "1px solid #CBD5E1",
-    background: "#F8FAFC",
-    color: "#1D4ED8",
-    borderRadius: 12,
-    padding: "10px 12px",
-    fontWeight: 700,
-    fontSize: 13,
-  },
-
-  coordCard: {
-    borderRadius: 16,
-    padding: 14,
-    background: "#FFF8EA",
-    border: "1px solid #FDE68A",
-    marginBottom: 12,
-  },
-
-  coordHeader: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
-    flexWrap: "wrap",
-  },
-
-  coordTypeBadge: {
-    display: "inline-block",
-    padding: "4px 8px",
-    borderRadius: 999,
-    background: "#F59E0B",
-    color: "#FFFFFF",
-    fontSize: 11,
-    fontWeight: 800,
-  },
-
-  coordTypeMeta: {
-    fontSize: 12,
-    color: "#92400E",
-    fontWeight: 700,
-  },
-
-  coordText: {
-    fontSize: 15,
-    color: "#0F172A",
-    fontWeight: 700,
-    lineHeight: 1.45,
-  },
-
-  coordMeta: {
-    marginTop: 8,
-    fontSize: 12,
-    color: "#64748B",
-  },
-
-  actionsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: 10,
-    marginBottom: 12,
-  },
-
-  actionButton: {
-    padding: 11,
-    borderRadius: 12,
-    border: "1px solid #CBD5E1",
-    background: "#EFF6FF",
-    color: "#1D4ED8",
-    fontWeight: 700,
-    cursor: "pointer",
-    fontSize: 13,
-  },
-
-  noteComposer: {
-    display: "grid",
-    gap: 10,
-  },
-
-  noteTypePills: {
-    display: "flex",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-
-  noteTypePill: {
-    padding: "8px 11px",
-    borderRadius: 999,
-    border: "1px solid #CBD5E1",
-    background: "#FFFFFF",
-    color: "#334155",
-    fontSize: 12,
-    fontWeight: 700,
-  },
-
-  textarea: {
-    minHeight: 104,
-    resize: "vertical",
-    border: "1px solid #CBD5E1",
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 14,
-    fontFamily: "inherit",
-    boxSizing: "border-box",
-  },
-
-  noteActions: {
-    display: "flex",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-
-  primaryButton: {
-    border: "1px solid #2563EB",
-    background: "#2563EB",
-    color: "#FFFFFF",
-    borderRadius: 12,
-    padding: "10px 14px",
-    fontWeight: 700,
-    cursor: "pointer",
-  },
-
-  secondaryButton: {
-    border: "1px solid #CBD5E1",
-    background: "#FFFFFF",
-    color: "#334155",
-    borderRadius: 12,
-    padding: "10px 14px",
-    fontWeight: 700,
-    cursor: "pointer",
-  },
-
-  tagsList: {
-    display: "grid",
-    gap: 10,
-  },
-
-  freinTag: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "11px 12px",
-    borderRadius: 12,
-    background: "#FFF7F7",
-    border: "1px solid #FEE2E2",
-    color: "#0F172A",
-    fontWeight: 600,
-    fontSize: 14,
-  },
-
-  freinDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    background: "#FB7185",
-    flexShrink: 0,
-  },
-
-  addRow: {
-    display: "grid",
-    gridTemplateColumns: "1fr 44px",
-    gap: 8,
-    marginTop: 12,
-  },
-
-  addInput: {
-    width: "100%",
-    border: "1px solid #CBD5E1",
-    borderRadius: 10,
-    padding: "10px 12px",
-    fontSize: 14,
-    boxSizing: "border-box",
-  },
-
-  addMiniButton: {
-    border: "1px solid #CBD5E1",
-    background: "#FFFFFF",
-    color: "#1D4ED8",
-    borderRadius: 10,
-    fontSize: 22,
-    fontWeight: 700,
-  },
-
-  actorList: {
-    display: "grid",
-    gap: 10,
-  },
-
-  actorRow: {
-    display: "grid",
-    gap: 2,
-    padding: "12px 12px",
-    borderRadius: 12,
-    background: "#F8FAFC",
-    border: "1px solid #E5E7EB",
-  },
-
-  actorRole: {
-    fontSize: 12,
-    color: "#64748B",
-    fontWeight: 700,
-  },
-
-  actorName: {
-    fontSize: 15,
-    color: "#0F172A",
-    fontWeight: 700,
-  },
-
-  summaryBlock: {
-    display: "grid",
-    gap: 12,
-  },
-
-  summaryRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 12,
-    fontSize: 14,
-    color: "#0F172A",
-  },
-
-  summaryNext: {
-    display: "grid",
-    gap: 4,
-    padding: 12,
-    borderRadius: 14,
-    background: "#F8FAFC",
-    border: "1px solid #E5E7EB",
-    fontSize: 14,
-    color: "#0F172A",
-  },
-
-  riskHigh: {
-    color: "#DC2626",
-  },
-
-  suggestionButton: {
-    border: "1px solid #BFDBFE",
-    background: "#EFF6FF",
-    color: "#1D4ED8",
-    borderRadius: 12,
-    padding: "12px 14px",
-    fontWeight: 800,
-    textAlign: "left",
-  },
-
-  contactGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: 12,
-  },
-
-  contactCard: {
-    border: "1px solid #E5E7EB",
-    borderRadius: 16,
-    padding: 14,
-    background: "#FFFFFF",
-  },
-
-  contactTitle: {
-    fontSize: 11,
-    color: "#64748B",
-    textTransform: "uppercase",
-    fontWeight: 800,
-    marginBottom: 6,
-  },
-
-  contactName: {
-    fontSize: 15,
-    fontWeight: 800,
-    color: "#0F172A",
-  },
-
-  contactRow: {
-    marginTop: 8,
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 10,
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-
-  contactPhoneLink: {
-    fontSize: 14,
-    color: "#1D4ED8",
-    fontWeight: 700,
-    textDecoration: "none",
-  },
-
-  contactPhoneMuted: {
-    fontSize: 14,
-    color: "#64748B",
-    fontWeight: 600,
-  },
-
-  copyButton: {
-    border: "1px solid #CBD5E1",
-    background: "#FFFFFF",
-    color: "#334155",
-    borderRadius: 10,
-    padding: "6px 10px",
-    fontSize: 12,
-    fontWeight: 700,
-  },
-
-  timeline: {
-    display: "grid",
-    gap: 10,
-  },
-
-  timelineItem: {
-    display: "flex",
-    gap: 10,
-    alignItems: "flex-start",
-    border: "1px solid #E5E7EB",
-    borderRadius: 14,
-    background: "#FFFFFF",
-    padding: 12,
-    textAlign: "left",
-    cursor: "pointer",
-  },
-
-  timelineUnread: {
-    borderColor: "#93C5FD",
-    background: "#F8FBFF",
-  },
-
-  timelineDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    marginTop: 6,
-    flexShrink: 0,
-  },
-
-  timelineContent: {
-    flex: 1,
-  },
-
-  timelineTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 10,
-    flexWrap: "wrap",
-    marginBottom: 6,
-  },
-
-  timelineDate: {
-    fontSize: 12,
-    color: "#64748B",
-    fontWeight: 700,
-  },
-
-  timelineBadges: {
-    display: "flex",
-    gap: 6,
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-
-  noteTypeBadge: {
-    display: "inline-block",
-    padding: "4px 8px",
-    borderRadius: 999,
-    fontSize: 11,
-    fontWeight: 800,
-  },
-
-  unreadBadge: {
-    display: "inline-block",
-    padding: "4px 8px",
-    borderRadius: 999,
-    fontSize: 11,
-    fontWeight: 800,
-    background: "#FEF2F2",
-    color: "#DC2626",
-  },
-
-  timelineText: {
-    fontSize: 14,
-    color: "#0F172A",
-    lineHeight: 1.45,
-  },
-};
+    info:
