@@ -1,6 +1,6 @@
 export default function Dashboard({ patients, onOpenPatient }) {
   const sortedPatients = [...patients].sort((a, b) => b.score - a.score);
-
+  
   const totalPatients = patients.length;
   const blockedPatients = patients.filter((p) => p.score >= 8).length;
   const riskPatients = patients.filter((p) => p.score >= 6 && p.score < 8).length;
