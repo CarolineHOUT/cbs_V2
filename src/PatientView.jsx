@@ -208,43 +208,72 @@ export default function PatientView({
         </div>
       </header>
 
-      <section style={styles.patientStrip}>
-        <div style={styles.patientMainBlock}>
-          <div style={styles.patientName}>{editablePatient.nom} {editablePatient.prenom}</div>
-          <div style={styles.patientMeta}>
-            {editablePatient.birthDate} • {editablePatient.age} ans • INS {editablePatient.ins} • IEP {editablePatient.iep}
+      <section style={styles.identitySection}>
+        <div style={styles.identityCard}>
+          <div style={styles.identityName}>{editablePatient.nom} {editablePatient.prenom}</div>
+
+          <div style={styles.identityLine}>
+            <span>{editablePatient.birthDate}</span>
+            <span>•</span>
+            <span>{editablePatient.age} ans</span>
+            <span>•</span>
+            <span>INS {editablePatient.ins}</span>
+            <span>•</span>
+            <span>IEP {editablePatient.iep}</span>
           </div>
-          <div style={styles.patientMeta}>
-            {editablePatient.service} — Chambre {editablePatient.chambre} — Lit {editablePatient.lit} • Entrée : {editablePatient.entryDate} • {stayDays} jours
+
+          <div style={styles.identityLine}>
+            <span>{editablePatient.service}</span>
+            <span>•</span>
+            <span>Chambre {editablePatient.chambre}</span>
+            <span>•</span>
+            <span>Lit {editablePatient.lit}</span>
+          </div>
+
+          <div style={styles.identityLine}>
+            <span>Entrée : {editablePatient.entryDate}</span>
+            <span>•</span>
+            <span>{stayDays} jours de présence</span>
           </div>
         </div>
 
-        <div style={styles.patientStatusBlock}>
-          <StatusBadge label={status.label} tone={status.tone} />
-
-          <MetricPill label="Sortant médical" value={editablePatient.sortantMedicalement ? "Oui" : "Non"} />
-          <MetricPill label="Jours évitables" value={editablePatient.joursEvitables} alert />
-          <MetricPill label="Score parcours" value={scoreParcours} />
-
-          {unreadCount > 0 ? (
-            <span style={styles.unreadPill}>{unreadCount} non lue(s)</span>
-          ) : null}
-
-          {urgentCount > 0 ? (
-            <span style={styles.urgentPill}>{urgentCount} urgente(s)</span>
-          ) : null}
-
-          <button
-            type="button"
-            style={styles.duoButton}
-            onClick={() =>
-              onOpenDuo
-                ? onOpenDuo(editablePatient)
-                : quickAction("Ouverture vue DUO demandée", "action")
-            }
-          >
-            Vue DUO
-          </button>
+        <div style={styles.identitySummary}>
+          <div style={styles.identitySummaryGrid}>
+            <SummaryTile
+              label="Statut"
+              value={status.label}
+              tone={status.tone}
+            />
+            <SummaryTile
+              label="Sortant médical"
+              value={editablePatient.sortantMedicalement ? "Oui" : "Non"}
+            />
+            <SummaryTile
+              label="Jours évitables"
+              value={editablePatient.joursEvitables}
+              alert
+            />
+            <SummaryTile
+              label="Score parcours"
+              value={scoreParcours}
+            />
+            <SummaryTile
+              label="Notes non lues"
+              value={unreadCount}
+              subtle
+            />
+            <button
+              type="button"
+              style={styles.duoTile}
+              onClick={() =>
+                onOpenDuo
+                  ? onOpenDuo(editablePatient)
+                  : quickAction("Ouverture vue DUO demandée", "action")
+              }
+            >
+              Vue DUO
+            </button>
+          </div>
         </div>
       </section>
 
@@ -259,14 +288,16 @@ export default function PatientView({
 
       <section style={styles.topRow}>
         <Card title="Situation de sortie" subtitle="Décision et préparation">
-          <div style={styles.situationGrid}>
+          <div style={styles.situationMainGrid}>
             <div style={styles.focusCard}>
               <div style={styles.focusLabel}>Frein principal</div>
               <div style={styles.focusValue}>{editablePatient.blocage || "Non renseigné"}</div>
-              <div style={styles.focusSub}>Point prioritaire à lever pour débloquer la sortie.</div>
+              <div style={styles.focusSub}>
+                Point prioritaire à lever pour débloquer la sortie.
+              </div>
             </div>
 
-            <div style={styles.planStack}>
+            <div style={styles.planGrid}>
               <InlineField
                 label="Orientation prévue"
                 value={editablePatient.destinationPrevue || ""}
@@ -287,12 +318,35 @@ export default function PatientView({
                 value={editablePatient.documentsSortie || ""}
                 onChange={(value) => updateField("documentsSortie", value)}
               />
-              <InlineField
-                label="Prochaine action"
-                value={editablePatient.nextStep || ""}
-                onChange={(value) => updateField("nextStep", value)}
-              />
+              <div style={styles.planWide}>
+                <InlineField
+                  label="Prochaine action"
+                  value={editablePatient.nextStep || ""}
+                  onChange={(value) => updateField("nextStep", value)}
+                />
+              </div>
             </div>
+          </div>
+
+          <div style={styles.situationFooter}>
+            <div style={styles.toggleCard}>
+              <div style={styles.toggleLabel}>Sortant médical</div>
+              <label style={styles.checkboxWrap}>
+                <input
+                  type="checkbox"
+                  checked={editablePatient.sortantMedicalement}
+                  onChange={(e) => updateField("sortantMedicalement", e.target.checked)}
+                />
+                <span>{editablePatient.sortantMedicalement ? "Oui" : "Non"}</span>
+              </label>
+            </div>
+
+            <button
+              style={styles.smallActionButton}
+              onClick={() => quickAction("Sortie intégrée au plan", "action")}
+            >
+              Intégrer sortie →
+            </button>
           </div>
         </Card>
 
@@ -302,9 +356,11 @@ export default function PatientView({
               <span style={styles.coordTypeBadge}>POST-IT</span>
               <span style={styles.coordTypeMeta}>{labelForType(newNoteType)}</span>
             </div>
+
             <div style={styles.coordText}>
               {editablePatient.notes[0]?.text || "Aucune note récente."}
             </div>
+
             <div style={styles.coordMeta}>
               {editablePatient.referentMedical || "Non renseigné"} • il y a 3 h
             </div>
@@ -528,7 +584,11 @@ function InlineField({ label, value, onChange }) {
   return (
     <div style={styles.inlineField}>
       <div style={styles.inlineFieldLabel}>{label}</div>
-      <input value={value} onChange={(e) => onChange(e.target.value)} style={styles.inlineFieldInput} />
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={styles.inlineFieldInput}
+      />
     </div>
   );
 }
@@ -550,7 +610,12 @@ function ContactCard({ title, name, phone, onCopy, copied }) {
           <span style={styles.contactPhoneMuted}>{phone}</span>
         )}
 
-        <button type="button" onClick={onCopy} style={styles.copyButton} disabled={!canCall}>
+        <button
+          type="button"
+          onClick={onCopy}
+          style={styles.copyButton}
+          disabled={!canCall}
+        >
           {copied ? "Copié" : "Copier"}
         </button>
       </div>
@@ -575,11 +640,21 @@ function StatusBadge({ label, tone = "neutral" }) {
   );
 }
 
-function MetricPill({ label, value, alert = false }) {
+function SummaryTile({ label, value, tone = "neutral", alert = false, subtle = false }) {
+  const toneMap = {
+    neutral: { bg: "#FFFFFF", border: "#E5E7EB", value: "#0F172A" },
+    red: { bg: "#FEF2F2", border: "#FECACA", value: "#DC2626" },
+    amber: { bg: "#FFFBEB", border: "#FDE68A", value: "#D97706" },
+    green: { bg: "#ECFDF5", border: "#A7F3D0", value: "#059669" },
+  };
+
+  const current = toneMap[tone] || toneMap.neutral;
+  const valueColor = alert ? "#D97706" : subtle ? "#DC2626" : current.value;
+
   return (
-    <div style={styles.metricPill}>
-      <span style={styles.metricPillLabel}>{label}</span>
-      <span style={alert ? styles.metricPillValueAlert : styles.metricPillValue}>{value}</span>
+    <div style={{ ...styles.summaryTile, background: current.bg, borderColor: current.border }}>
+      <div style={styles.summaryTileLabel}>{label}</div>
+      <div style={{ ...styles.summaryTileValue, color: valueColor }}>{value}</div>
     </div>
   );
 }
@@ -669,7 +744,7 @@ function activeNotePillStyle(type) {
 
 const styles = {
   page: {
-    maxWidth: 1440,
+    maxWidth: 1460,
     margin: "0 auto",
     padding: 18,
     background: "#F8FAFC",
@@ -685,7 +760,7 @@ const styles = {
     color: "#FFFFFF",
     padding: "12px 16px",
     borderRadius: 18,
-    marginBottom: 14,
+    marginBottom: 16,
     boxShadow: "0 14px 30px rgba(37,99,235,0.14)",
     flexWrap: "wrap",
   },
@@ -717,7 +792,7 @@ const styles = {
 
   appTitle: {
     fontWeight: 800,
-    fontSize: 20,
+    fontSize: 22,
     letterSpacing: 0.2,
   },
 
@@ -753,113 +828,99 @@ const styles = {
     fontSize: 12,
   },
 
-  patientStrip: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 14,
+  identitySection: {
+    display: "grid",
+    gridTemplateColumns: "1.25fr 0.95fr",
+    gap: 16,
+    marginBottom: 16,
+    alignItems: "stretch",
+  },
+
+  identityCard: {
     background: "#FFFFFF",
     border: "1px solid #E5E7EB",
-    borderRadius: 18,
-    padding: "16px 18px",
-    marginBottom: 14,
+    borderRadius: 20,
+    padding: 22,
     boxShadow: "0 10px 24px rgba(15,23,42,0.04)",
-    flexWrap: "wrap",
   },
 
-  patientMainBlock: {
-    minWidth: 0,
-  },
-
-  patientName: {
-    fontSize: 34,
+  identityName: {
+    fontSize: 36,
     fontWeight: 900,
     color: "#0F172A",
     lineHeight: 1.05,
   },
 
-  patientMeta: {
-    marginTop: 6,
-    fontSize: 14,
+  identityLine: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 8,
+    fontSize: 15,
     color: "#475569",
     lineHeight: 1.45,
   },
 
-  patientStatusBlock: {
-    display: "flex",
+  identitySummary: {
+    background: "#FFFFFF",
+    border: "1px solid #E5E7EB",
+    borderRadius: 20,
+    padding: 18,
+    boxShadow: "0 10px 24px rgba(15,23,42,0.04)",
+    display: "grid",
     alignItems: "center",
+  },
+
+  identitySummaryGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gap: 10,
-    flexWrap: "wrap",
-    justifyContent: "flex-end",
+  },
+
+  summaryTile: {
+    border: "1px solid #E5E7EB",
+    borderRadius: 14,
+    padding: "12px 12px",
+    minHeight: 72,
+    display: "grid",
+    alignContent: "space-between",
+  },
+
+  summaryTileLabel: {
+    fontSize: 11,
+    color: "#64748B",
+    fontWeight: 800,
+    textTransform: "uppercase",
+    letterSpacing: 0.2,
+  },
+
+  summaryTileValue: {
+    fontSize: 22,
+    fontWeight: 900,
+    lineHeight: 1.1,
+  },
+
+  duoTile: {
+    border: "1px solid #BFDBFE",
+    background: "#EFF6FF",
+    color: "#1D4ED8",
+    borderRadius: 14,
+    minHeight: 72,
+    fontWeight: 800,
+    fontSize: 16,
   },
 
   statusBadge: {
     display: "inline-block",
-    padding: "9px 13px",
+    padding: "8px 12px",
     borderRadius: 999,
     fontSize: 12,
     fontWeight: 800,
-  },
-
-  metricPill: {
-    display: "grid",
-    gap: 2,
-    padding: "8px 11px",
-    borderRadius: 12,
-    background: "#F8FAFC",
-    border: "1px solid #E5E7EB",
-  },
-
-  metricPillLabel: {
-    fontSize: 11,
-    color: "#64748B",
-    fontWeight: 700,
-  },
-
-  metricPillValue: {
-    fontSize: 14,
-    color: "#0F172A",
-    fontWeight: 800,
-  },
-
-  metricPillValueAlert: {
-    fontSize: 14,
-    color: "#D97706",
-    fontWeight: 800,
-  },
-
-  unreadPill: {
-    borderRadius: 999,
-    padding: "7px 10px",
-    background: "#FEF2F2",
-    color: "#DC2626",
-    fontSize: 12,
-    fontWeight: 800,
-    border: "1px solid #FECACA",
-  },
-
-  urgentPill: {
-    borderRadius: 999,
-    padding: "7px 10px",
-    background: "#FFF7ED",
-    color: "#EA580C",
-    fontSize: 12,
-    fontWeight: 800,
-    border: "1px solid #FED7AA",
-  },
-
-  duoButton: {
-    border: "1px solid #CBD5E1",
-    background: "#FFFFFF",
-    color: "#1D4ED8",
-    borderRadius: 12,
-    padding: "10px 12px",
-    fontWeight: 700,
-    fontSize: 12,
+    justifySelf: "start",
   },
 
   alertBanner: {
-    marginBottom: 16,
+    marginBottom: 18,
     borderRadius: 16,
     padding: 14,
     background: "linear-gradient(180deg, #FFF7ED 0%, #FFFFFF 100%)",
@@ -881,7 +942,7 @@ const styles = {
 
   topRow: {
     display: "grid",
-    gridTemplateColumns: "1.3fr 1fr",
+    gridTemplateColumns: "1.3fr 0.95fr",
     gap: 18,
     marginBottom: 18,
     alignItems: "start",
@@ -889,7 +950,7 @@ const styles = {
 
   middleRow: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr 0.9fr",
+    gridTemplateColumns: "1fr 1fr 0.95fr",
     gap: 18,
     marginBottom: 18,
     alignItems: "start",
@@ -923,10 +984,10 @@ const styles = {
     color: "#64748B",
   },
 
-  situationGrid: {
+  situationMainGrid: {
     display: "grid",
-    gridTemplateColumns: "0.95fr 1.15fr",
-    gap: 14,
+    gridTemplateColumns: "0.8fr 1.2fr",
+    gap: 16,
     alignItems: "start",
   },
 
@@ -935,7 +996,7 @@ const styles = {
     padding: 18,
     background: "linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)",
     border: "1px solid #BFDBFE",
-    minHeight: 240,
+    minHeight: 100,
   },
 
   focusLabel: {
@@ -949,7 +1010,7 @@ const styles = {
 
   focusValue: {
     fontSize: 34,
-    lineHeight: 1.1,
+    lineHeight: 1.08,
     fontWeight: 900,
     color: "#0F172A",
   },
@@ -961,9 +1022,14 @@ const styles = {
     lineHeight: 1.45,
   },
 
-  planStack: {
+  planGrid: {
     display: "grid",
-    gap: 10,
+    gridTemplateColumns: "1fr 1fr",
+    gap: 12,
+  },
+
+  planWide: {
+    gridColumn: "1 / -1",
   },
 
   inlineField: {
@@ -988,6 +1054,49 @@ const styles = {
     padding: "10px 12px",
     fontSize: 15,
     boxSizing: "border-box",
+  },
+
+  situationFooter: {
+    marginTop: 14,
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
+
+  toggleCard: {
+    border: "1px solid #BFDBFE",
+    borderRadius: 14,
+    padding: "10px 12px",
+    background: "#F8FBFF",
+  },
+
+  toggleLabel: {
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.2,
+    color: "#64748B",
+    fontWeight: 800,
+    marginBottom: 6,
+  },
+
+  checkboxWrap: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    fontSize: 13,
+    color: "#0F172A",
+  },
+
+  smallActionButton: {
+    border: "1px solid #CBD5E1",
+    background: "#F8FAFC",
+    color: "#1D4ED8",
+    borderRadius: 12,
+    padding: "10px 12px",
+    fontWeight: 700,
+    fontSize: 13,
   },
 
   coordCard: {
@@ -1224,31 +1333,6 @@ const styles = {
     padding: "12px 14px",
     fontWeight: 800,
     textAlign: "left",
-  },
-
-  actionTable: {
-    display: "grid",
-    gap: 8,
-  },
-
-  actionTableHeader: {
-    display: "grid",
-    gridTemplateColumns: "90px 1fr 140px",
-    gap: 10,
-    fontSize: 12,
-    color: "#64748B",
-    fontWeight: 800,
-    paddingBottom: 4,
-  },
-
-  actionTableRow: {
-    display: "grid",
-    gridTemplateColumns: "90px 1fr 140px",
-    gap: 10,
-    padding: "10px 0",
-    borderTop: "1px solid #EEF2F7",
-    fontSize: 14,
-    color: "#0F172A",
   },
 
   contactGrid: {
