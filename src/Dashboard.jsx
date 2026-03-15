@@ -13,24 +13,26 @@ export default function Dashboard({ patients, onOpenPatient }) {
   return (
     <div style={pageStyle}>
       <header style={headerStyle}>
-        <div>
-          <div style={brandStyle}>CARABBAS</div>
-          <div style={subtitleStyle}>Pilotage des sorties hospitalières complexes</div>
+        <div style={headerTopStyle}>
+          <div>
+            <div style={brandStyle}>CARABBAS</div>
+            <div style={subtitleStyle}>Pilotage des sorties hospitalières complexes</div>
+          </div>
         </div>
 
         <div style={navWrapStyle}>
           <NavPill active>Tableau de bord</NavPill>
           <NavPill>Patient en fiche</NavPill>
           <NavPill>Vue DUO</NavPill>
-          <NavPill>Équipe Vue</NavPill>
-          <NavDanger>Cellule de crise</NavDanger>
+          <NavPill>Équipe</NavPill>
+          <NavDanger>Crise</NavDanger>
         </div>
       </header>
 
       <section style={kpiGridStyle}>
         <KpiCard title="Patients suivis" value={totalPatients} tone="violet" />
-        <KpiCard title="Patients bloqués" value={blockedPatients} tone="red" />
-        <KpiCard title="Patients à risque" value={riskPatients} tone="amber" />
+        <KpiCard title="Bloqués" value={blockedPatients} tone="red" />
+        <KpiCard title="À risque" value={riskPatients} tone="amber" />
         <KpiCard title="Jours évitables" value={avoidableDays} tone="green" />
       </section>
 
@@ -39,15 +41,15 @@ export default function Dashboard({ patients, onOpenPatient }) {
           <div style={panelHeaderStyle}>
             <div>
               <div style={panelTitleStyle}>Patients prioritaires</div>
-              <div style={panelSubStyle}>Lecture service, coordination et gestion des lits</div>
+              <div style={panelSubStyle}>Service • coordination • gestion des lits</div>
             </div>
           </div>
 
-          <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ display: "grid", gap: 10 }}>
             {sortedPatients.map((p) => (
-              <div key={p.id} style={patientCardStyle}>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={patientTopRowStyle}>
+              <div key={p.id} style={patientRowStyle}>
+                <div style={patientMainStyle}>
+                  <div style={patientHeaderLineStyle}>
                     <div style={patientNameStyle}>
                       {p.nom} {p.prenom}
                     </div>
@@ -62,12 +64,15 @@ export default function Dashboard({ patients, onOpenPatient }) {
                     {p.service} • chambre {p.chambre} • lit {p.lit}
                   </div>
 
-                  <div style={patientInfoStyle}>Frein : {p.blocage}</div>
-                  <div style={patientInfoMutedStyle}>INS : {p.ins}</div>
+                  <div style={patientDetailStyle}>
+                    <strong>Frein :</strong> {p.blocage}
+                  </div>
+
+                  <div style={patientMutedStyle}>INS : {p.ins}</div>
                 </div>
 
                 <button onClick={() => onOpenPatient(p)} style={openButtonStyle}>
-                  Ouvrir dossier
+                  Ouvrir
                 </button>
               </div>
             ))}
@@ -87,8 +92,8 @@ export default function Dashboard({ patients, onOpenPatient }) {
             <InfoLine label="Patients à risque" value={String(riskPatients)} />
             <InfoLine label="Jours évitables" value={String(avoidableDays)} />
             <InfoLine
-              label="Niveau de tension"
-              value={blockedPatients >= 2 ? "Élevé" : "Modéré"}
+              label="Tension"
+              value={blockedPatients >= 2 ? "Élevée" : "Modérée"}
             />
           </div>
 
@@ -96,14 +101,14 @@ export default function Dashboard({ patients, onOpenPatient }) {
             <div style={panelHeaderStyle}>
               <div>
                 <div style={panelTitleStyle}>Action du jour</div>
-                <div style={panelSubStyle}>Focus opérationnel</div>
+                <div style={panelSubStyle}>Priorité opérationnelle</div>
               </div>
             </div>
 
             <div style={focusBoxStyle}>
               {blockedPatients > 0
-                ? "Finaliser en priorité les solutions d’aval des patients bloqués."
-                : "Sécuriser les patients à risque avant aggravation du blocage."}
+                ? "Finaliser les solutions d’aval des patients bloqués."
+                : "Sécuriser rapidement les patients à risque."}
             </div>
           </div>
         </div>
@@ -116,12 +121,12 @@ function NavPill({ children, active = false }) {
   return (
     <div
       style={{
-        padding: "8px 12px",
-        borderRadius: 12,
-        border: active ? "2px solid #1f2937" : "1px solid #e5e7eb",
-        background: active ? "#6d28d9" : "#ffffff",
+        padding: "7px 11px",
+        borderRadius: 10,
+        border: active ? "1px solid #312e81" : "1px solid #e5e7eb",
+        background: active ? "#4f46e5" : "#ffffff",
         color: active ? "#ffffff" : "#374151",
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: 600,
         whiteSpace: "nowrap",
       }}
@@ -135,12 +140,12 @@ function NavDanger({ children }) {
   return (
     <div
       style={{
-        padding: "8px 12px",
-        borderRadius: 12,
+        padding: "7px 11px",
+        borderRadius: 10,
         border: "1px solid #fecaca",
         background: "#fff7f7",
         color: "#b91c1c",
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: 700,
         whiteSpace: "nowrap",
       }}
@@ -152,33 +157,20 @@ function NavDanger({ children }) {
 
 function KpiCard({ title, value, tone }) {
   const tones = {
-    violet: { bg: "#f3e8ff", color: "#6d28d9" },
+    violet: { bg: "#f5f3ff", color: "#6d28d9" },
     red: { bg: "#fef2f2", color: "#b91c1c" },
     amber: { bg: "#fffbeb", color: "#b45309" },
     green: { bg: "#ecfdf5", color: "#15803d" },
   };
 
   return (
-    <div
-      style={{
-        background: "#ffffff",
-        border: "1px solid #e5e7eb",
-        borderRadius: 16,
-        padding: 16,
-        boxShadow: "0 3px 12px rgba(15,23,42,0.04)",
-      }}
-    >
-      <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 10 }}>{title}</div>
+    <div style={kpiCardStyle}>
+      <div style={kpiTitleStyle}>{title}</div>
       <div
         style={{
-          display: "inline-block",
+          ...kpiValueStyle,
           background: tones[tone].bg,
           color: tones[tone].color,
-          borderRadius: 12,
-          padding: "8px 12px",
-          fontSize: 26,
-          fontWeight: 800,
-          minWidth: 56,
         }}
       >
         {value}
@@ -225,46 +217,55 @@ function badgeStyle(bg, color) {
     display: "inline-block",
     background: bg,
     color,
-    padding: "6px 10px",
+    padding: "5px 9px",
     borderRadius: 999,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 700,
   };
 }
 
 function InfoLine({ label, value }) {
   return (
-    <div style={{ padding: "10px 0", borderBottom: "1px solid #f1f5f9" }}>
-      <div style={{ fontSize: 13, color: "#6b7280" }}>{label}</div>
-      <div style={{ marginTop: 4, fontWeight: 700, color: "#111827" }}>{value}</div>
+    <div style={{ padding: "9px 0", borderBottom: "1px solid #f1f5f9" }}>
+      <div style={{ fontSize: 12, color: "#6b7280" }}>{label}</div>
+      <div style={{ marginTop: 3, fontWeight: 700, color: "#111827", fontSize: 14 }}>
+        {value}
+      </div>
     </div>
   );
 }
 
 const pageStyle = {
-  maxWidth: 1280,
+  maxWidth: 1240,
   margin: "0 auto",
-  padding: 16,
+  padding: 14,
 };
 
 const headerStyle = {
   background: "linear-gradient(135deg,#5b54c7,#6d66d8)",
   color: "#ffffff",
-  borderRadius: 22,
-  padding: "14px 16px",
+  borderRadius: 18,
+  padding: "14px 14px 12px 14px",
   marginBottom: 12,
 };
 
+const headerTopStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 12,
+  alignItems: "start",
+};
+
 const brandStyle = {
-  fontSize: "clamp(24px, 6vw, 30px)",
+  fontSize: "clamp(22px, 5vw, 28px)",
   fontWeight: 800,
-  letterSpacing: 0.5,
+  letterSpacing: 0.4,
   lineHeight: 1.05,
 };
 
 const subtitleStyle = {
-  marginTop: 4,
-  fontSize: 14,
+  marginTop: 3,
+  fontSize: 13,
   opacity: 0.92,
 };
 
@@ -277,51 +278,74 @@ const navWrapStyle = {
 
 const kpiGridStyle = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-  gap: 12,
-  marginBottom: 16,
+  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+  gap: 10,
+  marginBottom: 14,
 };
 
 const contentGridStyle = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-  gap: 16,
+  gridTemplateColumns: "minmax(0, 1.7fr) minmax(260px, 0.9fr)",
+  gap: 14,
   alignItems: "start",
 };
 
 const sideColStyle = {
   display: "grid",
-  gap: 16,
+  gap: 14,
 };
 
 const panelStyle = {
   background: "#ffffff",
   border: "1px solid #e5e7eb",
-  borderRadius: 20,
-  padding: 18,
-  boxShadow: "0 3px 12px rgba(15,23,42,0.04)",
+  borderRadius: 18,
+  padding: 16,
+  boxShadow: "0 2px 10px rgba(15,23,42,0.04)",
 };
 
 const panelHeaderStyle = {
-  marginBottom: 14,
+  marginBottom: 12,
 };
 
 const panelTitleStyle = {
-  fontSize: 18,
+  fontSize: 17,
   fontWeight: 800,
   color: "#111827",
 };
 
 const panelSubStyle = {
-  marginTop: 4,
-  fontSize: 13,
+  marginTop: 3,
+  fontSize: 12,
   color: "#6b7280",
 };
 
-const patientCardStyle = {
+const kpiCardStyle = {
+  background: "#ffffff",
   border: "1px solid #e5e7eb",
   borderRadius: 16,
-  padding: 16,
+  padding: 14,
+  boxShadow: "0 2px 10px rgba(15,23,42,0.04)",
+};
+
+const kpiTitleStyle = {
+  fontSize: 13,
+  color: "#6b7280",
+  marginBottom: 10,
+};
+
+const kpiValueStyle = {
+  display: "inline-block",
+  borderRadius: 12,
+  padding: "8px 12px",
+  fontSize: 24,
+  fontWeight: 800,
+  minWidth: 52,
+};
+
+const patientRowStyle = {
+  border: "1px solid #e5e7eb",
+  borderRadius: 14,
+  padding: 14,
   background: "#ffffff",
   display: "flex",
   justifyContent: "space-between",
@@ -330,7 +354,12 @@ const patientCardStyle = {
   flexWrap: "wrap",
 };
 
-const patientTopRowStyle = {
+const patientMainStyle = {
+  minWidth: 0,
+  flex: 1,
+};
+
+const patientHeaderLineStyle = {
   display: "flex",
   gap: 10,
   justifyContent: "space-between",
@@ -339,30 +368,30 @@ const patientTopRowStyle = {
 };
 
 const patientNameStyle = {
-  fontSize: 16,
+  fontSize: 15,
   fontWeight: 800,
   color: "#111827",
 };
 
 const badgeRowStyle = {
   display: "flex",
-  gap: 8,
+  gap: 6,
   flexWrap: "wrap",
 };
 
 const patientMetaStyle = {
-  fontSize: 13,
+  fontSize: 12,
   color: "#6b7280",
   marginTop: 4,
 };
 
-const patientInfoStyle = {
+const patientDetailStyle = {
   marginTop: 6,
   fontSize: 14,
   color: "#111827",
 };
 
-const patientInfoMutedStyle = {
+const patientMutedStyle = {
   marginTop: 4,
   fontSize: 12,
   color: "#6b7280",
@@ -372,18 +401,20 @@ const openButtonStyle = {
   border: "none",
   background: "#5b54c7",
   color: "#ffffff",
-  padding: "10px 14px",
-  borderRadius: 12,
+  padding: "9px 12px",
+  borderRadius: 10,
   cursor: "pointer",
   fontWeight: 700,
   whiteSpace: "nowrap",
+  fontSize: 13,
 };
 
 const focusBoxStyle = {
   background: "#f8fafc",
   border: "1px solid #e5e7eb",
-  borderRadius: 14,
-  padding: 14,
+  borderRadius: 12,
+  padding: 12,
   color: "#111827",
-  lineHeight: 1.6,
+  lineHeight: 1.55,
+  fontSize: 14,
 };
