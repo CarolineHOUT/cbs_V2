@@ -127,11 +127,9 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
 
     const visibleServices = new Set(filtered.map((p) => p.service));
     let total = 0;
-
     visibleServices.forEach((svc) => {
       total += SERVICE_CAPACITIES[svc] || 0;
     });
-
     return total || occupiedBeds;
   }, [service, filtered, occupiedBeds]);
 
@@ -152,6 +150,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
       avoidableDays,
       recoverableBeds,
       occupancyLabel: `${occupiedBeds} / ${capacity}`,
+      occupancyRate: capacity > 0 ? Math.round((occupiedBeds / capacity) * 100) : 0,
       tension:
         blocked >= 3 ? "Critique" : blocked >= 2 ? "Élevée" : blocked === 1 ? "Sous tension" : "Modérée",
     };
@@ -262,12 +261,19 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
         <button style={styles.crisisButton}>Cellule de crise</button>
       </header>
 
-      <section style={styles.kpiStrip}>
-        <KpiTile label="Lits occupés / capacitaire" value={stats.occupancyLabel} tone="blue" />
-        <KpiTile label="Sortants médicaux" value={stats.medicalReady} tone="blue" />
-        <KpiTile label="Bloqués" value={stats.blocked} tone="red" />
-        <KpiTile label="Jours évitables" value={stats.avoidableDays} tone="amber" />
-        <KpiTile label="Lits récupérables" value={stats.recoverableBeds} tone="blue" />
+      <section style={styles.heroRow}>
+        <div style={styles.mainHeroKpi}>
+          <div style={styles.heroKpiLabel}>Lits occupés / capacitaire</div>
+          <div style={styles.heroKpiValue}>{stats.occupancyLabel}</div>
+          <div style={styles.heroKpiSub}>{stats.occupancyRate}% d’occupation sur le périmètre affiché</div>
+        </div>
+
+        <div style={styles.secondaryKpis}>
+          <KpiTile label="Sortants médicaux" value={stats.medicalReady} tone="blue" />
+          <KpiTile label="Bloqués" value={stats.blocked} tone="red" />
+          <KpiTile label="Jours évitables" value={stats.avoidableDays} tone="amber" />
+          <KpiTile label="Lits récupérables" value={stats.recoverableBeds} tone="blue" />
+        </div>
       </section>
 
       <section style={styles.filtersPanel}>
@@ -337,7 +343,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
       <section
         style={{
           ...styles.grid,
-          gridTemplateColumns: isMobile ? "1fr" : "minmax(0,1.9fr) minmax(360px,1fr)",
+          gridTemplateColumns: isMobile ? "1fr" : "minmax(0,1.95fr) minmax(370px,1fr)",
         }}
       >
         <div>
@@ -348,9 +354,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
                 <div style={styles.panelSubtitle}>Coordination de sortie et gestion capacitaire</div>
               </div>
 
-              <div style={styles.listCount}>
-                {filtered.length} patient(s)
-              </div>
+              <div style={styles.listCount}>{filtered.length} patient(s)</div>
             </div>
 
             {filtered.length === 0 ? (
@@ -377,40 +381,36 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
                       </div>
                     </div>
 
-                    <div style={styles.patientMainRow}>
-                      <div style={styles.mainInfo}>
-                        <div style={styles.mainInfoTitle}>{p.service}</div>
-                        <div style={styles.mainInfoText}>ch {p.chambre} • lit {p.lit}</div>
+                    <div style={styles.patientCoreRow}>
+                      <div style={styles.focusBlock}>
+                        <div style={styles.focusLabel}>Service</div>
+                        <div style={styles.focusValue}>{p.service}</div>
+                        <div style={styles.focusSub}>ch {p.chambre} • lit {p.lit}</div>
                       </div>
 
-                      <div style={styles.mainInfo}>
-                        <div style={styles.mainInfoTitle}>Frein</div>
-                        <div style={styles.mainInfoText}>{p.blocage}</div>
+                      <div style={styles.focusBlock}>
+                        <div style={styles.focusLabel}>Frein principal</div>
+                        <div style={styles.focusValue}>{p.blocage}</div>
                       </div>
 
-                      <div style={styles.mainInfo}>
-                        <div style={styles.mainInfoTitle}>Admission</div>
-                        <div style={styles.mainInfoText}>{p.entryDate || "Non renseignée"}</div>
-                      </div>
-                    </div>
-
-                    <div style={styles.patientBottomRow}>
-                      <MiniStat label="Présence" value={`${p.stayDays} j`} />
-                      <MiniStat
-                        label="Jours évitables"
-                        value={p.sortantMedicalement ? `${p.joursEvitables} j` : "—"}
-                      />
-
-                      <div style={styles.sortantBox}>
-                        <div style={styles.miniLabel}>Sortant médical</div>
-                        <label style={styles.checkboxWrap}>
-                          <input
-                            type="checkbox"
-                            checked={p.sortantMedicalement}
-                            onChange={() => toggleMedicalReady(p.id)}
-                          />
-                          <span>{p.sortantMedicalement ? "Oui" : "Non"}</span>
-                        </label>
+                      <div style={styles.timelineBlock}>
+                        <MiniStat label="Admission" value={p.entryDate || "—"} />
+                        <MiniStat label="Présence" value={`${p.stayDays} j`} />
+                        <MiniStat
+                          label="Jours évitables"
+                          value={p.sortantMedicalement ? `${p.joursEvitables} j` : "—"}
+                        />
+                        <div style={styles.sortantBox}>
+                          <div style={styles.miniLabel}>Sortant médical</div>
+                          <label style={styles.checkboxWrap}>
+                            <input
+                              type="checkbox"
+                              checked={p.sortantMedicalement}
+                              onChange={() => toggleMedicalReady(p.id)}
+                            />
+                            <span>{p.sortantMedicalement ? "Oui" : "Non"}</span>
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -431,13 +431,20 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
                     key={s.name}
                     type="button"
                     onClick={() => setService(s.name)}
-                    style={styles.serviceCardButton}
+                    style={{
+                      ...styles.serviceCardButton,
+                      ...(s.level === "critical"
+                        ? styles.serviceCardCritical
+                        : s.level === "high"
+                          ? styles.serviceCardHigh
+                          : {}),
+                    }}
                   >
                     <div style={styles.insightTop}>
                       <div style={styles.serviceName}>{s.name}</div>
                       <ServiceBadge level={s.level} />
                     </div>
-                    <div style={styles.serviceMeta}>
+                    <div style={styles.serviceMetaStrong}>
                       {s.count} sortant(s) médicaux • {s.days} jours évitables
                     </div>
                     <div style={styles.serviceMeta}>{s.blocked} patient(s) bloqué(s)</div>
@@ -519,14 +526,14 @@ function KpiTile({ label, value, tone = "blue" }) {
     amber: "#D97706",
   };
 
-  const glowMap = {
-    blue: "rgba(37,99,235,0.10)",
-    red: "rgba(220,38,38,0.10)",
-    amber: "rgba(217,119,6,0.10)",
+  const tintMap = {
+    blue: "#EFF6FF",
+    red: "#FEF2F2",
+    amber: "#FFFBEB",
   };
 
   return (
-    <div style={{ ...styles.kpiTile, boxShadow: `0 12px 24px ${glowMap[tone]}` }}>
+    <div style={{ ...styles.kpiTile, background: tintMap[tone] }}>
       <div style={{ ...styles.kpiValueHero, color: colorMap[tone] }}>{value}</div>
       <div style={styles.kpiLabelHero}>{label}</div>
     </div>
@@ -577,13 +584,7 @@ function ServiceBadge({ level }) {
   const tone = tones[level];
 
   return (
-    <span
-      style={{
-        ...styles.serviceBadge,
-        background: tone.bg,
-        color: tone.color,
-      }}
-    >
+    <span style={{ ...styles.serviceBadge, background: tone.bg, color: tone.color }}>
       {tone.label}
     </span>
   );
@@ -591,7 +592,7 @@ function ServiceBadge({ level }) {
 
 const styles = {
   page: {
-    maxWidth: 1340,
+    maxWidth: 1360,
     margin: "0 auto",
     padding: 18,
     background: "#F8FAFC",
@@ -659,26 +660,61 @@ const styles = {
     boxShadow: "0 8px 18px rgba(185,28,28,0.10)",
   },
 
-  kpiStrip: {
+  heroRow: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+    gridTemplateColumns: "minmax(260px, 1.15fr) minmax(0, 2fr)",
     gap: 14,
     marginBottom: 16,
   },
 
-  kpiTile: {
-    background: "#FFFFFF",
-    border: "1px solid #E5E7EB",
-    borderRadius: 18,
-    padding: 18,
-    minHeight: 108,
+  mainHeroKpi: {
+    background: "linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)",
+    color: "#FFFFFF",
+    borderRadius: 22,
+    padding: 22,
+    minHeight: 162,
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
+    boxShadow: "0 20px 44px rgba(37,99,235,0.22)",
+  },
+
+  heroKpiLabel: {
+    fontSize: 13,
+    fontWeight: 700,
+    opacity: 0.92,
+  },
+
+  heroKpiValue: {
+    fontSize: 58,
+    fontWeight: 900,
+    lineHeight: 1,
+  },
+
+  heroKpiSub: {
+    fontSize: 12,
+    opacity: 0.88,
+  },
+
+  secondaryKpis: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+    gap: 14,
+  },
+
+  kpiTile: {
+    border: "1px solid #E5E7EB",
+    borderRadius: 18,
+    padding: 18,
+    minHeight: 162,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    boxShadow: "0 8px 22px rgba(15,23,42,0.05)",
   },
 
   kpiValueHero: {
-    fontSize: 40,
+    fontSize: 42,
     fontWeight: 900,
     lineHeight: 1,
   },
@@ -686,7 +722,6 @@ const styles = {
   kpiLabelHero: {
     fontSize: 13,
     fontWeight: 700,
-    marginTop: 10,
     color: "#475569",
   },
 
@@ -879,19 +914,20 @@ const styles = {
     marginTop: 5,
   },
 
-  patientMainRow: {
+  patientCoreRow: {
     display: "grid",
-    gridTemplateColumns: "1.2fr 1fr 0.8fr",
+    gridTemplateColumns: "1fr 1.1fr 1.35fr",
     gap: 12,
     paddingTop: 12,
     borderTop: "1px solid #EDF2F7",
+    alignItems: "start",
   },
 
-  mainInfo: {
+  focusBlock: {
     minWidth: 0,
   },
 
-  mainInfoTitle: {
+  focusLabel: {
     fontSize: 11,
     color: "#64748B",
     fontWeight: 800,
@@ -900,24 +936,27 @@ const styles = {
     marginBottom: 4,
   },
 
-  mainInfoText: {
-    fontSize: 14,
+  focusValue: {
+    fontSize: 15,
     color: "#0F172A",
-    lineHeight: 1.45,
-    fontWeight: 600,
+    fontWeight: 800,
+    lineHeight: 1.35,
   },
 
-  patientBottomRow: {
-    display: "flex",
+  focusSub: {
+    fontSize: 13,
+    color: "#64748B",
+    marginTop: 4,
+  },
+
+  timelineBlock: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
     gap: 10,
-    flexWrap: "wrap",
-    marginTop: 12,
-    paddingTop: 12,
-    borderTop: "1px solid #F1F5F9",
   },
 
   miniStat: {
-    minWidth: 120,
+    minWidth: 0,
     padding: "10px 12px",
     borderRadius: 12,
     background: "#F8FAFC",
@@ -935,10 +974,11 @@ const styles = {
     fontSize: 16,
     fontWeight: 800,
     color: "#0F172A",
+    lineHeight: 1.2,
   },
 
   sortantBox: {
-    minWidth: 150,
+    minWidth: 0,
     padding: "10px 12px",
     borderRadius: 12,
     background: "#F8FAFC",
@@ -964,35 +1004,57 @@ const styles = {
     boxShadow: "0 8px 16px rgba(37,99,235,0.08)",
   },
 
-  metricGrid: {
+  stack: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gap: 10,
   },
 
-  metricCard: {
+  serviceCardButton: {
+    textAlign: "left",
     border: "1px solid #E5E7EB",
-    borderRadius: 14,
-    padding: 12,
+    borderRadius: 16,
+    padding: 14,
     background: "#FFFFFF",
+    cursor: "pointer",
   },
 
-  metricLabel: {
-    fontSize: 11,
-    color: "#64748B",
-    marginBottom: 5,
-    fontWeight: 700,
+  serviceCardCritical: {
+    background: "linear-gradient(180deg, #FFF7F7 0%, #FFFFFF 100%)",
+    borderColor: "#FECACA",
+    boxShadow: "0 10px 20px rgba(220,38,38,0.08)",
   },
 
-  metricValue: {
-    fontSize: 18,
+  serviceCardHigh: {
+    background: "linear-gradient(180deg, #FFFDF5 0%, #FFFFFF 100%)",
+    borderColor: "#FDE68A",
+  },
+
+  serviceName: {
+    fontSize: 15,
     fontWeight: 800,
     color: "#0F172A",
   },
 
-  stack: {
-    display: "grid",
-    gap: 10,
+  serviceMetaStrong: {
+    fontSize: 13,
+    color: "#0F172A",
+    marginTop: 6,
+    fontWeight: 700,
+  },
+
+  serviceMeta: {
+    fontSize: 12,
+    color: "#64748B",
+    marginTop: 4,
+  },
+
+  serviceBadge: {
+    display: "inline-block",
+    padding: "5px 8px",
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: 700,
+    whiteSpace: "nowrap",
   },
 
   insightButton: {
@@ -1082,36 +1144,6 @@ const styles = {
     fontSize: 12,
     color: "#64748B",
     lineHeight: 1.4,
-  },
-
-  serviceCardButton: {
-    textAlign: "left",
-    border: "1px solid #E5E7EB",
-    borderRadius: 14,
-    padding: 12,
-    background: "#FFFFFF",
-    cursor: "pointer",
-  },
-
-  serviceName: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: "#0F172A",
-  },
-
-  serviceMeta: {
-    fontSize: 12,
-    color: "#64748B",
-    marginTop: 5,
-  },
-
-  serviceBadge: {
-    display: "inline-block",
-    padding: "5px 8px",
-    borderRadius: 999,
-    fontSize: 11,
-    fontWeight: 700,
-    whiteSpace: "nowrap",
   },
 
   actionTitle: {
