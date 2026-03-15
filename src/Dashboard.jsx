@@ -58,10 +58,18 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
     }));
   }, [localPatients]);
 
-  const services = useMemo(
+  const allServices = useMemo(
     () => ["Tous", ...new Set(enrichedPatients.map((p) => p.service))],
     [enrichedPatients]
   );
+
+  const visibleServicePills = useMemo(() => {
+    return allServices.slice(0, 6);
+  }, [allServices]);
+
+  const hiddenServices = useMemo(() => {
+    return allServices.slice(6);
+  }, [allServices]);
 
   const barriers = useMemo(
     () => ["Tous", ...new Set(enrichedPatients.map((p) => p.blocage))],
@@ -133,6 +141,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
 
   const dominantBarriers = useMemo(() => {
     const grouped = {};
+
     medicalReadyPatients.forEach((p) => {
       if (!grouped[p.blocage]) {
         grouped[p.blocage] = {
@@ -154,6 +163,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
 
   const servicesInTension = useMemo(() => {
     const grouped = {};
+
     medicalReadyPatients.forEach((p) => {
       if (!grouped[p.service]) {
         grouped[p.service] = {
@@ -200,10 +210,15 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
   const selectedBarrierPatients = useMemo(() => {
     const found = dominantBarriers.find((b) => b.label === selectedBarrier);
     return found ? found.patients : [];
-  }, [dominantBarriers, selectedBarrier]);
+  }, [selectedBarrier, dominantBarriers]);
 
   const priorityService = servicesInTension[0] || null;
   const mainBarrier = dominantBarriers[0] || null;
+
+  const summaryText =
+    stats.medicalReady === 0
+      ? "Aucun patient médicalement sortant n’est détecté dans le périmètre affiché."
+      : `${stats.medicalReady} patient(s) médicalement sortant(s), ${stats.blocked} bloqué(s), ${stats.avoidableDays} jours évitables, soit environ ${stats.recoverableBeds} lit(s) récupérable(s).`;
 
   const actionTitle = priorityService
     ? `Priorité : ${priorityService.name}`
@@ -227,7 +242,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
 
           <div>
             <div style={styles.appTitle}>CARABBAS</div>
-            <div style={styles.appSubtitle}>Sorties hospitalières complexes</div>
+            <div style={styles.appSubtitle}>Pilotage des sorties hospitalières complexes</div>
           </div>
         </div>
 
@@ -243,48 +258,73 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
       </section>
 
       <section style={styles.filtersPanel}>
-        <div style={styles.filtersGrid}>
-          <FilterField label="Service">
-            <select value={service} onChange={(e) => setService(e.target.value)} style={styles.fieldInput}>
-              {services.map((s) => (
-                <option key={s}>{s}</option>
-              ))}
-            </select>
-          </FilterField>
+        <div style={styles.filterCard}>
+          <div style={styles.quickServiceLabel}>Services</div>
 
-          <FilterField label="Statut">
-            <select value={status} onChange={(e) => setStatus(e.target.value)} style={styles.fieldInput}>
-              <option>Tous</option>
-              <option>Sortant médical</option>
-              <option>Bloqué</option>
-              <option>Risque</option>
-              <option>Suivi</option>
-            </select>
-          </FilterField>
+          <div style={styles.servicePillsWrap}>
+            {visibleServicePills.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setService(s)}
+                style={{
+                  ...styles.servicePill,
+                  ...(service === s ? styles.servicePillActive : {}),
+                }}
+              >
+                {s}
+              </button>
+            ))}
 
-          <FilterField label="Frein">
-            <select value={barrier} onChange={(e) => setBarrier(e.target.value)} style={styles.fieldInput}>
-              {barriers.map((b) => (
-                <option key={b}>{b}</option>
-              ))}
-            </select>
-          </FilterField>
+            {hiddenServices.length > 0 && (
+              <select
+                value={hiddenServices.includes(service) ? service : ""}
+                onChange={(e) => setService(e.target.value || "Tous")}
+                style={styles.otherServiceSelect}
+              >
+                <option value="">Autres services</option>
+                {hiddenServices.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+            )}
+          </div>
 
-          <FilterField label="Recherche">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Nom, INS, service"
-              style={styles.fieldInput}
-            />
-          </FilterField>
+          <div style={styles.filtersGrid}>
+            <FilterField label="Statut">
+              <select value={status} onChange={(e) => setStatus(e.target.value)} style={styles.fieldInput}>
+                <option>Tous</option>
+                <option>Sortant médical</option>
+                <option>Bloqué</option>
+                <option>Risque</option>
+                <option>Suivi</option>
+              </select>
+            </FilterField>
+
+            <FilterField label="Frein">
+              <select value={barrier} onChange={(e) => setBarrier(e.target.value)} style={styles.fieldInput}>
+                {barriers.map((b) => (
+                  <option key={b}>{b}</option>
+                ))}
+              </select>
+            </FilterField>
+
+            <FilterField label="Recherche">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Nom, INS, service"
+                style={styles.fieldInput}
+              />
+            </FilterField>
+          </div>
         </div>
       </section>
 
       <section
         style={{
           ...styles.grid,
-          gridTemplateColumns: isMobile ? "1fr" : "minmax(0,1.9fr) minmax(320px,1fr)",
+          gridTemplateColumns: isMobile ? "1fr" : "minmax(0,1.85fr) minmax(360px,1fr)",
         }}
       >
         <div>
@@ -350,11 +390,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
           <Panel title="Lecture opérationnelle" subtitle="Synthèse immédiate">
             <div style={styles.heroSummary}>
               <div style={styles.heroTitle}>Situation actuelle</div>
-              <div style={styles.heroText}>
-                {stats.medicalReady === 0
-                  ? "Aucun patient médicalement sortant n’est détecté dans le périmètre affiché."
-                  : `${stats.medicalReady} patient(s) médicalement sortant(s), ${stats.blocked} bloqué(s), ${stats.avoidableDays} jours évitables, soit environ ${stats.recoverableBeds} lit(s) récupérable(s).`}
-              </div>
+              <div style={styles.heroText}>{summaryText}</div>
               <div style={styles.heroMeta}>
                 Présence cumulée des patients médicalement sortants : {stats.totalPresence} jours
               </div>
@@ -431,7 +467,12 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
             ) : (
               <div style={styles.stack}>
                 {servicesInTension.map((s) => (
-                  <div key={s.name} style={styles.serviceCard}>
+                  <button
+                    key={s.name}
+                    type="button"
+                    onClick={() => setService(s.name)}
+                    style={styles.serviceCardButton}
+                  >
                     <div style={styles.insightTop}>
                       <div style={styles.serviceName}>{s.name}</div>
                       <ServiceBadge level={s.level} />
@@ -440,7 +481,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
                       {s.count} sortant(s) médicaux • {s.days} jours évitables
                     </div>
                     <div style={styles.serviceMeta}>{s.blocked} patient(s) bloqué(s)</div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -472,10 +513,16 @@ function KpiTile({ label, value, tone = "blue" }) {
     amber: "#D97706",
   };
 
+  const glowMap = {
+    blue: "rgba(37,99,235,0.08)",
+    red: "rgba(220,38,38,0.08)",
+    amber: "rgba(217,119,6,0.08)",
+  };
+
   return (
-    <div style={styles.kpiTile}>
-      <div style={styles.kpiLabel}>{label}</div>
-      <div style={{ ...styles.kpiValue, color: colorMap[tone] }}>{value}</div>
+    <div style={{ ...styles.kpiTile, boxShadow: `0 12px 24px ${glowMap[tone]}` }}>
+      <div style={styles.kpiValueHero}>{value}</div>
+      <div style={{ ...styles.kpiLabelHero, color: colorMap[tone] }}>{label}</div>
     </div>
   );
 }
@@ -542,9 +589,10 @@ function ServiceBadge({ level }) {
 
 const styles = {
   page: {
-    maxWidth: 1280,
+    maxWidth: 1320,
     margin: "0 auto",
-    padding: 16,
+    padding: 18,
+    background: "#F8FAFC",
   },
 
   header: {
@@ -554,30 +602,30 @@ const styles = {
     gap: 12,
     background: "linear-gradient(90deg, #1E3A8A 0%, #2563EB 100%)",
     color: "#FFFFFF",
-    padding: "12px 16px",
-    borderRadius: 14,
-    marginBottom: 14,
-    boxShadow: "0 10px 24px rgba(37,99,235,0.16)",
+    padding: "14px 18px",
+    borderRadius: 18,
+    marginBottom: 18,
+    boxShadow: "0 18px 40px rgba(37,99,235,0.18)",
     flexWrap: "wrap",
   },
 
   headerLeft: {
     display: "flex",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
   },
 
   burgerButton: {
-    width: 34,
-    height: 34,
+    width: 38,
+    height: 38,
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     gap: 4,
     background: "rgba(255,255,255,0.10)",
-    border: "1px solid rgba(255,255,255,0.14)",
-    borderRadius: 10,
-    padding: "0 7px",
+    border: "1px solid rgba(255,255,255,0.16)",
+    borderRadius: 12,
+    padding: "0 8px",
   },
 
   burgerLine: {
@@ -588,67 +636,121 @@ const styles = {
 
   appTitle: {
     fontWeight: 800,
-    fontSize: 18,
+    fontSize: 22,
     letterSpacing: 0.2,
   },
 
   appSubtitle: {
     fontSize: 12,
-    opacity: 0.9,
-    marginTop: 2,
+    opacity: 0.92,
+    marginTop: 3,
   },
 
   crisisButton: {
     background: "#FFF1F2",
     color: "#B91C1C",
     border: "1px solid #FECACA",
-    padding: "8px 12px",
-    borderRadius: 10,
+    padding: "9px 14px",
+    borderRadius: 12,
     fontWeight: 700,
     fontSize: 12,
+    boxShadow: "0 8px 18px rgba(185,28,28,0.10)",
   },
 
   kpiStrip: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-    gap: 12,
-    marginBottom: 14,
+    gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+    gap: 14,
+    marginBottom: 16,
   },
 
   kpiTile: {
     background: "#FFFFFF",
     border: "1px solid #E5E7EB",
-    borderRadius: 16,
-    padding: 14,
-    boxShadow: "0 4px 14px rgba(15,23,42,0.05)",
+    borderRadius: 18,
+    padding: 18,
+    minHeight: 108,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
   },
 
-  kpiLabel: {
-    fontSize: 12,
-    color: "#64748B",
-    fontWeight: 700,
-  },
-
-  kpiValue: {
-    fontSize: 30,
-    fontWeight: 800,
-    marginTop: 6,
+  kpiValueHero: {
+    fontSize: 42,
+    fontWeight: 900,
     lineHeight: 1,
+    color: "#111827",
+  },
+
+  kpiLabelHero: {
+    fontSize: 13,
+    fontWeight: 700,
+    marginTop: 10,
   },
 
   filtersPanel: {
-    marginBottom: 14,
+    marginBottom: 16,
+  },
+
+  filterCard: {
+    background: "#FFFFFF",
+    border: "1px solid #E5E7EB",
+    borderRadius: 18,
+    padding: 14,
+    boxShadow: "0 8px 24px rgba(15,23,42,0.04)",
+  },
+
+  quickServiceLabel: {
+    fontSize: 11,
+    color: "#64748B",
+    fontWeight: 800,
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+    marginBottom: 8,
+  },
+
+  servicePillsWrap: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap",
+    marginBottom: 12,
+  },
+
+  servicePill: {
+    padding: "9px 12px",
+    borderRadius: 999,
+    border: "1px solid #CBD5E1",
+    background: "#FFFFFF",
+    color: "#334155",
+    fontSize: 12,
+    fontWeight: 700,
+  },
+
+  servicePillActive: {
+    background: "#EFF6FF",
+    borderColor: "#93C5FD",
+    color: "#1D4ED8",
+    boxShadow: "0 8px 18px rgba(37,99,235,0.10)",
+  },
+
+  otherServiceSelect: {
+    padding: "9px 12px",
+    borderRadius: 999,
+    border: "1px solid #CBD5E1",
+    background: "#FFFFFF",
+    fontSize: 12,
+    color: "#334155",
   },
 
   filtersGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
     gap: 10,
   },
 
   filterField: {
     display: "grid",
-    gap: 4,
+    gap: 5,
   },
 
   filterLabel: {
@@ -660,7 +762,7 @@ const styles = {
   fieldInput: {
     width: "100%",
     padding: "10px 12px",
-    borderRadius: 10,
+    borderRadius: 12,
     border: "1px solid #D1D5DB",
     background: "#FFFFFF",
     fontSize: 13,
@@ -669,21 +771,21 @@ const styles = {
 
   grid: {
     display: "grid",
-    gap: 14,
+    gap: 16,
     alignItems: "start",
   },
 
   sideColumn: {
     display: "grid",
-    gap: 14,
+    gap: 16,
   },
 
   panel: {
     background: "#FFFFFF",
     border: "1px solid #E5E7EB",
-    borderRadius: 16,
-    padding: 16,
-    boxShadow: "0 8px 24px rgba(15,23,42,0.04)",
+    borderRadius: 20,
+    padding: 18,
+    boxShadow: "0 12px 28px rgba(15,23,42,0.05)",
   },
 
   panelHeader: {
@@ -691,40 +793,40 @@ const styles = {
   },
 
   panelTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 800,
-    color: "#111827",
+    color: "#0F172A",
   },
 
   panelSubtitle: {
-    marginTop: 3,
-    fontSize: 12,
-    color: "#6B7280",
+    marginTop: 4,
+    fontSize: 13,
+    color: "#64748B",
   },
 
   sideTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: 800,
-    color: "#111827",
+    color: "#0F172A",
+    marginBottom: 2,
   },
 
   sideSubtitle: {
-    marginTop: 2,
     fontSize: 12,
-    color: "#6B7280",
+    color: "#64748B",
   },
 
   patientList: {
     display: "grid",
-    gap: 12,
+    gap: 14,
   },
 
   patientCard: {
     border: "1px solid #E5E7EB",
-    borderRadius: 16,
-    padding: 16,
-    background: "#FFFFFF",
-    boxShadow: "0 3px 10px rgba(15,23,42,0.03)",
+    borderRadius: 18,
+    padding: 18,
+    background: "linear-gradient(180deg, #FFFFFF 0%, #FCFDFF 100%)",
+    boxShadow: "0 10px 24px rgba(15,23,42,0.04)",
   },
 
   patientTop: {
@@ -733,7 +835,7 @@ const styles = {
     alignItems: "flex-start",
     gap: 12,
     flexWrap: "wrap",
-    marginBottom: 14,
+    marginBottom: 16,
   },
 
   patientActions: {
@@ -744,36 +846,38 @@ const styles = {
   },
 
   patientName: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 800,
-    color: "#111827",
+    color: "#0F172A",
   },
 
   meta: {
     fontSize: 12,
-    color: "#6B7280",
-    lineHeight: 1.45,
-    marginTop: 3,
+    color: "#64748B",
+    lineHeight: 1.5,
+    marginTop: 5,
   },
 
   infoGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: 14,
+    gap: 16,
+    paddingTop: 14,
+    borderTop: "1px solid #EDF2F7",
   },
 
   infoLabel: {
     fontSize: 11,
     color: "#64748B",
-    fontWeight: 700,
-    marginBottom: 4,
+    fontWeight: 800,
+    marginBottom: 5,
     textTransform: "uppercase",
-    letterSpacing: 0.2,
+    letterSpacing: 0.25,
   },
 
   infoValue: {
-    fontSize: 13,
-    color: "#111827",
+    fontSize: 14,
+    color: "#0F172A",
     lineHeight: 1.45,
   },
 
@@ -782,23 +886,24 @@ const styles = {
     alignItems: "center",
     gap: 6,
     fontSize: 13,
-    color: "#111827",
+    color: "#0F172A",
   },
 
   openButton: {
     background: "#EFF6FF",
     color: "#1D4ED8",
     border: "1px solid #BFDBFE",
-    padding: "8px 12px",
-    borderRadius: 10,
+    padding: "8px 13px",
+    borderRadius: 12,
     fontSize: 12,
     fontWeight: 700,
+    boxShadow: "0 8px 16px rgba(37,99,235,0.08)",
   },
 
   heroSummary: {
     border: "1px solid #DBEAFE",
-    background: "linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%)",
-    borderRadius: 14,
+    background: "linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)",
+    borderRadius: 16,
     padding: 14,
     marginBottom: 12,
   },
@@ -806,17 +911,17 @@ const styles = {
   heroTitle: {
     fontSize: 12,
     fontWeight: 800,
-    color: "#1E3A8A",
+    color: "#1E40AF",
     marginBottom: 6,
     textTransform: "uppercase",
     letterSpacing: 0.3,
   },
 
   heroText: {
-    fontSize: 14,
-    lineHeight: 1.55,
-    color: "#111827",
-    fontWeight: 600,
+    fontSize: 15,
+    lineHeight: 1.6,
+    color: "#0F172A",
+    fontWeight: 700,
   },
 
   heroMeta: {
@@ -833,7 +938,7 @@ const styles = {
 
   metricCard: {
     border: "1px solid #E5E7EB",
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 12,
     background: "#FFFFFF",
   },
@@ -848,7 +953,7 @@ const styles = {
   metricValue: {
     fontSize: 18,
     fontWeight: 800,
-    color: "#111827",
+    color: "#0F172A",
   },
 
   stack: {
@@ -860,7 +965,7 @@ const styles = {
     width: "100%",
     textAlign: "left",
     border: "1px solid #E5E7EB",
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 12,
     background: "#FFFFFF",
     cursor: "pointer",
@@ -869,6 +974,7 @@ const styles = {
   insightButtonActive: {
     borderColor: "#93C5FD",
     background: "#EFF6FF",
+    boxShadow: "0 10px 18px rgba(37,99,235,0.08)",
   },
 
   insightTop: {
@@ -881,17 +987,17 @@ const styles = {
   insightTitle: {
     fontSize: 14,
     fontWeight: 700,
-    color: "#111827",
+    color: "#0F172A",
   },
 
   insightCount: {
-    fontSize: 18,
-    fontWeight: 800,
+    fontSize: 20,
+    fontWeight: 900,
     color: "#1D4ED8",
   },
 
   insightMeta: {
-    marginTop: 5,
+    marginTop: 6,
     fontSize: 12,
     color: "#64748B",
   },
@@ -900,14 +1006,14 @@ const styles = {
     marginTop: 10,
     border: "1px solid #DBEAFE",
     background: "#F8FBFF",
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 12,
   },
 
   detailTitle: {
     fontSize: 14,
     fontWeight: 800,
-    color: "#111827",
+    color: "#0F172A",
   },
 
   detailSubtitle: {
@@ -926,7 +1032,7 @@ const styles = {
     textAlign: "left",
     border: "1px solid #E5E7EB",
     background: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 10,
     cursor: "pointer",
   },
@@ -934,7 +1040,7 @@ const styles = {
   detailPatientName: {
     fontSize: 13,
     fontWeight: 700,
-    color: "#111827",
+    color: "#0F172A",
   },
 
   detailPatientMeta: {
@@ -944,17 +1050,19 @@ const styles = {
     lineHeight: 1.4,
   },
 
-  serviceCard: {
+  serviceCardButton: {
+    textAlign: "left",
     border: "1px solid #E5E7EB",
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 12,
     background: "#FFFFFF",
+    cursor: "pointer",
   },
 
   serviceName: {
     fontSize: 14,
     fontWeight: 700,
-    color: "#111827",
+    color: "#0F172A",
   },
 
   serviceMeta: {
@@ -973,32 +1081,32 @@ const styles = {
   },
 
   actionTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 800,
-    color: "#111827",
+    color: "#0F172A",
     marginBottom: 8,
   },
 
   actionBox: {
     fontSize: 13,
-    lineHeight: 1.55,
-    color: "#111827",
+    lineHeight: 1.6,
+    color: "#0F172A",
     background: "#F8FAFC",
     border: "1px solid #E5E7EB",
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 12,
   },
 
   empty: {
     fontSize: 13,
-    color: "#6B7280",
+    color: "#64748B",
   },
 
   badgeRed: {
     display: "inline-block",
     background: "#FEE2E2",
     color: "#DC2626",
-    padding: "5px 9px",
+    padding: "6px 10px",
     borderRadius: 999,
     fontSize: 11,
     fontWeight: 700,
@@ -1008,7 +1116,7 @@ const styles = {
     display: "inline-block",
     background: "#FEF3C7",
     color: "#D97706",
-    padding: "5px 9px",
+    padding: "6px 10px",
     borderRadius: 999,
     fontSize: 11,
     fontWeight: 700,
@@ -1018,7 +1126,7 @@ const styles = {
     display: "inline-block",
     background: "#D1FAE5",
     color: "#059669",
-    padding: "5px 9px",
+    padding: "6px 10px",
     borderRadius: 999,
     fontSize: 11,
     fontWeight: 700,
