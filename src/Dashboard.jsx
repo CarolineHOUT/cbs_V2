@@ -58,11 +58,12 @@ export default function Dashboard({ patients, onOpenPatient }) {
           <div style={{ display: "grid", gap: 12 }}>
             {sortedPatients.map((p) => (
               <div key={p.id} style={patientCardStyle}>
-                <div style={{ minWidth: 0 }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={patientTopRowStyle}>
                     <div style={patientNameStyle}>
                       {p.nom} {p.prenom}
                     </div>
+
                     <div style={badgeRowStyle}>
                       <PriorityBadge score={p.score} />
                       <ScoreBadge score={p.score} />
@@ -127,7 +128,7 @@ function NavPill({ children, active = false }) {
   return (
     <div
       style={{
-        padding: "10px 14px",
+        padding: "9px 13px",
         borderRadius: 14,
         border: active ? "2px solid #1f2937" : "1px solid #e5e7eb",
         background: active ? "#6d28d9" : "#ffffff",
@@ -147,7 +148,7 @@ function NavDanger({ children }) {
   return (
     <div
       style={{
-        padding: "10px 14px",
+        padding: "9px 13px",
         borderRadius: 14,
         border: "1px solid #fecaca",
         background: "#fff7f7",
@@ -214,11 +215,7 @@ function PriorityBadge({ score }) {
     label = "Risque";
   }
 
-  return (
-    <span style={badgeStyle(bg, color)}>
-      {label}
-    </span>
-  );
+  return <span style={badgeStyle(bg, color)}>{label}</span>;
 }
 
 function ScoreBadge({ score }) {
@@ -233,11 +230,7 @@ function ScoreBadge({ score }) {
     color = "#b45309";
   }
 
-  return (
-    <span style={badgeStyle(bg, color)}>
-      Score {score}
-    </span>
-  );
+  return <span style={badgeStyle(bg, color)}>Score {score}</span>;
 }
 
 function badgeStyle(bg, color) {
@@ -271,14 +264,15 @@ const headerStyle = {
   background: "linear-gradient(135deg,#5b54c7,#6d66d8)",
   color: "#ffffff",
   borderRadius: 24,
-  padding: 20,
+  padding: "16px",
   marginBottom: 16,
 };
 
 const brandStyle = {
-  fontSize: 28,
+  fontSize: "clamp(24px, 6vw, 30px)",
   fontWeight: 800,
   letterSpacing: 0.5,
+  lineHeight: 1.05,
 };
 
 const subtitleStyle = {
@@ -289,16 +283,16 @@ const subtitleStyle = {
 
 const navWrapStyle = {
   display: "flex",
-  gap: 10,
+  gap: 8,
   flexWrap: "wrap",
-  marginTop: 18,
+  marginTop: 14,
 };
 
 const heroStyle = {
   background: "linear-gradient(135deg,#4f46e5,#7c3aed)",
   color: "#ffffff",
   borderRadius: 24,
-  padding: 24,
+  padding: "20px",
   marginBottom: 16,
 };
 
@@ -310,10 +304,11 @@ const heroEyebrowStyle = {
 };
 
 const heroTitleStyle = {
-  fontSize: 28,
-  lineHeight: 1.1,
+  fontSize: "clamp(26px, 6vw, 40px)",
+  lineHeight: 1.15,
   margin: "8px 0 10px 0",
   fontWeight: 800,
+  maxWidth: 700,
 };
 
 const heroTextStyle = {
@@ -332,7 +327,7 @@ const kpiGridStyle = {
 
 const contentGridStyle = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1.6fr) minmax(280px, 0.9fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
   gap: 16,
   alignItems: "start",
 };
