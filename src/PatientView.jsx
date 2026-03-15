@@ -698,3 +698,561 @@ function labelForType(type) {
 function activeNotePillStyle(type) {
   const stylesByType = {
     info:
+    info: {
+      background: "#EFF6FF",
+      color: "#1D4ED8",
+      border: "1px solid #BFDBFE",
+    },
+    action: {
+      background: "#ECFDF5",
+      color: "#059669",
+      border: "1px solid #A7F3D0",
+    },
+    famille: {
+      background: "#FFF7ED",
+      color: "#EA580C",
+      border: "1px solid #FED7AA",
+    },
+    urgent: {
+      background: "#FEF2F2",
+      color: "#DC2626",
+      border: "1px solid #FECACA",
+    },
+  };
+
+  return stylesByType[type] || stylesByType.info;
+}
+
+const styles = {
+  page: {
+    padding: 20,
+    background: "#F1F5F9",
+    minHeight: "100vh",
+    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto",
+  },
+
+  /* HEADER */
+
+  appHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    background: "#1E3A8A",
+    color: "white",
+    padding: "12px 16px",
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+
+  appHeaderLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+  },
+
+  appTitle: {
+    fontSize: 20,
+    fontWeight: 700,
+  },
+
+  appSubtitle: {
+    fontSize: 12,
+    opacity: 0.85,
+  },
+
+  headerActions: {
+    display: "flex",
+    gap: 8,
+  },
+
+  headerGhostButton: {
+    background: "white",
+    border: "none",
+    borderRadius: 6,
+    padding: "6px 10px",
+    cursor: "pointer",
+  },
+
+  headerDuoButton: {
+    background: "#2563EB",
+    color: "white",
+    border: "none",
+    borderRadius: 6,
+    padding: "6px 12px",
+    cursor: "pointer",
+  },
+
+  headerCrisisButton: {
+    background: "#DC2626",
+    color: "white",
+    border: "none",
+    borderRadius: 6,
+    padding: "6px 12px",
+    cursor: "pointer",
+  },
+
+  burgerButton: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 3,
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+  },
+
+  burgerLine: {
+    width: 18,
+    height: 2,
+    background: "white",
+  },
+
+  /* RUBAN PATIENT */
+
+  patientRibbon: {
+    display: "flex",
+    justifyContent: "space-between",
+    background: "white",
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 14,
+  },
+
+  patientIdentity: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+  },
+
+  patientName: {
+    fontSize: 22,
+    fontWeight: 700,
+  },
+
+  patientMetaLine: {
+    fontSize: 13,
+    color: "#475569",
+    display: "flex",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+
+  patientMetrics: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3,auto)",
+    gap: 10,
+    alignItems: "center",
+  },
+
+  statusPill: {
+    padding: "6px 10px",
+    borderRadius: 6,
+    fontSize: 12,
+    fontWeight: 600,
+  },
+
+  metricCell: {
+    textAlign: "center",
+  },
+
+  metricCellLabel: {
+    fontSize: 11,
+    color: "#64748B",
+  },
+
+  metricCellValue: {
+    fontSize: 18,
+    fontWeight: 700,
+  },
+
+  /* ALERT */
+
+  alertBanner: {
+    background: "#FEF2F2",
+    border: "1px solid #FECACA",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 14,
+  },
+
+  alertTitle: {
+    fontWeight: 700,
+    color: "#DC2626",
+  },
+
+  alertText: {
+    fontSize: 13,
+  },
+
+  /* LAYOUT */
+
+  topRow: {
+    display: "grid",
+    gridTemplateColumns: "2fr 1fr",
+    gap: 14,
+    marginBottom: 14,
+  },
+
+  middleRow: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr",
+    gap: 14,
+    marginBottom: 14,
+  },
+
+  bottomRow: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 14,
+  },
+
+  card: {
+    background: "white",
+    borderRadius: 10,
+    padding: 14,
+  },
+
+  cardTitle: {
+    fontWeight: 700,
+  },
+
+  cardSubtitle: {
+    fontSize: 12,
+    color: "#64748B",
+  },
+
+  /* SITUATION */
+
+  situationLayout: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 12,
+  },
+
+  primaryBlock: {
+    background: "#F8FAFC",
+    padding: 12,
+    borderRadius: 8,
+  },
+
+  primaryBlockLabel: {
+    fontSize: 12,
+    color: "#64748B",
+  },
+
+  primaryBlockValue: {
+    fontSize: 18,
+    fontWeight: 700,
+  },
+
+  primaryBlockHint: {
+    fontSize: 12,
+    color: "#475569",
+  },
+
+  planBoard: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 8,
+  },
+
+  planRow: {
+    display: "flex",
+    flexDirection: "column",
+  },
+
+  planRowWide: {
+    gridColumn: "1/3",
+  },
+
+  planRowLabel: {
+    fontSize: 12,
+    color: "#64748B",
+  },
+
+  planRowInput: {
+    border: "1px solid #CBD5F5",
+    borderRadius: 6,
+    padding: "4px 6px",
+  },
+
+  situationFooter: {
+    marginTop: 10,
+    display: "flex",
+    justifyContent: "space-between",
+  },
+
+  integrateButton: {
+    background: "#2563EB",
+    color: "white",
+    border: "none",
+    padding: "6px 10px",
+    borderRadius: 6,
+  },
+
+  toggleInline: {
+    display: "flex",
+    gap: 6,
+    alignItems: "center",
+  },
+
+  checkboxWrap: {
+    display: "flex",
+    gap: 4,
+    alignItems: "center",
+  },
+
+  /* FREINS */
+
+  tagsList: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+
+  freinTag: {
+    display: "flex",
+    gap: 4,
+    alignItems: "center",
+    background: "#F1F5F9",
+    padding: "4px 6px",
+    borderRadius: 6,
+  },
+
+  freinDot: {
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    background: "#DC2626",
+  },
+
+  addRow: {
+    display: "flex",
+    gap: 6,
+    marginTop: 8,
+  },
+
+  addInput: {
+    flex: 1,
+    border: "1px solid #CBD5F5",
+    borderRadius: 6,
+    padding: 4,
+  },
+
+  addMiniButton: {
+    border: "none",
+    background: "#2563EB",
+    color: "white",
+    padding: "4px 8px",
+    borderRadius: 6,
+  },
+
+  /* ACTEURS */
+
+  actorList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+  },
+
+  actorRow: {
+    display: "flex",
+    justifyContent: "space-between",
+  },
+
+  actorRole: {
+    color: "#64748B",
+  },
+
+  actorName: {
+    fontWeight: 600,
+  },
+
+  /* SUMMARY */
+
+  summaryBlock: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+
+  summaryRow: {
+    display: "flex",
+    justifyContent: "space-between",
+  },
+
+  summaryHighlight: {
+    background: "#F8FAFC",
+    padding: 8,
+    borderRadius: 6,
+  },
+
+  suggestionButton: {
+    marginTop: 6,
+    border: "none",
+    background: "#1E3A8A",
+    color: "white",
+    borderRadius: 6,
+    padding: "6px 8px",
+  },
+
+  /* CONTACTS */
+
+  contactGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr",
+    gap: 8,
+  },
+
+  contactCard: {
+    background: "#F8FAFC",
+    padding: 10,
+    borderRadius: 8,
+  },
+
+  contactTitle: {
+    fontSize: 12,
+    color: "#64748B",
+  },
+
+  contactName: {
+    fontWeight: 600,
+  },
+
+  contactRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: 4,
+  },
+
+  contactPhoneLink: {
+    color: "#2563EB",
+  },
+
+  contactPhoneMuted: {
+    color: "#94A3B8",
+  },
+
+  copyButton: {
+    fontSize: 11,
+    border: "none",
+    background: "#E2E8F0",
+    borderRadius: 4,
+    padding: "2px 6px",
+  },
+
+  /* TIMELINE */
+
+  timeline: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+  },
+
+  timelineItem: {
+    display: "flex",
+    gap: 8,
+    border: "none",
+    background: "#F8FAFC",
+    padding: 8,
+    borderRadius: 6,
+    textAlign: "left",
+  },
+
+  timelineUnread: {
+    borderLeft: "4px solid #DC2626",
+  },
+
+  timelineDot: {
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    marginTop: 6,
+  },
+
+  timelineContent: {
+    flex: 1,
+  },
+
+  timelineTop: {
+    display: "flex",
+    justifyContent: "space-between",
+  },
+
+  timelineDate: {
+    fontSize: 11,
+    color: "#64748B",
+  },
+
+  timelineBadges: {
+    display: "flex",
+    gap: 4,
+  },
+
+  noteTypeBadge: {
+    padding: "2px 6px",
+    borderRadius: 4,
+    fontSize: 11,
+  },
+
+  unreadBadge: {
+    fontSize: 10,
+    background: "#DC2626",
+    color: "white",
+    padding: "2px 4px",
+    borderRadius: 4,
+  },
+
+  timelineText: {
+    fontSize: 13,
+  },
+
+  /* NOTE COMPOSER */
+
+  noteComposer: {
+    marginTop: 12,
+  },
+
+  noteTypePills: {
+    display: "flex",
+    gap: 6,
+    marginBottom: 6,
+  },
+
+  noteTypePill: {
+    border: "1px solid #CBD5F5",
+    background: "white",
+    borderRadius: 6,
+    padding: "4px 8px",
+    fontSize: 12,
+    cursor: "pointer",
+  },
+
+  textarea: {
+    width: "100%",
+    minHeight: 60,
+    borderRadius: 6,
+    border: "1px solid #CBD5F5",
+    padding: 6,
+  },
+
+  noteActions: {
+    display: "flex",
+    gap: 8,
+    marginTop: 6,
+  },
+
+  primaryButton: {
+    background: "#2563EB",
+    color: "white",
+    border: "none",
+    padding: "6px 10px",
+    borderRadius: 6,
+  },
+
+  secondaryButton: {
+    border: "1px solid #CBD5F5",
+    background: "white",
+    padding: "6px 10px",
+    borderRadius: 6,
+  },
+};
