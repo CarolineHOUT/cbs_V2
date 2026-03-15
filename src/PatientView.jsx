@@ -1,12 +1,17 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 export default function PatientView({ patient, onBack }) {
+  const [editablePatient, setEditablePatient] = useState({
+    ...patient,
+    notes: patient.notes || [],
+  });
+  const [newNote, setNewNote] = useState("");
+
   const status = useMemo(() => {
-    if (!patient) return { label: "", tone: "neutral" };
-    if (patient.score >= 8) return { label: "Bloqué", tone: "red" };
-    if (patient.score >= 6) return { label: "Risque", tone: "amber" };
+    if (editablePatient.score >= 8) return { label: "Bloqué", tone: "red" };
+    if (editablePatient.score >= 6) return { label: "Risque", tone: "amber" };
     return { label: "Suivi", tone: "green" };
-  }, [patient]);
+  }, [editablePatient]);
 
   function parseFrenchDate(value) {
     if (!value || typeof value !== "string") return null;
@@ -26,9 +31,45 @@ export default function PatientView({ patient, onBack }) {
     return Math.max(0, Math.floor((end - start) / 86400000));
   }
 
-  if (!patient) return null;
+  function updateField(field, value) {
+    setEditablePatient((prev) => ({ ...prev, [field]: value }));
+  }
 
-  const stayDays = computeStayDays(patient.entryDate);
+  function addNote() {
+    const value = newNote.trim();
+    if (!value) return;
+
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, "0");
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mi = String(now.getMinutes()).padStart(2, "0");
+
+    const stampedNote = `${dd}/${mm} • ${hh}:${mi} — ${value}`;
+
+    setEditablePatient((prev) => ({
+      ...prev,
+      notes: [stampedNote, ...(prev.notes || [])],
+    }));
+    setNewNote("");
+  }
+
+  function quickAction(text) {
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, "0");
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mi = String(now.getMinutes()).padStart(2, "0");
+
+    const stampedNote = `${dd}/${mm} • ${hh}:${mi} — ${text}`;
+
+    setEditablePatient((prev) => ({
+      ...prev,
+      notes: [stampedNote, ...(prev.notes || [])],
+    }));
+  }
+
+  const stayDays = computeStayDays(editablePatient.entryDate);
 
   return (
     <div style={styles.page}>
@@ -43,19 +84,19 @@ export default function PatientView({ patient, onBack }) {
       <section style={styles.identityHero}>
         <div style={styles.identityLeft}>
           <div style={styles.patientName}>
-            {patient.nom} {patient.prenom}
+            {editablePatient.nom} {editablePatient.prenom}
           </div>
 
           <div style={styles.identityMeta}>
-            {patient.birthDate} • {patient.age} ans
+            {editablePatient.birthDate} • {editablePatient.age} ans
           </div>
 
           <div style={styles.identityMeta}>
-            INS {patient.ins} • IEP {patient.iep}
+            INS {editablePatient.ins} • IEP {editablePatient.iep}
           </div>
 
           <div style={styles.identityMeta}>
-            {patient.service} • chambre {patient.chambre} • lit {patient.lit}
+            {editablePatient.service} • chambre {editablePatient.chambre} • lit {editablePatient.lit}
           </div>
         </div>
 
@@ -68,94 +109,148 @@ export default function PatientView({ patient, onBack }) {
         <div style={styles.leftColumn}>
           <Panel title="Pilotage sortie" subtitle="Lecture clinique et capacitaire">
             <div style={styles.kpiGrid}>
-              <MiniKpi label="Admission" value={patient.entryDate || "—"} />
+              <MiniKpi label="Admission" value={editablePatient.entryDate || "—"} />
               <MiniKpi label="Présence" value={`${stayDays} j`} />
               <MiniKpi
                 label="Sortant médical"
-                value={patient.sortantMedicalement ? "Oui" : "Non"}
-                tone={patient.sortantMedicalement ? "blue" : "neutral"}
+                value={editablePatient.sortantMedicalement ? "Oui" : "Non"}
+                tone={editablePatient.sortantMedicalement ? "blue" : "neutral"}
               />
               <MiniKpi
                 label="Jours évitables"
-                value={patient.sortantMedicalement ? `${patient.joursEvitables} j` : "—"}
+                value={editablePatient.sortantMedicalement ? `${editablePatient.joursEvitables} j` : "—"}
                 tone="amber"
               />
             </div>
 
-            <div style={styles.focusCard}>
-              <div style={styles.focusLabel}>Frein principal</div>
-              <div style={styles.focusValue}>{patient.blocage}</div>
+            <div style={styles.formGrid}>
+              <EditableField
+                label="Frein principal"
+                value={editablePatient.blocage || ""}
+                onChange={(value) => updateField("blocage", value)}
+              />
+              <EditableField
+                label="Destination prévue"
+                value={editablePatient.destinationPrevue || ""}
+                onChange={(value) => updateField("destinationPrevue", value)}
+              />
+              <EditableField
+                label="Transport"
+                value={editablePatient.transport || ""}
+                onChange={(value) => updateField("transport", value)}
+              />
+              <EditableField
+                label="Documents sortie"
+                value={editablePatient.documentsSortie || ""}
+                onChange={(value) => updateField("documentsSortie", value)}
+              />
             </div>
 
-            <div style={styles.kpiGrid}>
-              <MiniKpi label="Score" value={patient.score} tone="blue" />
-              <MiniKpi label="Niveau" value={status.label} tone={status.tone} />
-              <MiniKpi label="Service" value={patient.service} />
-              <MiniKpi label="Lit" value={`${patient.chambre} / ${patient.lit}`} />
+            <div style={styles.toggleRow}>
+              <div style={styles.toggleCard}>
+                <div style={styles.fieldLabel}>Sortant médical</div>
+                <label style={styles.checkboxWrap}>
+                  <input
+                    type="checkbox"
+                    checked={editablePatient.sortantMedicalement}
+                    onChange={(e) => updateField("sortantMedicalement", e.target.checked)}
+                  />
+                  <span>{editablePatient.sortantMedicalement ? "Oui" : "Non"}</span>
+                </label>
+              </div>
+
+              <div style={styles.toggleCard}>
+                <div style={styles.fieldLabel}>Prochaine action</div>
+                <div style={styles.fieldValue}>{editablePatient.nextStep || "Non renseignée"}</div>
+              </div>
             </div>
           </Panel>
 
           <Panel title="Parcours et aval" subtitle="Organisation de la sortie">
             <InfoGrid
               items={[
-                ["Destination prévue", patient.destinationPrevue || "Non renseignée"],
-                ["Besoin d’aval", patient.besoinAval || "Non renseigné"],
-                ["Transport", patient.transport || "Non renseigné"],
-                ["Documents de sortie", patient.documentsSortie || "Non renseignés"],
+                ["Besoin d’aval", editablePatient.besoinAval || "Non renseigné"],
+                ["Référent médical", editablePatient.referentMedical || "Non renseigné"],
+                ["Cadre", editablePatient.cadre || "Non renseigné"],
+                ["Assistante sociale", editablePatient.assistanteSociale || "Non renseignée"],
               ]}
             />
           </Panel>
 
           <Panel title="Entourage et protection" subtitle="Sécurisation administrative et familiale">
-            <InfoGrid
-              items={[
-                ["Personne de confiance", patient.personneConfiance || "Non renseignée"],
-                ["Personne à prévenir", patient.personneAPrevenir || "Non renseignée"],
-                ["Tutelle / curatelle", patient.protectionJuridique || "Non renseignée"],
-              ]}
-            />
+            <div style={styles.formGrid}>
+              <EditableField
+                label="Personne de confiance"
+                value={editablePatient.personneConfiance || ""}
+                onChange={(value) => updateField("personneConfiance", value)}
+              />
+              <EditableField
+                label="Personne à prévenir"
+                value={editablePatient.personneAPrevenir || ""}
+                onChange={(value) => updateField("personneAPrevenir", value)}
+              />
+              <EditableField
+                label="Tutelle / curatelle"
+                value={editablePatient.protectionJuridique || ""}
+                onChange={(value) => updateField("protectionJuridique", value)}
+              />
+            </div>
           </Panel>
         </div>
 
         <div style={styles.rightColumn}>
-          <Panel title="Coordination" subtitle="Acteurs et prochaines actions">
-            <InfoGrid
-              items={[
-                ["Référent médical", patient.referentMedical || "Non renseigné"],
-                ["Cadre", patient.cadre || "Non renseigné"],
-                ["Assistante sociale", patient.assistanteSociale || "Non renseignée"],
-                ["Prochaine action", patient.nextStep || "Non renseignée"],
-              ]}
-            />
-          </Panel>
-
           <Panel title="Actions rapides" subtitle="Coordination immédiate">
             <div style={styles.actionsGrid}>
-              <button style={styles.actionButton}>
+              <button
+                style={styles.actionButton}
+                onClick={() => quickAction("Assistante sociale contactée")}
+              >
                 Contacter assistante sociale
               </button>
 
-              <button style={styles.actionButton}>
+              <button
+                style={styles.actionButton}
+                onClick={() => quickAction("Sortie à programmer")}
+              >
                 Programmer sortie
               </button>
 
-              <button style={styles.actionButton}>
-                Ajouter note
+              <button
+                style={styles.actionButton}
+                onClick={() => quickAction("Réunion de coordination demandée")}
+              >
+                Réunion coordination
               </button>
 
-              <button style={styles.actionButton}>
-                Réunion coordination
+              <button
+                style={styles.actionButton}
+                onClick={() => quickAction("Famille relancée")}
+              >
+                Relancer famille
               </button>
             </div>
           </Panel>
 
-          <Panel title="Historique opérationnel" subtitle="Traçabilité des actions">
+          <Panel title="Ajouter une note" subtitle="Traçabilité opérationnelle">
+            <div style={styles.noteComposer}>
+              <textarea
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                placeholder="Saisir une note opérationnelle..."
+                style={styles.textarea}
+              />
+              <button style={styles.primaryButton} onClick={addNote}>
+                Ajouter la note
+              </button>
+            </div>
+          </Panel>
+
+          <Panel title="Historique opérationnel" subtitle="Chronologie des actions">
             <div style={styles.timeline}>
-              {(patient.notes || []).map((note, index) => (
+              {(editablePatient.notes || []).map((note, index) => (
                 <div key={index} style={styles.timelineItem}>
                   <div style={styles.timelineDot} />
                   <div style={styles.timelineContent}>
-                    <div style={styles.timelineDate}>15/03 • 10:45</div>
                     <div style={styles.timelineText}>{note}</div>
                   </div>
                 </div>
@@ -206,6 +301,19 @@ function InfoGrid({ items }) {
           <div style={styles.infoValue}>{value}</div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function EditableField({ label, value, onChange }) {
+  return (
+    <div style={styles.editableCard}>
+      <div style={styles.fieldLabel}>{label}</div>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={styles.input}
+      />
     </div>
   );
 }
@@ -368,31 +476,6 @@ const styles = {
     lineHeight: 1.1,
   },
 
-  focusCard: {
-    marginTop: 12,
-    marginBottom: 12,
-    border: "1px solid #DBEAFE",
-    background: "linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)",
-    borderRadius: 18,
-    padding: 16,
-  },
-
-  focusLabel: {
-    fontSize: 11,
-    color: "#1E40AF",
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: 0.25,
-    marginBottom: 6,
-  },
-
-  focusValue: {
-    fontSize: 22,
-    fontWeight: 800,
-    color: "#0F172A",
-    lineHeight: 1.25,
-  },
-
   infoGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
@@ -422,6 +505,67 @@ const styles = {
     lineHeight: 1.45,
   },
 
+  formGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 12,
+    marginTop: 12,
+  },
+
+  editableCard: {
+    border: "1px solid #E5E7EB",
+    borderRadius: 16,
+    padding: 14,
+    background: "#FFFFFF",
+  },
+
+  fieldLabel: {
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.2,
+    color: "#64748B",
+    fontWeight: 800,
+    marginBottom: 6,
+  },
+
+  fieldValue: {
+    fontSize: 14,
+    color: "#0F172A",
+    fontWeight: 600,
+    lineHeight: 1.45,
+  },
+
+  input: {
+    width: "100%",
+    border: "1px solid #CBD5E1",
+    borderRadius: 10,
+    padding: "10px 12px",
+    fontSize: 14,
+    boxSizing: "border-box",
+  },
+
+  toggleRow: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 12,
+    marginTop: 12,
+  },
+
+  toggleCard: {
+    border: "1px solid #E5E7EB",
+    borderRadius: 16,
+    padding: 14,
+    background: "#FFFFFF",
+  },
+
+  checkboxWrap: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    fontSize: 13,
+    color: "#0F172A",
+  },
+
   actionsGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -434,6 +578,32 @@ const styles = {
     border: "1px solid #CBD5E1",
     background: "#EFF6FF",
     color: "#1D4ED8",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+
+  noteComposer: {
+    display: "grid",
+    gap: 10,
+  },
+
+  textarea: {
+    minHeight: 110,
+    resize: "vertical",
+    border: "1px solid #CBD5E1",
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 14,
+    fontFamily: "inherit",
+    boxSizing: "border-box",
+  },
+
+  primaryButton: {
+    border: "1px solid #2563EB",
+    background: "#2563EB",
+    color: "#FFFFFF",
+    borderRadius: 12,
+    padding: "10px 14px",
     fontWeight: 700,
     cursor: "pointer",
   },
@@ -462,16 +632,9 @@ const styles = {
     flex: 1,
   },
 
-  timelineDate: {
-    fontSize: 12,
-    color: "#64748B",
-    fontWeight: 700,
-  },
-
   timelineText: {
     fontSize: 14,
     color: "#0F172A",
     lineHeight: 1.45,
-    marginTop: 2,
   },
 };
