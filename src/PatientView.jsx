@@ -1,496 +1,153 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-export default function PatientView({
-  patient,
-  patientState,
-  onBack,
-  updatePatientState,
-}) {
-  const [newBarrier, setNewBarrier] = useState("");
-  const [newNote, setNewNote] = useState("");
-  const [newNotePriority, setNewNotePriority] = useState("Normal");
+export default function PatientView({ patient, onBack }) {
+  const status = useMemo(() => {
+    if (!patient) return { label: "", tone: "neutral" };
+    if (patient.score >= 8) return { label: "Bloqué", tone: "red" };
+    if (patient.score >= 6) return { label: "Risque", tone: "amber" };
+    return { label: "Suivi", tone: "green" };
+  }, [patient]);
 
-  const unreadNotes = useMemo(
-    () => patientState.notes.filter((n) => !n.read).length,
-    [patientState.notes]
-  );
-
-  function updateTrusted(field, value) {
-    updatePatientState((prev) => ({
-      ...prev,
-      trustedPerson: {
-        ...prev.trustedPerson,
-        [field]: value,
-      },
-    }));
+  function parseFrenchDate(value) {
+    if (!value || typeof value !== "string") return null;
+    const parts = value.split("/");
+    if (parts.length !== 3) return null;
+    const [d, m, y] = parts;
+    const date = new Date(Number(y), Number(m) - 1, Number(d));
+    return Number.isNaN(date.getTime()) ? null : date;
   }
 
-  function updateEmergency(field, value) {
-    updatePatientState((prev) => ({
-      ...prev,
-      emergencyContact: {
-        ...prev.emergencyContact,
-        [field]: value,
-      },
-    }));
+  function computeStayDays(dateString) {
+    const date = parseFrenchDate(dateString);
+    if (!date) return 0;
+    const today = new Date();
+    const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return Math.max(0, Math.floor((end - start) / 86400000));
   }
 
-  function updateProtection(field, value) {
-    updatePatientState((prev) => ({
-      ...prev,
-      protection: {
-        ...prev.protection,
-        [field]: value,
-      },
-    }));
-  }
+  if (!patient) return null;
 
-  function updateIntake(field, value) {
-    updatePatientState((prev) => ({
-      ...prev,
-      intake: {
-        ...prev.intake,
-        [field]: value,
-      },
-    }));
-  }
+  const stayDays = computeStayDays(patient.entryDate);
 
-  function updateStatus(field, value) {
-    updatePatientState((prev) => ({
-      ...prev,
-      status: {
-        ...prev.status,
-        [field]: value,
-      },
-    }));
-  }
-
-  function addBarrier() {
-    const value = newBarrier.trim();
-    if (!value) return;
-
-    updatePatientState((prev) => ({
-      ...prev,
-      barriers: [...prev.barriers, value],
-    }));
-    setNewBarrier("");
-  }
-
-  function removeBarrier(index) {
-    updatePatientState((prev) => ({
-      ...prev,
-      barriers: prev.barriers.filter((_, i) => i !== index),
-    }));
-  }
-
-  function addWorkflowAction() {
-    const title = window.prompt("Nom de l'action");
-    if (!title) return;
-
-    updatePatientState((prev) => ({
-      ...prev,
-      workflow: [
-        ...prev.workflow,
-        {
-          id: Date.now(),
-          title,
-          owner: "Coordination",
-          status: "À lancer",
-          lastUpdate: "Aujourd'hui",
-        },
+  const extendedPatient = {
+    destinationPrevue: patient.destinationPrevue || "Domicile avec aides",
+    besoinAval: patient.besoinAval || "Coordination ville / aide au retour",
+    transport: patient.transport || "Transport assis professionnalisé à confirmer",
+    documentsSortie: patient.documentsSortie || "Ordonnance en cours de finalisation",
+    referentMedical: patient.referentMedical || "Dr Martin",
+    cadre: patient.cadre || "Cadre de service à renseigner",
+    assistanteSociale: patient.assistanteSociale || "Mme Leroy",
+    nextStep: patient.nextStep || "Relancer l’aval et sécuriser la date de sortie",
+    personneConfiance: patient.personneConfiance || "Non renseignée",
+    personneAPrevenir: patient.personneAPrevenir || "Non renseignée",
+    protectionJuridique: patient.protectionJuridique || "Aucune mesure connue",
+    notes:
+      patient.notes || [
+        "Patient médicalement stabilisé.",
+        "Frein principal à la sortie toujours actif.",
+        "Coordination d’aval à relancer aujourd’hui.",
       ],
-    }));
-  }
-
-  function updateWorkflowAction(id, field, value) {
-    updatePatientState((prev) => ({
-      ...prev,
-      workflow: prev.workflow.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item
-      ),
-    }));
-  }
-
-  function addNote() {
-    const text = newNote.trim();
-    if (!text) return;
-
-    updatePatientState((prev) => ({
-      ...prev,
-      notes: [
-        {
-          id: Date.now(),
-          author: "Équipe",
-          priority: newNotePriority,
-          read: false,
-          date: new Date().toLocaleString(),
-          text,
-        },
-        ...prev.notes,
-      ],
-    }));
-
-    setNewNote("");
-    setNewNotePriority("Normal");
-  }
-
-  function markNoteRead(id) {
-    updatePatientState((prev) => ({
-      ...prev,
-      notes: prev.notes.map((note) =>
-        note.id === id ? { ...note, read: true } : note
-      ),
-    }));
-  }
-
-  function updateSolution(id, status) {
-    updatePatientState((prev) => ({
-      ...prev,
-      solutions: prev.solutions.map((solution) =>
-        solution.id === id ? { ...solution, status } : solution
-      ),
-    }));
-  }
+  };
 
   return (
-    <div style={pageStyle}>
-      <header style={topBarStyle}>
-        <div style={topLeftStyle}>
-          <button onClick={onBack} style={backButtonStyle}>
-            ← Retour
-          </button>
+    <div style={styles.page}>
+      <div style={styles.topBar}>
+        <button onClick={onBack} style={styles.backButton}>
+          ← Retour au cockpit
+        </button>
+        <div style={styles.topBarTitle}>Fiche patient</div>
+      </div>
 
-          <div>
-            <div style={titleStyle}>
-              {patient.nom} {patient.prenom}
-            </div>
-            <div style={subtitleStyle}>
-              Coordination de sortie • {patient.service}
-            </div>
+      <section style={styles.identityHero}>
+        <div style={styles.identityLeft}>
+          <div style={styles.patientName}>
+            {patient.nom} {patient.prenom}
+          </div>
+          <div style={styles.identityMeta}>
+            {patient.birthDate} • {patient.age} ans • INS {patient.ins} • IEP {patient.iep}
+          </div>
+          <div style={styles.identityMeta}>
+            {patient.service} • chambre {patient.chambre} • lit {patient.lit}
           </div>
         </div>
 
-        <div style={topRightStyle}>
-          <StatusBadge
-            label={patient.sortantMedicalement ? "Sortant médicalement" : "En hospitalisation"}
-            tone={patient.sortantMedicalement ? "blue" : "slate"}
-          />
-          <StatusBadge
-            label={`Score ${patient.score}`}
-            tone={patient.score >= 8 ? "red" : patient.score >= 6 ? "amber" : "green"}
-          />
+        <div style={styles.identityRight}>
+          <StatusBadge label={status.label} tone={status.tone} />
         </div>
-      </header>
-
-      <section style={identityGridStyle}>
-        <IdentityCard title="Identité et séjour">
-          <IdentityRow label="Date de naissance" value={patient.birthDate} />
-          <IdentityRow label="Âge" value={`${patient.age} ans`} />
-          <IdentityRow label="INS" value={patient.ins} />
-          <IdentityRow label="IEP" value={patient.iep} />
-          <IdentityRow label="Service" value={patient.service} />
-          <IdentityRow label="Chambre / Lit" value={`${patient.chambre} / ${patient.lit}`} />
-          <IdentityRow label="Entrée" value={patient.entryDate} />
-          <IdentityRow label="Sortie estimée" value={patient.estimatedDischargeDate} />
-          <IdentityRow label="Territoire" value={patient.city} />
-        </IdentityCard>
-
-        <IdentityCard title="Contacts et protection">
-          <Field label="Personne de confiance">
-            <input
-              value={patientState.trustedPerson.name}
-              onChange={(e) => updateTrusted("name", e.target.value)}
-              style={inputStyle}
-            />
-          </Field>
-
-          <Field label="Lien">
-            <input
-              value={patientState.trustedPerson.relation}
-              onChange={(e) => updateTrusted("relation", e.target.value)}
-              style={inputStyle}
-            />
-          </Field>
-
-          <Field label="Téléphone">
-            <input
-              value={patientState.trustedPerson.phone}
-              onChange={(e) => updateTrusted("phone", e.target.value)}
-              style={inputStyle}
-            />
-          </Field>
-
-          <Field label="Personne à prévenir">
-            <input
-              value={patientState.emergencyContact.name}
-              onChange={(e) => updateEmergency("name", e.target.value)}
-              style={inputStyle}
-            />
-          </Field>
-
-          <Field label="Téléphone">
-            <input
-              value={patientState.emergencyContact.phone}
-              onChange={(e) => updateEmergency("phone", e.target.value)}
-              style={inputStyle}
-            />
-          </Field>
-
-          <Field label="Mesure de protection">
-            <select
-              value={patientState.protection.type}
-              onChange={(e) => updateProtection("type", e.target.value)}
-              style={inputStyle}
-            >
-              <option>Aucune</option>
-              <option>Tutelle</option>
-              <option>Curatelle</option>
-              <option>Sauvegarde de justice</option>
-            </select>
-          </Field>
-
-          {patientState.protection.type !== "Aucune" && (
-            <>
-              <Field label="Représentant">
-                <input
-                  value={patientState.protection.representative}
-                  onChange={(e) => updateProtection("representative", e.target.value)}
-                  style={inputStyle}
-                />
-              </Field>
-
-              <Field label="Téléphone">
-                <input
-                  value={patientState.protection.phone}
-                  onChange={(e) => updateProtection("phone", e.target.value)}
-                  style={inputStyle}
-                />
-              </Field>
-            </>
-          )}
-        </IdentityCard>
       </section>
 
-      <section style={statusGridStyle}>
-        <Panel title="Statut de sortie" subtitle="Lecture immédiate">
-          <CheckRow
-            label="Sortant médicalement"
-            checked={patient.sortantMedicalement}
-            readOnly
-          />
-          <CheckRow
-            label="Solution d’aval trouvée"
-            checked={patientState.status.solutionFound}
-            onChange={(value) => updateStatus("solutionFound", value)}
-          />
-          <CheckRow
-            label="Transport organisé"
-            checked={patientState.status.transportReady}
-            onChange={(value) => updateStatus("transportReady", value)}
-          />
-          <CheckRow
-            label="Sortie programmée"
-            checked={patientState.status.dischargePlanned}
-            onChange={(value) => updateStatus("dischargePlanned", value)}
-          />
-        </Panel>
-
-        <Panel title="Recueil d’entrée" subtitle="Anticipation sortie">
-          <Field label="Lieu de vie">
-            <select
-              value={patientState.intake.livingPlace}
-              onChange={(e) => updateIntake("livingPlace", e.target.value)}
-              style={inputStyle}
-            >
-              <option>Domicile</option>
-              <option>Domicile avec aide</option>
-              <option>EHPAD</option>
-              <option>Résidence autonomie</option>
-              <option>Foyer</option>
-              <option>Sans domicile</option>
-            </select>
-          </Field>
-
-          <Field label="Aidant">
-            <select
-              value={patientState.intake.aidant}
-              onChange={(e) => updateIntake("aidant", e.target.value)}
-              style={inputStyle}
-            >
-              <option>Oui</option>
-              <option>Non</option>
-              <option>Aidant épuisé</option>
-            </select>
-          </Field>
-
-          <Field label="Autonomie">
-            <select
-              value={patientState.intake.autonomy}
-              onChange={(e) => updateIntake("autonomy", e.target.value)}
-              style={inputStyle}
-            >
-              <option>Indépendant</option>
-              <option>Fragile</option>
-              <option>Dépendant</option>
-            </select>
-          </Field>
-
-          <Field label="Territoire">
-            <input
-              value={patientState.intake.territory}
-              onChange={(e) => updateIntake("territory", e.target.value)}
-              style={inputStyle}
-            />
-          </Field>
-
-          <Field label="Niveau d’anticipation">
-            <select
-              value={patientState.intake.anticipation}
-              onChange={(e) => updateIntake("anticipation", e.target.value)}
-              style={inputStyle}
-            >
-              <option>Standard</option>
-              <option>Vigilance</option>
-              <option>Prioritaire dès maintenant</option>
-            </select>
-          </Field>
-        </Panel>
-      </section>
-
-      <section style={mainGridStyle}>
-        <div style={mainColumnStyle}>
-          <Panel title="Freins identifiés" subtitle="Évolutifs pendant l’hospitalisation">
-            <div style={barrierListStyle}>
-              {patientState.barriers.map((barrier, index) => (
-                <div key={`${barrier}-${index}`} style={barrierTagStyle}>
-                  <span>{barrier}</span>
-                  <button
-                    onClick={() => removeBarrier(index)}
-                    style={miniRemoveButtonStyle}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+      <section style={styles.mainGrid}>
+        <div style={styles.leftColumn}>
+          <Panel title="Pilotage sortie" subtitle="Lecture clinique et capacitaire">
+            <div style={styles.kpiGrid}>
+              <MiniKpi label="Admission" value={patient.entryDate || "—"} />
+              <MiniKpi label="Présence" value={`${stayDays} j`} />
+              <MiniKpi
+                label="Sortant médical"
+                value={patient.sortantMedicalement ? "Oui" : "Non"}
+                tone={patient.sortantMedicalement ? "blue" : "neutral"}
+              />
+              <MiniKpi
+                label="Jours évitables"
+                value={patient.sortantMedicalement ? `${patient.joursEvitables} j` : "—"}
+                tone="amber"
+              />
             </div>
 
-            <div style={inlineFormStyle}>
-              <input
-                value={newBarrier}
-                onChange={(e) => setNewBarrier(e.target.value)}
-                placeholder="Ajouter un frein"
-                style={inputStyle}
-              />
-              <button onClick={addBarrier} style={primaryButtonStyle}>
-                Ajouter
-              </button>
+            <div style={styles.focusCard}>
+              <div style={styles.focusLabel}>Frein principal</div>
+              <div style={styles.focusValue}>{patient.blocage}</div>
+            </div>
+
+            <div style={styles.kpiGrid}>
+              <MiniKpi label="Score" value={patient.score} tone="blue" />
+              <MiniKpi label="Niveau" value={status.label} tone={status.tone} />
+              <MiniKpi label="Service" value={patient.service} />
+              <MiniKpi label="Lit" value={`${patient.chambre} / ${patient.lit}`} />
             </div>
           </Panel>
 
-          <Panel title="Workflow des actions" subtitle="Ce qui a été tenté, en cours ou refusé">
-            <div style={{ display: "grid", gap: 10 }}>
-              {patientState.workflow.map((item) => (
-                <div key={item.id} style={workflowRowStyle}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={workflowTitleStyle}>{item.title}</div>
-                    <div style={workflowMetaStyle}>
-                      {item.owner} • dernière maj : {item.lastUpdate}
-                    </div>
-                  </div>
+          <Panel title="Parcours et aval" subtitle="Organisation de la sortie">
+            <InfoGrid
+              items={[
+                ["Destination prévue", extendedPatient.destinationPrevue],
+                ["Besoin d’aval", extendedPatient.besoinAval],
+                ["Transport", extendedPatient.transport],
+                ["Documents de sortie", extendedPatient.documentsSortie],
+              ]}
+            />
+          </Panel>
 
-                  <select
-                    value={item.status}
-                    onChange={(e) =>
-                      updateWorkflowAction(item.id, "status", e.target.value)
-                    }
-                    style={statusSelectStyle}
-                  >
-                    <option>À lancer</option>
-                    <option>En cours</option>
-                    <option>Accepté</option>
-                    <option>Refusé</option>
-                    <option>Terminé</option>
-                  </select>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ marginTop: 12 }}>
-              <button onClick={addWorkflowAction} style={primaryButtonStyle}>
-                Ajouter une action
-              </button>
-            </div>
+          <Panel title="Entourage et protection" subtitle="Sécurisation administrative et familiale">
+            <InfoGrid
+              items={[
+                ["Personne de confiance", extendedPatient.personneConfiance],
+                ["Personne à prévenir", extendedPatient.personneAPrevenir],
+                ["Tutelle / curatelle", extendedPatient.protectionJuridique],
+              ]}
+            />
           </Panel>
         </div>
 
-        <div style={sideColumnStyle}>
-          <Panel title="Notes équipe" subtitle={`Messages non lus : ${unreadNotes}`}>
-            <div style={inlineFormColumnStyle}>
-              <textarea
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Ajouter une note utile à l’équipe"
-                style={textareaStyle}
-              />
-              <div style={inlineFormStyle}>
-                <select
-                  value={newNotePriority}
-                  onChange={(e) => setNewNotePriority(e.target.value)}
-                  style={inputStyle}
-                >
-                  <option>Normal</option>
-                  <option>Important</option>
-                  <option>Urgent</option>
-                </select>
-                <button onClick={addNote} style={primaryButtonStyle}>
-                  Ajouter
-                </button>
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-              {patientState.notes.map((note) => (
-                <div key={note.id} style={noteCardStyle(note.priority)}>
-                  <div style={noteTopStyle}>
-                    <div style={noteMetaStyle}>
-                      {note.author} • {note.date}
-                    </div>
-
-                    <div style={badgeGroupStyle}>
-                      <PriorityTextBadge label={note.priority} />
-                      {!note.read && (
-                        <button
-                          onClick={() => markNoteRead(note.id)}
-                          style={miniActionButtonStyle}
-                        >
-                          Marquer lu
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div style={noteTextStyle}>{note.text}</div>
-                </div>
-              ))}
-            </div>
+        <div style={styles.rightColumn}>
+          <Panel title="Coordination" subtitle="Acteurs et prochaines actions">
+            <InfoGrid
+              items={[
+                ["Référent médical", extendedPatient.referentMedical],
+                ["Cadre", extendedPatient.cadre],
+                ["Assistante sociale", extendedPatient.assistanteSociale],
+                ["Prochaine action", extendedPatient.nextStep],
+              ]}
+            />
           </Panel>
 
-          <Panel title="Solutions d’aval" subtitle="Suivi des propositions">
-            <div style={{ display: "grid", gap: 10 }}>
-              {patientState.solutions.map((solution) => (
-                <div key={solution.id} style={solutionRowStyle}>
-                  <div style={workflowTitleStyle}>{solution.label}</div>
-                  <select
-                    value={solution.status}
-                    onChange={(e) => updateSolution(solution.id, e.target.value)}
-                    style={statusSelectStyle}
-                  >
-                    <option>À contacter</option>
-                    <option>À évaluer</option>
-                    <option>En cours</option>
-                    <option>Accepté</option>
-                    <option>Refusé</option>
-                  </select>
+          <Panel title="Notes opérationnelles" subtitle="À suivre aujourd’hui">
+            <div style={styles.notesList}>
+              {extendedPatient.notes.map((note, index) => (
+                <div key={index} style={styles.noteItem}>
+                  <div style={styles.noteBullet} />
+                  <div style={styles.noteText}>{note}</div>
                 </div>
               ))}
             </div>
@@ -503,414 +160,285 @@ export default function PatientView({
 
 function Panel({ title, subtitle, children }) {
   return (
-    <div style={panelStyle}>
-      <div style={panelHeaderStyle}>
-        <div style={panelTitleStyle}>{title}</div>
-        <div style={panelSubtitleStyle}>{subtitle}</div>
-      </div>
-      {children}
+    <section style={styles.panel}>
+      <div style={styles.panelTitle}>{title}</div>
+      {subtitle ? <div style={styles.panelSubtitle}>{subtitle}</div> : null}
+      <div style={{ marginTop: 14 }}>{children}</div>
+    </section>
+  );
+}
+
+function MiniKpi({ label, value, tone = "neutral" }) {
+  const toneStyles = {
+    neutral: { bg: "#FFFFFF", color: "#0F172A", border: "#E5E7EB" },
+    blue: { bg: "#EFF6FF", color: "#1D4ED8", border: "#BFDBFE" },
+    amber: { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A" },
+    red: { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA" },
+    green: { bg: "#ECFDF5", color: "#059669", border: "#A7F3D0" },
+  };
+
+  const t = toneStyles[tone] || toneStyles.neutral;
+
+  return (
+    <div style={{ ...styles.miniKpi, background: t.bg, borderColor: t.border }}>
+      <div style={styles.miniKpiLabel}>{label}</div>
+      <div style={{ ...styles.miniKpiValue, color: t.color }}>{value}</div>
     </div>
   );
 }
 
-function IdentityCard({ title, children }) {
+function InfoGrid({ items }) {
   return (
-    <div style={panelStyle}>
-      <div style={panelTitleStyle}>{title}</div>
-      <div style={{ marginTop: 12, display: "grid", gap: 10 }}>{children}</div>
+    <div style={styles.infoGrid}>
+      {items.map(([label, value]) => (
+        <div key={label} style={styles.infoCard}>
+          <div style={styles.infoLabel}>{label}</div>
+          <div style={styles.infoValue}>{value}</div>
+        </div>
+      ))}
     </div>
   );
 }
 
-function IdentityRow({ label, value }) {
-  return (
-    <div style={identityRowStyle}>
-      <div style={identityLabelStyle}>{label}</div>
-      <div style={identityValueStyle}>{value}</div>
-    </div>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <div style={{ display: "grid", gap: 6 }}>
-      <div style={fieldLabelStyle}>{label}</div>
-      {children}
-    </div>
-  );
-}
-
-function CheckRow({ label, checked, onChange, readOnly = false }) {
-  return (
-    <label style={checkRowStyle}>
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={readOnly}
-        onChange={(e) => onChange && onChange(e.target.checked)}
-      />
-      <span>{label}</span>
-    </label>
-  );
-}
-
-function StatusBadge({ label, tone }) {
+function StatusBadge({ label, tone = "neutral" }) {
   const tones = {
-    blue: { bg: "#DBEAFE", color: "#1D4ED8" },
+    neutral: { bg: "#E2E8F0", color: "#334155" },
     red: { bg: "#FEE2E2", color: "#DC2626" },
     amber: { bg: "#FEF3C7", color: "#D97706" },
     green: { bg: "#D1FAE5", color: "#059669" },
-    slate: { bg: "#E5E7EB", color: "#475569" },
   };
 
+  const t = tones[tone] || tones.neutral;
+
   return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "6px 10px",
-        borderRadius: 999,
-        background: tones[tone].bg,
-        color: tones[tone].color,
-        fontSize: 12,
-        fontWeight: 800,
-      }}
-    >
+    <span style={{ ...styles.badge, background: t.bg, color: t.color }}>
       {label}
     </span>
   );
 }
 
-function PriorityTextBadge({ label }) {
-  const config = {
-    Urgent: { bg: "#FEE2E2", color: "#DC2626" },
-    Important: { bg: "#FEF3C7", color: "#D97706" },
-    Normal: { bg: "#DBEAFE", color: "#1D4ED8" },
-  };
+const styles = {
+  page: {
+    maxWidth: 1360,
+    margin: "0 auto",
+    padding: 18,
+    background: "#F8FAFC",
+    minHeight: "100vh",
+  },
 
-  const tone = config[label] || config.Normal;
+  topBar: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 16,
+    flexWrap: "wrap",
+  },
 
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "5px 9px",
-        borderRadius: 999,
-        background: tone.bg,
-        color: tone.color,
-        fontSize: 11,
-        fontWeight: 700,
-      }}
-    >
-      {label}
-    </span>
-  );
-}
-
-function noteCardStyle(priority) {
-  let bg = "#FFFFFF";
-
-  if (priority === "Urgent") bg = "#FFF7F7";
-  if (priority === "Important") bg = "#FFFBEB";
-
-  return {
-    background: bg,
-    border: "1px solid #E5E7EB",
+  backButton: {
+    border: "1px solid #CBD5E1",
+    background: "#FFFFFF",
     borderRadius: 12,
+    padding: "10px 14px",
+    fontWeight: 700,
+    color: "#334155",
+  },
+
+  topBarTitle: {
+    fontSize: 14,
+    color: "#64748B",
+    fontWeight: 700,
+  },
+
+  identityHero: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 16,
+    background: "linear-gradient(90deg, #1E3A8A 0%, #2563EB 100%)",
+    color: "#FFFFFF",
+    borderRadius: 22,
+    padding: 22,
+    boxShadow: "0 20px 44px rgba(37,99,235,0.18)",
+    marginBottom: 18,
+    flexWrap: "wrap",
+  },
+
+  identityLeft: {
+    minWidth: 0,
+  },
+
+  patientName: {
+    fontSize: 34,
+    fontWeight: 900,
+    lineHeight: 1.05,
+  },
+
+  identityMeta: {
+    marginTop: 8,
+    fontSize: 14,
+    opacity: 0.95,
+    lineHeight: 1.5,
+  },
+
+  identityRight: {
+    display: "flex",
+    alignItems: "flex-start",
+  },
+
+  badge: {
+    display: "inline-block",
+    padding: "8px 12px",
+    borderRadius: 999,
+    fontSize: 12,
+    fontWeight: 800,
+  },
+
+  mainGrid: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0,1.8fr) minmax(320px,1fr)",
+    gap: 16,
+    alignItems: "start",
+  },
+
+  leftColumn: {
+    display: "grid",
+    gap: 16,
+  },
+
+  rightColumn: {
+    display: "grid",
+    gap: 16,
+  },
+
+  panel: {
+    background: "#FFFFFF",
+    border: "1px solid #E5E7EB",
+    borderRadius: 20,
+    padding: 18,
+    boxShadow: "0 12px 28px rgba(15,23,42,0.05)",
+  },
+
+  panelTitle: {
+    fontSize: 20,
+    fontWeight: 800,
+    color: "#0F172A",
+  },
+
+  panelSubtitle: {
+    marginTop: 4,
+    fontSize: 13,
+    color: "#64748B",
+  },
+
+  kpiGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+    gap: 12,
+  },
+
+  miniKpi: {
+    border: "1px solid #E5E7EB",
+    borderRadius: 16,
+    padding: 14,
+  },
+
+  miniKpiLabel: {
+    fontSize: 11,
+    color: "#64748B",
+    fontWeight: 800,
+    textTransform: "uppercase",
+    letterSpacing: 0.25,
+    marginBottom: 6,
+  },
+
+  miniKpiValue: {
+    fontSize: 22,
+    fontWeight: 900,
+    lineHeight: 1.1,
+  },
+
+  focusCard: {
+    marginTop: 12,
+    marginBottom: 12,
+    border: "1px solid #DBEAFE",
+    background: "linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)",
+    borderRadius: 18,
+    padding: 16,
+  },
+
+  focusLabel: {
+    fontSize: 11,
+    color: "#1E40AF",
+    fontWeight: 800,
+    textTransform: "uppercase",
+    letterSpacing: 0.25,
+    marginBottom: 6,
+  },
+
+  focusValue: {
+    fontSize: 22,
+    fontWeight: 800,
+    color: "#0F172A",
+    lineHeight: 1.25,
+  },
+
+  infoGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 12,
+  },
+
+  infoCard: {
+    border: "1px solid #E5E7EB",
+    borderRadius: 16,
+    padding: 14,
+    background: "#FFFFFF",
+  },
+
+  infoLabel: {
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.2,
+    color: "#64748B",
+    fontWeight: 800,
+    marginBottom: 6,
+  },
+
+  infoValue: {
+    fontSize: 14,
+    color: "#0F172A",
+    fontWeight: 600,
+    lineHeight: 1.45,
+  },
+
+  notesList: {
+    display: "grid",
+    gap: 10,
+  },
+
+  noteItem: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 10,
+    border: "1px solid #E5E7EB",
+    borderRadius: 14,
     padding: 12,
-  };
-}
+    background: "#FFFFFF",
+  },
 
-const pageStyle = {
-  maxWidth: 1280,
-  margin: "0 auto",
-  padding: 12,
-};
+  noteBullet: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    background: "#2563EB",
+    marginTop: 7,
+    flexShrink: 0,
+  },
 
-const topBarStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: 12,
-  flexWrap: "wrap",
-  background: "#FFFFFF",
-  border: "1px solid #E5E7EB",
-  borderRadius: 16,
-  padding: "12px 14px",
-  marginBottom: 12,
-  boxShadow: "0 2px 10px rgba(15,23,42,0.04)",
-};
-
-const topLeftStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: 12,
-  flexWrap: "wrap",
-};
-
-const backButtonStyle = {
-  border: "1px solid #E5E7EB",
-  background: "#FFFFFF",
-  color: "#111827",
-  padding: "8px 10px",
-  borderRadius: 10,
-  fontWeight: 700,
-  fontSize: 12,
-};
-
-const titleStyle = {
-  fontSize: 18,
-  fontWeight: 800,
-  color: "#111827",
-};
-
-const subtitleStyle = {
-  marginTop: 2,
-  fontSize: 12,
-  color: "#6B7280",
-};
-
-const topRightStyle = {
-  display: "flex",
-  gap: 8,
-  flexWrap: "wrap",
-};
-
-const identityGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-  gap: 12,
-  marginBottom: 12,
-};
-
-const statusGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-  gap: 12,
-  marginBottom: 12,
-};
-
-const mainGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-  gap: 12,
-  alignItems: "start",
-};
-
-const mainColumnStyle = {
-  minWidth: 0,
-};
-
-const sideColumnStyle = {
-  display: "grid",
-  gap: 12,
-};
-
-const panelStyle = {
-  background: "#FFFFFF",
-  border: "1px solid #E5E7EB",
-  borderRadius: 16,
-  padding: 14,
-  boxShadow: "0 2px 10px rgba(15,23,42,0.04)",
-};
-
-const panelHeaderStyle = {
-  marginBottom: 12,
-};
-
-const panelTitleStyle = {
-  fontSize: 16,
-  fontWeight: 800,
-  color: "#111827",
-};
-
-const panelSubtitleStyle = {
-  marginTop: 2,
-  fontSize: 12,
-  color: "#6B7280",
-};
-
-const identityRowStyle = {
-  display: "grid",
-  gap: 3,
-};
-
-const identityLabelStyle = {
-  fontSize: 12,
-  color: "#6B7280",
-};
-
-const identityValueStyle = {
-  fontSize: 14,
-  color: "#111827",
-  fontWeight: 700,
-};
-
-const fieldLabelStyle = {
-  fontSize: 12,
-  color: "#6B7280",
-  fontWeight: 700,
-};
-
-const checkRowStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  padding: "8px 0",
-  borderBottom: "1px solid #F1F5F9",
-  fontSize: 14,
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid #E5E7EB",
-  background: "#FFFFFF",
-  fontSize: 14,
-  boxSizing: "border-box",
-};
-
-const textareaStyle = {
-  width: "100%",
-  minHeight: 90,
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid #E5E7EB",
-  background: "#FFFFFF",
-  fontSize: 14,
-  resize: "vertical",
-  boxSizing: "border-box",
-};
-
-const inlineFormStyle = {
-  display: "flex",
-  gap: 8,
-  flexWrap: "wrap",
-  alignItems: "center",
-};
-
-const inlineFormColumnStyle = {
-  display: "grid",
-  gap: 8,
-};
-
-const primaryButtonStyle = {
-  border: "none",
-  background: "#2563EB",
-  color: "#FFFFFF",
-  padding: "10px 12px",
-  borderRadius: 10,
-  fontWeight: 700,
-  fontSize: 13,
-  whiteSpace: "nowrap",
-};
-
-const barrierListStyle = {
-  display: "flex",
-  gap: 8,
-  flexWrap: "wrap",
-  marginBottom: 12,
-};
-
-const barrierTagStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 8,
-  background: "#EFF6FF",
-  color: "#1D4ED8",
-  borderRadius: 999,
-  padding: "7px 10px",
-  fontSize: 12,
-  fontWeight: 700,
-};
-
-const miniRemoveButtonStyle = {
-  border: "none",
-  background: "transparent",
-  color: "#1D4ED8",
-  fontWeight: 800,
-  cursor: "pointer",
-  padding: 0,
-};
-
-const workflowRowStyle = {
-  border: "1px solid #E5E7EB",
-  borderRadius: 12,
-  padding: 12,
-  background: "#FFFFFF",
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 10,
-  flexWrap: "wrap",
-  alignItems: "center",
-};
-
-const workflowTitleStyle = {
-  fontSize: 14,
-  fontWeight: 700,
-  color: "#111827",
-};
-
-const workflowMetaStyle = {
-  marginTop: 4,
-  fontSize: 12,
-  color: "#6B7280",
-};
-
-const statusSelectStyle = {
-  minWidth: 140,
-  padding: "9px 10px",
-  borderRadius: 10,
-  border: "1px solid #E5E7EB",
-  background: "#FFFFFF",
-  fontSize: 13,
-};
-
-const noteTopStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 10,
-  alignItems: "center",
-  flexWrap: "wrap",
-  marginBottom: 8,
-};
-
-const noteMetaStyle = {
-  fontSize: 12,
-  color: "#6B7280",
-};
-
-const badgeGroupStyle = {
-  display: "flex",
-  gap: 8,
-  flexWrap: "wrap",
-  alignItems: "center",
-};
-
-const miniActionButtonStyle = {
-  border: "1px solid #E5E7EB",
-  background: "#FFFFFF",
-  color: "#111827",
-  padding: "5px 8px",
-  borderRadius: 8,
-  fontSize: 11,
-  fontWeight: 700,
-};
-
-const noteTextStyle = {
-  fontSize: 14,
-  color: "#111827",
-  lineHeight: 1.5,
-};
-
-const solutionRowStyle = {
-  border: "1px solid #E5E7EB",
-  borderRadius: 12,
-  padding: 12,
-  background: "#FFFFFF",
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 10,
-  alignItems: "center",
-  flexWrap: "wrap",
+  noteText: {
+    fontSize: 14,
+    color: "#0F172A",
+    lineHeight: 1.5,
+  },
 };
