@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 
+const SERVICE_CAPACITIES = {
+  Pneumologie: 24,
+  Médecine: 30,
+  Oncologie: 18,
+  Chirurgie: 28,
+  "Médecine polyvalente": 26,
+  Neurologie: 20,
+  Cardiologie: 22,
+};
+
 export default function Dashboard({ patients = [], onOpenPatient }) {
   const [service, setService] = useState("Tous");
   const [status, setStatus] = useState("Tous");
@@ -108,6 +118,23 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
     [filtered]
   );
 
+  const occupiedBeds = filtered.length;
+
+  const capacity = useMemo(() => {
+    if (service !== "Tous") {
+      return SERVICE_CAPACITIES[service] || occupiedBeds;
+    }
+
+    const visibleServices = new Set(filtered.map((p) => p.service));
+    let total = 0;
+
+    visibleServices.forEach((svc) => {
+      total += SERVICE_CAPACITIES[svc] || 0;
+    });
+
+    return total || occupiedBeds;
+  }, [service, filtered, occupiedBeds]);
+
   const stats = useMemo(() => {
     const medicalReady = medicalReadyPatients.length;
     const blocked = medicalReadyPatients.filter((p) => p.score >= 8).length;
@@ -117,10 +144,6 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
       0
     );
     const recoverableBeds = Math.max(0, Math.round(avoidableDays / 7));
-    const totalPresence = medicalReadyPatients.reduce(
-      (sum, p) => sum + (p.stayDays || 0),
-      0
-    );
 
     return {
       medicalReady,
@@ -128,11 +151,11 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
       risk,
       avoidableDays,
       recoverableBeds,
-      totalPresence,
+      occupancyLabel: `${occupiedBeds} / ${capacity}`,
       tension:
         blocked >= 3 ? "Critique" : blocked >= 2 ? "Élevée" : blocked === 1 ? "Sous tension" : "Modérée",
     };
-  }, [medicalReadyPatients]);
+  }, [medicalReadyPatients, occupiedBeds, capacity]);
 
   const dominantBarriers = useMemo(() => {
     const grouped = {};
@@ -210,11 +233,6 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
   const priorityService = servicesInTension[0] || null;
   const mainBarrier = dominantBarriers[0] || null;
 
-  const summaryText =
-    stats.medicalReady === 0
-      ? "Aucun patient médicalement sortant n’est détecté dans le périmètre affiché."
-      : `${stats.medicalReady} patient(s) médicalement sortant(s), ${stats.blocked} bloqué(s), ${stats.avoidableDays} jours évitables, soit environ ${stats.recoverableBeds} lit(s) récupérable(s).`;
-
   const actionTitle = priorityService
     ? `Priorité : ${priorityService.name}`
     : "Surveillance courante";
@@ -245,10 +263,10 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
       </header>
 
       <section style={styles.kpiStrip}>
+        <KpiTile label="Lits occupés / capacitaire" value={stats.occupancyLabel} tone="blue" />
         <KpiTile label="Sortants médicaux" value={stats.medicalReady} tone="blue" />
         <KpiTile label="Bloqués" value={stats.blocked} tone="red" />
-        <KpiTile label="Risque" value={stats.risk} tone="amber" />
-        <KpiTile label="Jours évitables" value={stats.avoidableDays} tone="blue" />
+        <KpiTile label="Jours évitables" value={stats.avoidableDays} tone="amber" />
         <KpiTile label="Lits récupérables" value={stats.recoverableBeds} tone="blue" />
       </section>
 
@@ -403,23 +421,30 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
         </div>
 
         <div style={styles.sideColumn}>
-          <Panel title="Lecture opérationnelle" subtitle="Synthèse immédiate">
-            <div style={styles.heroSummary}>
-              <div style={styles.heroTitle}>Situation actuelle</div>
-              <div style={styles.heroText}>{summaryText}</div>
-              <div style={styles.heroMeta}>
-                Présence cumulée des patients médicalement sortants : {stats.totalPresence} jours
+          <Panel title="Services en tension" subtitle="Lecture capacitaire par service">
+            {servicesInTension.length === 0 ? (
+              <div style={styles.empty}>Aucun service en tension.</div>
+            ) : (
+              <div style={styles.stack}>
+                {servicesInTension.map((s) => (
+                  <button
+                    key={s.name}
+                    type="button"
+                    onClick={() => setService(s.name)}
+                    style={styles.serviceCardButton}
+                  >
+                    <div style={styles.insightTop}>
+                      <div style={styles.serviceName}>{s.name}</div>
+                      <ServiceBadge level={s.level} />
+                    </div>
+                    <div style={styles.serviceMeta}>
+                      {s.count} sortant(s) médicaux • {s.days} jours évitables
+                    </div>
+                    <div style={styles.serviceMeta}>{s.blocked} patient(s) bloqué(s)</div>
+                  </button>
+                ))}
               </div>
-            </div>
-
-            <MetricGrid
-              items={[
-                { label: "Sortants médicaux", value: stats.medicalReady },
-                { label: "Patients bloqués", value: stats.blocked },
-                { label: "Patients à risque", value: stats.risk },
-                { label: "Tension", value: stats.tension },
-              ]}
-            />
+            )}
           </Panel>
 
           <Panel title="Freins dominants" subtitle="Cliquer pour voir les patients concernés">
@@ -477,32 +502,6 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
             )}
           </Panel>
 
-          <Panel title="Services en tension" subtitle="Lecture capacitaire par service">
-            {servicesInTension.length === 0 ? (
-              <div style={styles.empty}>Aucun service en tension.</div>
-            ) : (
-              <div style={styles.stack}>
-                {servicesInTension.map((s) => (
-                  <button
-                    key={s.name}
-                    type="button"
-                    onClick={() => setService(s.name)}
-                    style={styles.serviceCardButton}
-                  >
-                    <div style={styles.insightTop}>
-                      <div style={styles.serviceName}>{s.name}</div>
-                      <ServiceBadge level={s.level} />
-                    </div>
-                    <div style={styles.serviceMeta}>
-                      {s.count} sortant(s) médicaux • {s.days} jours évitables
-                    </div>
-                    <div style={styles.serviceMeta}>{s.blocked} patient(s) bloqué(s)</div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </Panel>
-
           <Panel title="Action prioritaire" subtitle="Décision du jour">
             <div style={styles.actionTitle}>{actionTitle}</div>
             <div style={styles.actionBox}>{actionText}</div>
@@ -549,19 +548,6 @@ function Panel({ title, subtitle, children }) {
       <div style={styles.sideTitle}>{title}</div>
       {subtitle ? <div style={styles.sideSubtitle}>{subtitle}</div> : null}
       <div style={{ marginTop: 10 }}>{children}</div>
-    </div>
-  );
-}
-
-function MetricGrid({ items }) {
-  return (
-    <div style={styles.metricGrid}>
-      {items.map((item) => (
-        <div key={item.label} style={styles.metricCard}>
-          <div style={styles.metricLabel}>{item.label}</div>
-          <div style={styles.metricValue}>{item.value}</div>
-        </div>
-      ))}
     </div>
   );
 }
@@ -692,7 +678,7 @@ const styles = {
   },
 
   kpiValueHero: {
-    fontSize: 44,
+    fontSize: 40,
     fontWeight: 900,
     lineHeight: 1,
   },
@@ -976,36 +962,6 @@ const styles = {
     fontSize: 12,
     fontWeight: 700,
     boxShadow: "0 8px 16px rgba(37,99,235,0.08)",
-  },
-
-  heroSummary: {
-    border: "1px solid #DBEAFE",
-    background: "linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)",
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 12,
-  },
-
-  heroTitle: {
-    fontSize: 12,
-    fontWeight: 800,
-    color: "#1E40AF",
-    marginBottom: 6,
-    textTransform: "uppercase",
-    letterSpacing: 0.3,
-  },
-
-  heroText: {
-    fontSize: 15,
-    lineHeight: 1.6,
-    color: "#0F172A",
-    fontWeight: 700,
-  },
-
-  heroMeta: {
-    marginTop: 8,
-    fontSize: 12,
-    color: "#64748B",
   },
 
   metricGrid: {
