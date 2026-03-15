@@ -5,11 +5,24 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
   const [status, setStatus] = useState("Tous");
   const [barrier, setBarrier] = useState("Tous");
   const [search, setSearch] = useState("");
+  const [activeBarrier, setActiveBarrier] = useState(null);
   const [localPatients, setLocalPatients] = useState(patients);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 980 : false
+  );
 
   useEffect(() => {
     setLocalPatients(patients);
   }, [patients]);
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < 980);
+    }
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const services = useMemo(
     () => ["Tous", ...new Set(localPatients.map((p) => p.service))],
@@ -31,8 +44,34 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
     );
   }
 
+  function parseFrenchDate(dateString) {
+    if (!dateString || typeof dateString !== "string") return null;
+    const [day, month, year] = dateString.split("/");
+    if (!day || !month || !year) return null;
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function daysSince(dateString) {
+    const date = parseFrenchDate(dateString);
+    if (!date) return null;
+
+    const today = new Date();
+    const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const diffMs = end - start;
+    return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+  }
+
+  const enrichedPatients = useMemo(() => {
+    return localPatients.map((p) => ({
+      ...p,
+      presenceDays: daysSince(p.entryDate),
+    }));
+  }, [localPatients]);
+
   const filtered = useMemo(() => {
-    return localPatients
+    return enrichedPatients
       .filter((p) => {
         if (service !== "Tous" && p.service !== service) return false;
 
@@ -62,7 +101,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
         if (b.score !== a.score) return b.score - a.score;
         return (b.joursEvitables || 0) - (a.joursEvitables || 0);
       });
-  }, [localPatients, service, status, barrier, search]);
+  }, [enrichedPatients, service, status, barrier, search]);
 
   const medicalReadyPatients = useMemo(
     () => filtered.filter((p) => p.sortantMedicalement),
@@ -78,6 +117,13 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
       0
     );
     const recoverableBeds = Math.max(0, Math.round(avoidableDays / 7));
+    const averagePresence =
+      medicalReadyPatients.length > 0
+        ? Math.round(
+            medicalReadyPatients.reduce((sum, p) => sum + (p.presenceDays || 0), 0) /
+              medicalReadyPatients.length
+          )
+        : 0;
 
     return {
       medicalReady,
@@ -85,44 +131,54 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
       risk,
       avoidableDays,
       recoverableBeds,
+      averagePresence,
       tension:
         blocked >= 2 ? "Élevée" : blocked === 1 ? "Sous tension" : "Modérée",
     };
   }, [medicalReadyPatients]);
 
-  const blockingReasons = useMemo(() => {
-    const map = {};
+  const dominantBarriers = useMemo(() => {
+    const grouped = {};
+
     medicalReadyPatients.forEach((p) => {
-      if (!map[p.blocage]) {
-        map[p.blocage] = { label: p.blocage, count: 0, days: 0 };
+      if (!grouped[p.blocage]) {
+        grouped[p.blocage] = {
+          label: p.blocage,
+          count: 0,
+          days: 0,
+          patients: [],
+        };
       }
-      map[p.blocage].count += 1;
-      map[p.blocage].days += p.joursEvitables || 0;
+
+      grouped[p.blocage].count += 1;
+      grouped[p.blocage].days += p.joursEvitables || 0;
+      grouped[p.blocage].patients.push(p);
     });
 
-    return Object.values(map)
+    return Object.values(grouped)
       .sort((a, b) => b.days - a.days || b.count - a.count)
-      .slice(0, 4);
+      .slice(0, 5);
   }, [medicalReadyPatients]);
 
   const servicesInTension = useMemo(() => {
-    const map = {};
+    const grouped = {};
 
     medicalReadyPatients.forEach((p) => {
-      if (!map[p.service]) {
-        map[p.service] = {
+      if (!grouped[p.service]) {
+        grouped[p.service] = {
           name: p.service,
           medicalReady: 0,
           blocked: 0,
           days: 0,
         };
       }
-      map[p.service].medicalReady += 1;
-      map[p.service].days += p.joursEvitables || 0;
-      if (p.score >= 8) map[p.service].blocked += 1;
+
+      grouped[p.service].medicalReady += 1;
+      grouped[p.service].days += p.joursEvitables || 0;
+      if (p.score >= 8) grouped[p.service].blocked += 1;
     });
 
-    return Object.values(map)
+    return Object.values(grouped)
       .map((s) => ({
         ...s,
         level:
@@ -138,32 +194,29 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
         const rank = { critical: 4, high: 3, medium: 2, low: 1 };
         return rank[b.level] - rank[a.level] || b.days - a.days;
       })
-      .slice(0, 4);
+      .slice(0, 5);
   }, [medicalReadyPatients]);
 
-  const priorityAction = useMemo(() => {
-    const topService = servicesInTension[0];
-    const topBarrier = blockingReasons[0];
+  const selectedBarrierDetails = useMemo(() => {
+    return dominantBarriers.find((b) => b.label === activeBarrier) || null;
+  }, [dominantBarriers, activeBarrier]);
 
-    if (!topService && !topBarrier) {
-      return {
-        title: "Surveillance courante",
-        text: "Aucun blocage capacitaire majeur détecté. Maintenir l’anticipation des sorties.",
-      };
+  useEffect(() => {
+    if (!dominantBarriers.length) {
+      setActiveBarrier(null);
+      return;
     }
-
-    if (topService && topBarrier) {
-      return {
-        title: `Priorité : ${topService.name}`,
-        text: `Concentrer les relances sur ${topService.name} : ${topService.medicalReady} sortant(s) médical(aux), ${topService.days} jours évitables. Frein dominant : ${topBarrier.label}.`,
-      };
+    if (!activeBarrier || !dominantBarriers.some((b) => b.label === activeBarrier)) {
+      setActiveBarrier(dominantBarriers[0].label);
     }
+  }, [dominantBarriers, activeBarrier]);
 
-    return {
-      title: "Priorité parcours",
-      text: "Relancer les solutions d’aval en attente et sécuriser les sorties médicalement prêtes.",
-    };
-  }, [servicesInTension, blockingReasons]);
+  const topService = servicesInTension[0] || null;
+  const topBarrier = dominantBarriers[0] || null;
+
+  const actionText = topService
+    ? `Service prioritaire : ${topService.name}. ${topService.medicalReady} patient(s) médicalement sortant(s), ${topService.days} jours évitables. Frein principal : ${topBarrier ? topBarrier.label.toLowerCase() : "à préciser"}.`
+    : "Aucune tension majeure détectée. Maintenir l’anticipation des sorties et sécuriser les situations à risque.";
 
   return (
     <div style={pageStyle}>
@@ -231,7 +284,12 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
         </div>
       </section>
 
-      <section style={desktopGridStyle}>
+      <section
+        style={{
+          ...desktopGridStyle,
+          gridTemplateColumns: isMobile ? "1fr" : "minmax(0,1.9fr) minmax(320px,0.95fr)",
+        }}
+      >
         <div style={mainColumnStyle}>
           <section style={panelStyle}>
             <div style={panelHeaderStyle}>
@@ -239,62 +297,80 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
               <div style={panelSubtitleStyle}>Coordination de sortie et gestion capacitaire</div>
             </div>
 
-            <div style={desktopTableWrapStyle}>
-              <div style={tableHeaderStyle}>
-                <div>Patient</div>
-                <div>Service</div>
-                <div>Frein</div>
-                <div>Impact</div>
-                <div>Sortant médical</div>
-                <div>Action</div>
+            {filtered.length === 0 ? (
+              <div style={emptyTextStyle}>Aucun patient ne correspond aux filtres.</div>
+            ) : (
+              <div style={patientListStyle}>
+                {filtered.map((p) => (
+                  <div key={p.id} style={patientCardStyle}>
+                    <div style={patientTopRowStyle}>
+                      <div>
+                        <div style={patientNameStyle}>
+                          {p.nom} {p.prenom}
+                        </div>
+                        <div style={metaLineStyle}>
+                          {p.birthDate} • {p.age} ans • INS {p.ins} • IEP {p.iep}
+                        </div>
+                      </div>
+
+                      <div style={patientTopActionsStyle}>
+                        <StatusBadge score={p.score} />
+                        <button style={openButtonStyle} onClick={() => onOpenPatient(p)}>
+                          Ouvrir
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={patientInfoGridStyle}>
+                      <div>
+                        <div style={patientLabelStyle}>Service</div>
+                        <div style={patientValueStyle}>
+                          {p.service} • ch {p.chambre} • lit {p.lit}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div style={patientLabelStyle}>Frein</div>
+                        <div style={patientValueStyle}>{p.blocage}</div>
+                      </div>
+
+                      <div>
+                        <div style={patientLabelStyle}>Admission</div>
+                        <div style={patientValueStyle}>
+                          {p.entryDate || "Non renseignée"}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div style={patientLabelStyle}>Présence</div>
+                        <div style={patientValueStyle}>
+                          {p.presenceDays != null ? `${p.presenceDays} j` : "—"}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div style={patientLabelStyle}>Jours évitables</div>
+                        <div style={patientValueStyle}>
+                          {p.sortantMedicalement ? `${p.joursEvitables} j` : "—"}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div style={patientLabelStyle}>Sortant médical</div>
+                        <label style={checkboxWrapStyle}>
+                          <input
+                            type="checkbox"
+                            checked={p.sortantMedicalement}
+                            onChange={() => toggleMedicalReady(p.id)}
+                          />
+                          <span>{p.sortantMedicalement ? "Oui" : "Non"}</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-
-              {filtered.map((p) => (
-                <div key={p.id} style={tableRowStyle}>
-                  <div style={patientIdentityCellStyle}>
-                    <div style={patientNameStyle}>
-                      {p.nom} {p.prenom}
-                    </div>
-                    <div style={metaLineStyle}>
-                      {p.birthDate} • {p.age} ans
-                    </div>
-                    <div style={metaLineStyle}>
-                      INS {p.ins} • IEP {p.iep}
-                    </div>
-                  </div>
-
-                  <div style={tableCellStyle}>
-                    {p.service} • ch {p.chambre} • lit {p.lit}
-                  </div>
-
-                  <div style={tableCellStyle}>{p.blocage}</div>
-
-                  <div style={tableCellStyle}>
-                    {p.sortantMedicalement ? `${p.joursEvitables} j` : "—"}
-                  </div>
-
-                  <div style={tableCellStyle}>
-                    <label style={checkboxWrapStyle}>
-                      <input
-                        type="checkbox"
-                        checked={p.sortantMedicalement}
-                        onChange={() => toggleMedicalReady(p.id)}
-                      />
-                      <span>Oui</span>
-                    </label>
-                    <div style={{ marginTop: 6 }}>
-                      <StatusBadge score={p.score} />
-                    </div>
-                  </div>
-
-                  <div style={tableActionCellStyle}>
-                    <button style={openButtonStyle} onClick={() => onOpenPatient(p)}>
-                      Ouvrir
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            )}
           </section>
         </div>
 
@@ -308,31 +384,67 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
               </div>
             </div>
 
-            <MetricGrid
-              items={[
-                { label: "Sortants médicaux", value: stats.medicalReady },
-                { label: "Patients bloqués", value: stats.blocked },
-                { label: "Patients à risque", value: stats.risk },
-                { label: "Tension capacitaire", value: stats.tension },
-              ]}
-            />
+            <div style={operationGridStyle}>
+              <OperationTile label="Sortants médicaux" value={stats.medicalReady} />
+              <OperationTile label="Patients bloqués" value={stats.blocked} />
+              <OperationTile label="Patients à risque" value={stats.risk} />
+              <OperationTile label="Présence moyenne" value={`${stats.averagePresence} j`} />
+              <OperationTile label="Tension" value={stats.tension} full />
+            </div>
           </Panel>
 
           <Panel title="Freins dominants">
-            {blockingReasons.length === 0 ? (
+            {dominantBarriers.length === 0 ? (
               <div style={emptyTextStyle}>Aucun frein dominant.</div>
             ) : (
-              <div style={stackStyle}>
-                {blockingReasons.map((b) => (
-                  <div key={b.label} style={insightCardStyle}>
-                    <div style={insightTopStyle}>
-                      <div style={insightTitleStyle}>{b.label}</div>
-                      <div style={insightCountStyle}>{b.count}</div>
+              <>
+                <div style={barrierButtonStackStyle}>
+                  {dominantBarriers.map((b) => (
+                    <button
+                      key={b.label}
+                      onClick={() => setActiveBarrier(b.label)}
+                      style={{
+                        ...barrierButtonStyle,
+                        ...(activeBarrier === b.label ? barrierButtonActiveStyle : {}),
+                      }}
+                    >
+                      <div style={barrierButtonTopStyle}>
+                        <span style={barrierButtonTitleStyle}>{b.label}</span>
+                        <span style={barrierButtonCountStyle}>{b.count}</span>
+                      </div>
+                      <div style={barrierButtonMetaStyle}>{b.days} jours évitables</div>
+                    </button>
+                  ))}
+                </div>
+
+                {selectedBarrierDetails ? (
+                  <div style={detailPanelStyle}>
+                    <div style={detailPanelTitleStyle}>
+                      Patients concernés : {selectedBarrierDetails.label}
                     </div>
-                    <div style={insightMetaStyle}>{b.days} jours évitables associés</div>
+
+                    <div style={detailListStyle}>
+                      {selectedBarrierDetails.patients.map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => onOpenPatient(p)}
+                          style={detailPatientButtonStyle}
+                        >
+                          <div style={detailPatientNameStyle}>
+                            {p.nom} {p.prenom}
+                          </div>
+                          <div style={detailPatientMetaStyle}>
+                            {p.service} • ch {p.chambre} • lit {p.lit}
+                          </div>
+                          <div style={detailPatientMetaStyle}>
+                            {p.sortantMedicalement ? `${p.joursEvitables} jours évitables` : "non décompté"}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
+                ) : null}
+              </>
             )}
           </Panel>
 
@@ -348,7 +460,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
                       <ServiceBadge level={s.level} />
                     </div>
                     <div style={serviceMetaStyle}>
-                      {s.medicalReady} sortant(s) médical(aux) • {s.days} jours évitables
+                      {s.medicalReady} sortant(s) médicaux • {s.days} jours évitables
                     </div>
                     <div style={serviceMetaStyle}>
                       {s.blocked} patient(s) bloqué(s)
@@ -360,8 +472,8 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
           </Panel>
 
           <Panel title="Action prioritaire">
-            <div style={actionHeaderStyle}>{priorityAction.title}</div>
-            <div style={actionBoxStyle}>{priorityAction.text}</div>
+            <div style={actionHeaderStyle}>{topService ? `Priorité : ${topService.name}` : "Surveillance"}</div>
+            <div style={actionBoxStyle}>{actionText}</div>
           </Panel>
         </div>
       </section>
@@ -397,20 +509,21 @@ function Panel({ title, children }) {
   return (
     <div style={panelStyle}>
       <div style={sidePanelTitleStyle}>{title}</div>
-      {children}
+      <div style={{ marginTop: 10 }}>{children}</div>
     </div>
   );
 }
 
-function MetricGrid({ items }) {
+function OperationTile({ label, value, full = false }) {
   return (
-    <div style={metricGridStyle}>
-      {items.map((item) => (
-        <div key={item.label} style={metricCardStyle}>
-          <div style={metricCardLabelStyle}>{item.label}</div>
-          <div style={metricCardValueStyle}>{item.value}</div>
-        </div>
-      ))}
+    <div
+      style={{
+        ...operationTileStyle,
+        gridColumn: full ? "1 / -1" : "auto",
+      }}
+    >
+      <div style={operationTileLabelStyle}>{label}</div>
+      <div style={operationTileValueStyle}>{value}</div>
     </div>
   );
 }
@@ -482,358 +595,4 @@ const burgerButtonStyle = {
   justifyContent: "center",
   gap: 4,
   background: "transparent",
-  border: "none",
-  padding: 0,
-};
-
-const burgerLineStyle = {
-  height: 2,
-  background: "#FFFFFF",
-  borderRadius: 999,
-};
-
-const appTitleStyle = {
-  fontWeight: 800,
-  fontSize: 16,
-};
-
-const appSubtitleStyle = {
-  fontSize: 12,
-  opacity: 0.85,
-};
-
-const crisisButtonStyle = {
-  background: "#FEE2E2",
-  color: "#B91C1C",
-  border: "none",
-  padding: "7px 12px",
-  borderRadius: 8,
-  fontWeight: 700,
-  fontSize: 12,
-};
-
-const kpiStripStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
-  gap: 10,
-  marginBottom: 12,
-};
-
-const kpiTileStyle = {
-  background: "#FFFFFF",
-  border: "1px solid #E5E7EB",
-  borderRadius: 10,
-  padding: 10,
-};
-
-const kpiLabelStyle = {
-  fontSize: 12,
-  color: "#6B7280",
-};
-
-const kpiValueStyle = {
-  fontSize: 22,
-  fontWeight: 800,
-  marginTop: 4,
-};
-
-const filtersPanelStyle = {
-  marginBottom: 12,
-};
-
-const filtersGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))",
-  gap: 8,
-};
-
-const filterFieldStyle = {
-  display: "grid",
-  gap: 4,
-};
-
-const filterLabelStyle = {
-  fontSize: 11,
-  color: "#6B7280",
-  fontWeight: 700,
-};
-
-const fieldInputStyle = {
-  width: "100%",
-  padding: "8px 10px",
-  borderRadius: 8,
-  border: "1px solid #D1D5DB",
-  background: "#FFFFFF",
-  fontSize: 13,
-  boxSizing: "border-box",
-};
-
-const desktopGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "minmax(0,1.9fr) minmax(300px,0.95fr)",
-  gap: 12,
-  alignItems: "start",
-};
-
-const mainColumnStyle = {
-  minWidth: 0,
-};
-
-const sideColumnStyle = {
-  display: "grid",
-  gap: 12,
-};
-
-const panelStyle = {
-  background: "#FFFFFF",
-  border: "1px solid #E5E7EB",
-  borderRadius: 12,
-  padding: 14,
-};
-
-const panelHeaderStyle = {
-  marginBottom: 12,
-};
-
-const panelTitleStyle = {
-  fontSize: 16,
-  fontWeight: 800,
-  color: "#111827",
-};
-
-const panelSubtitleStyle = {
-  marginTop: 2,
-  fontSize: 12,
-  color: "#6B7280",
-};
-
-const sidePanelTitleStyle = {
-  fontSize: 16,
-  fontWeight: 800,
-  color: "#111827",
-  marginBottom: 10,
-};
-
-const desktopTableWrapStyle = {
-  display: "block",
-};
-
-const tableHeaderStyle = {
-  display: "grid",
-  gridTemplateColumns: "2.1fr 1.8fr 1.6fr 0.8fr 1.2fr 0.9fr",
-  gap: 10,
-  paddingBottom: 8,
-  borderBottom: "1px solid #E5E7EB",
-  fontSize: 12,
-  fontWeight: 700,
-  color: "#374151",
-};
-
-const tableRowStyle = {
-  display: "grid",
-  gridTemplateColumns: "2.1fr 1.8fr 1.6fr 0.8fr 1.2fr 0.9fr",
-  gap: 10,
-  alignItems: "center",
-  padding: "12px 0",
-  borderBottom: "1px solid #F1F5F9",
-};
-
-const patientIdentityCellStyle = {
-  minWidth: 0,
-};
-
-const patientNameStyle = {
-  fontSize: 15,
-  fontWeight: 800,
-  color: "#111827",
-};
-
-const metaLineStyle = {
-  fontSize: 12,
-  color: "#6B7280",
-  lineHeight: 1.4,
-  marginTop: 2,
-};
-
-const tableCellStyle = {
-  fontSize: 13,
-  color: "#111827",
-  lineHeight: 1.4,
-};
-
-const tableActionCellStyle = {
-  display: "flex",
-  justifyContent: "flex-start",
-};
-
-const checkboxWrapStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  fontSize: 12,
-  color: "#111827",
-};
-
-const openButtonStyle = {
-  background: "#EFF6FF",
-  color: "#1D4ED8",
-  border: "1px solid #DBEAFE",
-  padding: "7px 10px",
-  borderRadius: 8,
-  fontSize: 12,
-  fontWeight: 700,
-};
-
-const summaryBoxStyle = {
-  border: "1px solid #E5E7EB",
-  background: "#F8FAFC",
-  borderRadius: 10,
-  padding: 10,
-  marginBottom: 10,
-};
-
-const summaryTitleStyle = {
-  fontSize: 12,
-  fontWeight: 800,
-  color: "#111827",
-  marginBottom: 6,
-};
-
-const summaryTextStyle = {
-  fontSize: 13,
-  lineHeight: 1.5,
-  color: "#111827",
-};
-
-const metricGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  gap: 8,
-};
-
-const metricCardStyle = {
-  border: "1px solid #E5E7EB",
-  borderRadius: 10,
-  padding: 10,
-  background: "#FFFFFF",
-};
-
-const metricCardLabelStyle = {
-  fontSize: 11,
-  color: "#6B7280",
-  marginBottom: 4,
-};
-
-const metricCardValueStyle = {
-  fontSize: 15,
-  fontWeight: 800,
-  color: "#111827",
-};
-
-const stackStyle = {
-  display: "grid",
-  gap: 8,
-};
-
-const insightCardStyle = {
-  border: "1px solid #E5E7EB",
-  borderRadius: 10,
-  padding: 10,
-  background: "#FFFFFF",
-};
-
-const insightTopStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 10,
-  alignItems: "center",
-};
-
-const insightTitleStyle = {
-  fontSize: 13,
-  fontWeight: 700,
-  color: "#111827",
-};
-
-const insightCountStyle = {
-  fontSize: 16,
-  fontWeight: 800,
-  color: "#1D4ED8",
-};
-
-const insightMetaStyle = {
-  marginTop: 4,
-  fontSize: 12,
-  color: "#6B7280",
-};
-
-const serviceInsightStyle = {
-  border: "1px solid #E5E7EB",
-  borderRadius: 10,
-  padding: 10,
-  background: "#FFFFFF",
-};
-
-const serviceNameStyle = {
-  fontSize: 13,
-  fontWeight: 700,
-  color: "#111827",
-};
-
-const serviceMetaStyle = {
-  fontSize: 12,
-  color: "#6B7280",
-  marginTop: 4,
-};
-
-const actionHeaderStyle = {
-  fontSize: 13,
-  fontWeight: 800,
-  color: "#111827",
-  marginBottom: 8,
-};
-
-const actionBoxStyle = {
-  fontSize: 13,
-  lineHeight: 1.5,
-  color: "#111827",
-  background: "#F8FAFC",
-  border: "1px solid #E5E7EB",
-  borderRadius: 10,
-  padding: 10,
-};
-
-const emptyTextStyle = {
-  fontSize: 13,
-  color: "#6B7280",
-};
-
-const badgeRedStyle = {
-  display: "inline-block",
-  background: "#FEE2E2",
-  color: "#DC2626",
-  padding: "4px 8px",
-  borderRadius: 999,
-  fontSize: 11,
-  fontWeight: 700,
-};
-
-const badgeAmberStyle = {
-  display: "inline-block",
-  background: "#FEF3C7",
-  color: "#D97706",
-  padding: "4px 8px",
-  borderRadius: 999,
-  fontSize: 11,
-  fontWeight: 700,
-};
-
-const badgeGreenStyle = {
-  display: "inline-block",
-  background: "#D1FAE5",
-  color: "#059669",
-  padding: "4px 8px",
-  borderRadius: 999,
-  fontSize: 11,
-  fontWeight: 700,
-};
+  border: "
