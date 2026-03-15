@@ -4,20 +4,21 @@ export default function Dashboard({ patients, onOpenPatient }) {
   const totalPatients = patients.length;
   const blockedPatients = patients.filter((p) => p.score >= 8).length;
   const riskPatients = patients.filter((p) => p.score >= 6 && p.score < 8).length;
+  const medicalReadyPatients = patients.filter((p) => p.sortantMedicalement).length;
 
   const avoidableDays = patients.reduce(
     (sum, p) => sum + (p.score >= 8 ? 6 : p.score >= 6 ? 3 : 1),
     0
   );
 
+  const recoverableBeds = Math.round(avoidableDays / 7);
+
   return (
     <div style={pageStyle}>
       <header style={headerStyle}>
-        <div style={headerTopStyle}>
-          <div>
-            <div style={brandStyle}>CARABBAS</div>
-            <div style={subtitleStyle}>Pilotage des sorties hospitalières complexes</div>
-          </div>
+        <div>
+          <div style={brandStyle}>CARABBAS</div>
+          <div style={subtitleStyle}>Pilotage des sorties hospitalières complexes</div>
         </div>
 
         <div style={navWrapStyle}>
@@ -29,6 +30,20 @@ export default function Dashboard({ patients, onOpenPatient }) {
         </div>
       </header>
 
+      <section style={topStripStyle}>
+        <div style={topStripLeftStyle}>
+          <div style={topStripLabelStyle}>Vue de pilotage</div>
+          <div style={topStripTextStyle}>
+            <strong>{medicalReadyPatients}</strong> sortants médicaux présents ·{" "}
+            <strong>{blockedPatients}</strong> bloqués ·{" "}
+            <strong>{avoidableDays}</strong> jours évitables ·{" "}
+            <strong>{recoverableBeds}</strong> lits récupérables
+          </div>
+        </div>
+
+        <button style={primaryActionStyle}>Déclencher cellule de crise</button>
+      </section>
+
       <section style={kpiGridStyle}>
         <KpiCard title="Patients suivis" value={totalPatients} tone="violet" />
         <KpiCard title="Bloqués" value={blockedPatients} tone="red" />
@@ -37,57 +52,21 @@ export default function Dashboard({ patients, onOpenPatient }) {
       </section>
 
       <section style={contentGridStyle}>
-        <div style={panelStyle}>
-          <div style={panelHeaderStyle}>
-            <div>
-              <div style={panelTitleStyle}>Patients prioritaires</div>
-              <div style={panelSubStyle}>Service • coordination • gestion des lits</div>
+        <div style={mainColStyle}>
+          <Panel
+            title="Patients prioritaires"
+            subtitle="Lecture service, coordination et gestion des lits"
+          >
+            <div style={{ display: "grid", gap: 10 }}>
+              {sortedPatients.map((p) => (
+                <PatientRow key={p.id} patient={p} onOpenPatient={onOpenPatient} />
+              ))}
             </div>
-          </div>
-
-          <div style={{ display: "grid", gap: 10 }}>
-            {sortedPatients.map((p) => (
-              <div key={p.id} style={patientRowStyle}>
-                <div style={patientMainStyle}>
-                  <div style={patientHeaderLineStyle}>
-                    <div style={patientNameStyle}>
-                      {p.nom} {p.prenom}
-                    </div>
-
-                    <div style={badgeRowStyle}>
-                      <PriorityBadge score={p.score} />
-                      <ScoreBadge score={p.score} />
-                    </div>
-                  </div>
-
-                  <div style={patientMetaStyle}>
-                    {p.service} • chambre {p.chambre} • lit {p.lit}
-                  </div>
-
-                  <div style={patientDetailStyle}>
-                    <strong>Frein :</strong> {p.blocage}
-                  </div>
-
-                  <div style={patientMutedStyle}>INS : {p.ins}</div>
-                </div>
-
-                <button onClick={() => onOpenPatient(p)} style={openButtonStyle}>
-                  Ouvrir
-                </button>
-              </div>
-            ))}
-          </div>
+          </Panel>
         </div>
 
         <div style={sideColStyle}>
-          <div style={panelStyle}>
-            <div style={panelHeaderStyle}>
-              <div>
-                <div style={panelTitleStyle}>Lecture rapide</div>
-                <div style={panelSubStyle}>Vue direction / coordination</div>
-              </div>
-            </div>
-
+          <Panel title="Lecture rapide" subtitle="Vue direction / coordination">
             <InfoLine label="Patients bloqués" value={String(blockedPatients)} />
             <InfoLine label="Patients à risque" value={String(riskPatients)} />
             <InfoLine label="Jours évitables" value={String(avoidableDays)} />
@@ -95,24 +74,62 @@ export default function Dashboard({ patients, onOpenPatient }) {
               label="Tension"
               value={blockedPatients >= 2 ? "Élevée" : "Modérée"}
             />
-          </div>
+          </Panel>
 
-          <div style={panelStyle}>
-            <div style={panelHeaderStyle}>
-              <div>
-                <div style={panelTitleStyle}>Action du jour</div>
-                <div style={panelSubStyle}>Priorité opérationnelle</div>
-              </div>
-            </div>
-
+          <Panel title="Action du jour" subtitle="Priorité opérationnelle">
             <div style={focusBoxStyle}>
               {blockedPatients > 0
-                ? "Finaliser les solutions d’aval des patients bloqués."
-                : "Sécuriser rapidement les patients à risque."}
+                ? "Finaliser les solutions d’aval des patients bloqués et sécuriser les relances prioritaires."
+                : "Sécuriser rapidement les patients à risque avant aggravation du blocage."}
             </div>
-          </div>
+          </Panel>
         </div>
       </section>
+    </div>
+  );
+}
+
+function PatientRow({ patient, onOpenPatient }) {
+  return (
+    <div style={patientRowStyle}>
+      <div style={patientMainStyle}>
+        <div style={patientHeaderLineStyle}>
+          <div style={patientNameStyle}>
+            {patient.nom} {patient.prenom}
+          </div>
+
+          <div style={badgeRowStyle}>
+            <PriorityBadge score={patient.score} />
+            <ScoreBadge score={patient.score} />
+          </div>
+        </div>
+
+        <div style={patientMetaStyle}>
+          {patient.service} • chambre {patient.chambre} • lit {patient.lit}
+        </div>
+
+        <div style={patientDetailStyle}>
+          <strong>Frein :</strong> {patient.blocage}
+        </div>
+
+        <div style={patientMutedStyle}>INS : {patient.ins}</div>
+      </div>
+
+      <button onClick={() => onOpenPatient(patient)} style={openButtonStyle}>
+        Ouvrir
+      </button>
+    </div>
+  );
+}
+
+function Panel({ title, subtitle, children }) {
+  return (
+    <div style={panelStyle}>
+      <div style={panelHeaderStyle}>
+        <div style={panelTitleStyle}>{title}</div>
+        <div style={panelSubStyle}>{subtitle}</div>
+      </div>
+      {children}
     </div>
   );
 }
@@ -212,6 +229,15 @@ function ScoreBadge({ score }) {
   return <span style={badgeStyle(bg, color)}>Score {score}</span>;
 }
 
+function InfoLine({ label, value }) {
+  return (
+    <div style={infoLineStyle}>
+      <div style={infoLabelStyle}>{label}</div>
+      <div style={infoValueStyle}>{value}</div>
+    </div>
+  );
+}
+
 function badgeStyle(bg, color) {
   return {
     display: "inline-block",
@@ -222,17 +248,6 @@ function badgeStyle(bg, color) {
     fontSize: 11,
     fontWeight: 700,
   };
-}
-
-function InfoLine({ label, value }) {
-  return (
-    <div style={{ padding: "9px 0", borderBottom: "1px solid #f1f5f9" }}>
-      <div style={{ fontSize: 12, color: "#6b7280" }}>{label}</div>
-      <div style={{ marginTop: 3, fontWeight: 700, color: "#111827", fontSize: 14 }}>
-        {value}
-      </div>
-    </div>
-  );
 }
 
 const pageStyle = {
@@ -247,13 +262,6 @@ const headerStyle = {
   borderRadius: 18,
   padding: "14px 14px 12px 14px",
   marginBottom: 12,
-};
-
-const headerTopStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 12,
-  alignItems: "start",
 };
 
 const brandStyle = {
@@ -276,6 +284,50 @@ const navWrapStyle = {
   marginTop: 12,
 };
 
+const topStripStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 12,
+  alignItems: "center",
+  flexWrap: "wrap",
+  background: "#ffffff",
+  border: "1px solid #e5e7eb",
+  borderRadius: 16,
+  padding: "12px 14px",
+  marginBottom: 14,
+  boxShadow: "0 2px 10px rgba(15,23,42,0.04)",
+};
+
+const topStripLeftStyle = {
+  minWidth: 0,
+  flex: 1,
+};
+
+const topStripLabelStyle = {
+  fontSize: 11,
+  textTransform: "uppercase",
+  letterSpacing: 1,
+  color: "#6b7280",
+  marginBottom: 4,
+};
+
+const topStripTextStyle = {
+  fontSize: 14,
+  color: "#111827",
+  lineHeight: 1.5,
+};
+
+const primaryActionStyle = {
+  border: "none",
+  background: "#5b54c7",
+  color: "#ffffff",
+  padding: "10px 12px",
+  borderRadius: 10,
+  fontWeight: 700,
+  fontSize: 13,
+  whiteSpace: "nowrap",
+};
+
 const kpiGridStyle = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
@@ -285,9 +337,13 @@ const kpiGridStyle = {
 
 const contentGridStyle = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1.7fr) minmax(260px, 0.9fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
   gap: 14,
   alignItems: "start",
+};
+
+const mainColStyle = {
+  minWidth: 0,
 };
 
 const sideColStyle = {
@@ -407,6 +463,23 @@ const openButtonStyle = {
   fontWeight: 700,
   whiteSpace: "nowrap",
   fontSize: 13,
+};
+
+const infoLineStyle = {
+  padding: "9px 0",
+  borderBottom: "1px solid #f1f5f9",
+};
+
+const infoLabelStyle = {
+  fontSize: 12,
+  color: "#6b7280",
+};
+
+const infoValueStyle = {
+  marginTop: 3,
+  fontWeight: 700,
+  color: "#111827",
+  fontSize: 14,
 };
 
 const focusBoxStyle = {
