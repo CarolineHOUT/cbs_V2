@@ -3,9 +3,11 @@ import { useMemo, useState } from "react";
 export default function PatientView({ patient, onBack }) {
   const [editablePatient, setEditablePatient] = useState({
     ...patient,
-    notes: patient.notes || [],
+    notes: normalizeNotes(patient.notes || []),
   });
   const [newNote, setNewNote] = useState("");
+  const [newNoteType, setNewNoteType] = useState("info");
+  const [copiedPhone, setCopiedPhone] = useState("");
 
   const status = useMemo(() => {
     if (editablePatient.score >= 8) return { label: "Bloqué", tone: "red" };
@@ -39,37 +41,63 @@ export default function PatientView({ patient, onBack }) {
     const value = newNote.trim();
     if (!value) return;
 
-    const now = new Date();
-    const dd = String(now.getDate()).padStart(2, "0");
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mi = String(now.getMinutes()).padStart(2, "0");
-
-    const stampedNote = `${dd}/${mm} • ${hh}:${mi} — ${value}`;
+    const note = {
+      id: cryptoRandom(),
+      text: value,
+      type: newNoteType,
+      unread: true,
+      timestamp: buildTimestamp(),
+    };
 
     setEditablePatient((prev) => ({
       ...prev,
-      notes: [stampedNote, ...(prev.notes || [])],
+      notes: [note, ...(prev.notes || [])],
     }));
+
     setNewNote("");
+    setNewNoteType("info");
   }
 
-  function quickAction(text) {
-    const now = new Date();
-    const dd = String(now.getDate()).padStart(2, "0");
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mi = String(now.getMinutes()).padStart(2, "0");
-
-    const stampedNote = `${dd}/${mm} • ${hh}:${mi} — ${text}`;
+  function quickAction(text, type = "action") {
+    const note = {
+      id: cryptoRandom(),
+      text,
+      type,
+      unread: true,
+      timestamp: buildTimestamp(),
+    };
 
     setEditablePatient((prev) => ({
       ...prev,
-      notes: [stampedNote, ...(prev.notes || [])],
+      notes: [note, ...(prev.notes || [])],
     }));
   }
+
+  function markAsRead(noteId) {
+    setEditablePatient((prev) => ({
+      ...prev,
+      notes: (prev.notes || []).map((note) =>
+        note.id === noteId ? { ...note, unread: false } : note
+      ),
+    }));
+  }
+
+  async function copyPhone(label, phone) {
+    if (!phone || phone === "Non renseigné" || phone === "Non concerné") return;
+    try {
+      await navigator.clipboard.writeText(phone);
+      setCopiedPhone(label);
+      setTimeout(() => setCopiedPhone(""), 1500);
+    } catch {
+      // no-op
+    }
+  }
+
+  if (!patient) return null;
 
   const stayDays = computeStayDays(editablePatient.entryDate);
+  const unreadCount = (editablePatient.notes || []).filter((n) => n.unread).length;
+  const urgentCount = (editablePatient.notes || []).filter((n) => n.type === "urgent").length;
 
   return (
     <div style={styles.page}>
@@ -78,7 +106,15 @@ export default function PatientView({ patient, onBack }) {
           ← Retour au cockpit
         </button>
 
-        <div style={styles.topBarTitle}>Fiche patient</div>
+        <div style={styles.topRight}>
+          <div style={styles.topBarTitle}>Fiche patient</div>
+          {urgentCount > 0 ? (
+            <div style={styles.urgentPill}>{urgentCount} note(s) urgente(s)</div>
+          ) : null}
+          {unreadCount > 0 ? (
+            <div style={styles.unreadPill}>{unreadCount} non lue(s)</div>
+          ) : null}
+        </div>
       </div>
 
       <section style={styles.identityHero}>
@@ -104,6 +140,15 @@ export default function PatientView({ patient, onBack }) {
           <StatusBadge label={status.label} tone={status.tone} />
         </div>
       </section>
+
+      {editablePatient.sortantMedicalement && editablePatient.joursEvitables >= 5 ? (
+        <div style={styles.alertBanner}>
+          <div style={styles.alertTitle}>Sortie prioritaire à sécuriser</div>
+          <div style={styles.alertText}>
+            {editablePatient.joursEvitables} jours évitables cumulés, frein principal : {editablePatient.blocage}.
+          </div>
+        </div>
+      ) : null}
 
       <section style={styles.mainGrid}>
         <div style={styles.leftColumn}>
@@ -177,22 +222,34 @@ export default function PatientView({ patient, onBack }) {
             />
           </Panel>
 
-          <Panel title="Entourage et protection" subtitle="Sécurisation administrative et familiale">
-            <div style={styles.formGrid}>
-              <EditableField
-                label="Personne de confiance"
-                value={editablePatient.personneConfiance || ""}
-                onChange={(value) => updateField("personneConfiance", value)}
+          <Panel title="Entourage et protection" subtitle="Coordonnées immédiatement exploitables">
+            <div style={styles.contactGrid}>
+              <ContactCard
+                title="Personne de confiance"
+                name={editablePatient.personneConfiance || "Non renseignée"}
+                phone={editablePatient.personneConfiancePhone || "Non renseigné"}
+                copied={copiedPhone === "confiance"}
+                onCopy={() =>
+                  copyPhone("confiance", editablePatient.personneConfiancePhone || "")
+                }
               />
-              <EditableField
-                label="Personne à prévenir"
-                value={editablePatient.personneAPrevenir || ""}
-                onChange={(value) => updateField("personneAPrevenir", value)}
+              <ContactCard
+                title="Personne à prévenir"
+                name={editablePatient.personneAPrevenir || "Non renseignée"}
+                phone={editablePatient.personneAPrevenirPhone || "Non renseigné"}
+                copied={copiedPhone === "prevenir"}
+                onCopy={() =>
+                  copyPhone("prevenir", editablePatient.personneAPrevenirPhone || "")
+                }
               />
-              <EditableField
-                label="Tutelle / curatelle"
-                value={editablePatient.protectionJuridique || ""}
-                onChange={(value) => updateField("protectionJuridique", value)}
+              <ContactCard
+                title="Tutelle / curatelle"
+                name={editablePatient.protectionJuridique || "Non renseignée"}
+                phone={editablePatient.protectionJuridiquePhone || "Non renseigné"}
+                copied={copiedPhone === "protection"}
+                onCopy={() =>
+                  copyPhone("protection", editablePatient.protectionJuridiquePhone || "")
+                }
               />
             </div>
           </Panel>
@@ -203,57 +260,90 @@ export default function PatientView({ patient, onBack }) {
             <div style={styles.actionsGrid}>
               <button
                 style={styles.actionButton}
-                onClick={() => quickAction("Assistante sociale contactée")}
+                onClick={() => quickAction("Assistante sociale contactée", "action")}
               >
                 Contacter assistante sociale
               </button>
 
               <button
                 style={styles.actionButton}
-                onClick={() => quickAction("Sortie à programmer")}
+                onClick={() => quickAction("Sortie à programmer", "action")}
               >
                 Programmer sortie
               </button>
 
               <button
                 style={styles.actionButton}
-                onClick={() => quickAction("Réunion de coordination demandée")}
+                onClick={() => quickAction("Réunion de coordination demandée", "action")}
               >
                 Réunion coordination
               </button>
 
               <button
                 style={styles.actionButton}
-                onClick={() => quickAction("Famille relancée")}
+                onClick={() => quickAction("Famille relancée", "famille")}
               >
                 Relancer famille
               </button>
             </div>
           </Panel>
 
-          <Panel title="Ajouter une note" subtitle="Traçabilité opérationnelle">
+          <Panel title="Ajouter une note" subtitle="Type, priorité et suivi non lu">
             <div style={styles.noteComposer}>
+              <div style={styles.noteTypeRow}>
+                <select
+                  value={newNoteType}
+                  onChange={(e) => setNewNoteType(e.target.value)}
+                  style={styles.select}
+                >
+                  <option value="info">Info</option>
+                  <option value="action">Action</option>
+                  <option value="famille">Famille</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+
               <textarea
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
                 placeholder="Saisir une note opérationnelle..."
                 style={styles.textarea}
               />
+
               <button style={styles.primaryButton} onClick={addNote}>
                 Ajouter la note
               </button>
             </div>
           </Panel>
 
-          <Panel title="Historique opérationnel" subtitle="Chronologie des actions">
+          <Panel title="Historique opérationnel" subtitle="Cliquer sur une note pour la marquer comme lue">
             <div style={styles.timeline}>
-              {(editablePatient.notes || []).map((note, index) => (
-                <div key={index} style={styles.timelineItem}>
-                  <div style={styles.timelineDot} />
+              {(editablePatient.notes || []).map((note) => (
+                <button
+                  key={note.id}
+                  onClick={() => markAsRead(note.id)}
+                  style={{
+                    ...styles.timelineItem,
+                    ...(note.unread ? styles.timelineUnread : {}),
+                  }}
+                >
+                  <div
+                    style={{
+                      ...styles.timelineDot,
+                      background: noteTypeColor(note.type),
+                    }}
+                  />
                   <div style={styles.timelineContent}>
-                    <div style={styles.timelineText}>{note}</div>
+                    <div style={styles.timelineTop}>
+                      <div style={styles.timelineDate}>{note.timestamp}</div>
+                      <div style={styles.timelineBadges}>
+                        <NoteTypeBadge type={note.type} />
+                        {note.unread ? <span style={styles.unreadBadge}>Non lu</span> : null}
+                      </div>
+                    </div>
+                    <div style={styles.timelineText}>{note.text}</div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </Panel>
@@ -292,19 +382,6 @@ function MiniKpi({ label, value, tone = "neutral" }) {
   );
 }
 
-function InfoGrid({ items }) {
-  return (
-    <div style={styles.infoGrid}>
-      {items.map(([label, value]) => (
-        <div key={label} style={styles.infoCard}>
-          <div style={styles.infoLabel}>{label}</div>
-          <div style={styles.infoValue}>{value}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function EditableField({ label, value, onChange }) {
   return (
     <div style={styles.editableCard}>
@@ -314,6 +391,49 @@ function EditableField({ label, value, onChange }) {
         onChange={(e) => onChange(e.target.value)}
         style={styles.input}
       />
+    </div>
+  );
+}
+
+function ContactCard({ title, name, phone, onCopy, copied }) {
+  const canCall = phone && phone !== "Non renseigné" && phone !== "Non concerné";
+  const telHref = canCall ? `tel:${phone.replace(/\s+/g, "")}` : undefined;
+
+  return (
+    <div style={styles.contactCard}>
+      <div style={styles.infoLabel}>{title}</div>
+      <div style={styles.contactName}>{name}</div>
+      <div style={styles.contactPhoneRow}>
+        {canCall ? (
+          <a href={telHref} style={styles.contactPhoneLink}>
+            {phone}
+          </a>
+        ) : (
+          <div style={styles.contactPhoneMuted}>{phone}</div>
+        )}
+
+        <button
+          type="button"
+          onClick={onCopy}
+          style={styles.copyButton}
+          disabled={!canCall}
+        >
+          {copied ? "Copié" : "Copier"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InfoGrid({ items }) {
+  return (
+    <div style={styles.infoGrid}>
+      {items.map(([label, value]) => (
+        <div key={label} style={styles.infoCard}>
+          <div style={styles.infoLabel}>{label}</div>
+          <div style={styles.infoValue}>{value}</div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -335,6 +455,60 @@ function StatusBadge({ label, tone = "neutral" }) {
   );
 }
 
+function NoteTypeBadge({ type }) {
+  const config = {
+    info: { label: "Info", bg: "#EFF6FF", color: "#1D4ED8" },
+    action: { label: "Action", bg: "#ECFDF5", color: "#059669" },
+    famille: { label: "Famille", bg: "#FFF7ED", color: "#EA580C" },
+    urgent: { label: "Urgent", bg: "#FEF2F2", color: "#DC2626" },
+  };
+
+  const item = config[type] || config.info;
+
+  return (
+    <span style={{ ...styles.noteTypeBadge, background: item.bg, color: item.color }}>
+      {item.label}
+    </span>
+  );
+}
+
+function normalizeNotes(notes) {
+  return notes.map((note) =>
+    typeof note === "string"
+      ? {
+          id: cryptoRandom(),
+          text: note,
+          type: "info",
+          unread: true,
+          timestamp: buildTimestamp(),
+        }
+      : note
+  );
+}
+
+function cryptoRandom() {
+  return Math.random().toString(36).slice(2, 11);
+}
+
+function buildTimestamp() {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mi = String(now.getMinutes()).padStart(2, "0");
+  return `${dd}/${mm} • ${hh}:${mi}`;
+}
+
+function noteTypeColor(type) {
+  const colors = {
+    info: "#2563EB",
+    action: "#059669",
+    famille: "#EA580C",
+    urgent: "#DC2626",
+  };
+  return colors[type] || "#2563EB";
+}
+
 const styles = {
   page: {
     maxWidth: 1360,
@@ -351,6 +525,33 @@ const styles = {
     gap: 12,
     marginBottom: 16,
     flexWrap: "wrap",
+  },
+
+  topRight: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    flexWrap: "wrap",
+  },
+
+  unreadPill: {
+    borderRadius: 999,
+    padding: "7px 10px",
+    background: "#FEF2F2",
+    color: "#DC2626",
+    fontSize: 12,
+    fontWeight: 800,
+    border: "1px solid #FECACA",
+  },
+
+  urgentPill: {
+    borderRadius: 999,
+    padding: "7px 10px",
+    background: "#FFF7ED",
+    color: "#EA580C",
+    fontSize: 12,
+    fontWeight: 800,
+    border: "1px solid #FED7AA",
   },
 
   backButton: {
@@ -378,7 +579,7 @@ const styles = {
     borderRadius: 22,
     padding: 22,
     boxShadow: "0 20px 44px rgba(37,99,235,0.18)",
-    marginBottom: 18,
+    marginBottom: 14,
     flexWrap: "wrap",
   },
 
@@ -412,9 +613,30 @@ const styles = {
     fontWeight: 800,
   },
 
+  alertBanner: {
+    marginBottom: 16,
+    borderRadius: 16,
+    padding: 14,
+    background: "linear-gradient(180deg, #FFF7ED 0%, #FFFFFF 100%)",
+    border: "1px solid #FED7AA",
+  },
+
+  alertTitle: {
+    fontSize: 13,
+    fontWeight: 800,
+    color: "#C2410C",
+    marginBottom: 4,
+  },
+
+  alertText: {
+    fontSize: 14,
+    color: "#7C2D12",
+    lineHeight: 1.45,
+  },
+
   mainGrid: {
     display: "grid",
-    gridTemplateColumns: "minmax(0,1.8fr) minmax(320px,1fr)",
+    gridTemplateColumns: "minmax(0,1.8fr) minmax(340px,1fr)",
     gap: 16,
     alignItems: "start",
   },
@@ -474,35 +696,6 @@ const styles = {
     fontSize: 22,
     fontWeight: 900,
     lineHeight: 1.1,
-  },
-
-  infoGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: 12,
-  },
-
-  infoCard: {
-    border: "1px solid #E5E7EB",
-    borderRadius: 16,
-    padding: 14,
-    background: "#FFFFFF",
-  },
-
-  infoLabel: {
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: 0.2,
-    color: "#64748B",
-    fontWeight: 800,
-    marginBottom: 6,
-  },
-
-  infoValue: {
-    fontSize: 14,
-    color: "#0F172A",
-    fontWeight: 600,
-    lineHeight: 1.45,
   },
 
   formGrid: {
@@ -566,6 +759,87 @@ const styles = {
     color: "#0F172A",
   },
 
+  infoGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 12,
+  },
+
+  infoCard: {
+    border: "1px solid #E5E7EB",
+    borderRadius: 16,
+    padding: 14,
+    background: "#FFFFFF",
+  },
+
+  infoLabel: {
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.2,
+    color: "#64748B",
+    fontWeight: 800,
+    marginBottom: 6,
+  },
+
+  infoValue: {
+    fontSize: 14,
+    color: "#0F172A",
+    fontWeight: 600,
+    lineHeight: 1.45,
+  },
+
+  contactGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 12,
+  },
+
+  contactCard: {
+    border: "1px solid #E5E7EB",
+    borderRadius: 16,
+    padding: 14,
+    background: "#FFFFFF",
+  },
+
+  contactName: {
+    fontSize: 15,
+    fontWeight: 800,
+    color: "#0F172A",
+    lineHeight: 1.35,
+  },
+
+  contactPhoneRow: {
+    marginTop: 8,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+    flexWrap: "wrap",
+  },
+
+  contactPhoneLink: {
+    fontSize: 14,
+    color: "#1D4ED8",
+    fontWeight: 700,
+    textDecoration: "none",
+  },
+
+  contactPhoneMuted: {
+    fontSize: 14,
+    color: "#64748B",
+    fontWeight: 600,
+  },
+
+  copyButton: {
+    border: "1px solid #CBD5E1",
+    background: "#FFFFFF",
+    color: "#334155",
+    borderRadius: 10,
+    padding: "6px 10px",
+    fontSize: 12,
+    fontWeight: 700,
+  },
+
   actionsGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -585,6 +859,21 @@ const styles = {
   noteComposer: {
     display: "grid",
     gap: 10,
+  },
+
+  noteTypeRow: {
+    display: "flex",
+    gap: 10,
+  },
+
+  select: {
+    width: "100%",
+    border: "1px solid #CBD5E1",
+    borderRadius: 10,
+    padding: "10px 12px",
+    fontSize: 14,
+    background: "#FFFFFF",
+    boxSizing: "border-box",
   },
 
   textarea: {
@@ -610,26 +899,76 @@ const styles = {
 
   timeline: {
     display: "grid",
-    gap: 12,
+    gap: 10,
   },
 
   timelineItem: {
     display: "flex",
     gap: 10,
     alignItems: "flex-start",
+    border: "1px solid #E5E7EB",
+    borderRadius: 14,
+    background: "#FFFFFF",
+    padding: 12,
+    textAlign: "left",
+    cursor: "pointer",
+  },
+
+  timelineUnread: {
+    borderColor: "#93C5FD",
+    background: "#F8FBFF",
   },
 
   timelineDot: {
     width: 10,
     height: 10,
     borderRadius: 999,
-    background: "#2563EB",
     marginTop: 6,
     flexShrink: 0,
   },
 
   timelineContent: {
     flex: 1,
+  },
+
+  timelineTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+    flexWrap: "wrap",
+    marginBottom: 6,
+  },
+
+  timelineDate: {
+    fontSize: 12,
+    color: "#64748B",
+    fontWeight: 700,
+  },
+
+  timelineBadges: {
+    display: "flex",
+    gap: 6,
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
+
+  noteTypeBadge: {
+    display: "inline-block",
+    padding: "4px 8px",
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: 800,
+  },
+
+  unreadBadge: {
+    display: "inline-block",
+    padding: "4px 8px",
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: 800,
+    background: "#FEF2F2",
+    color: "#DC2626",
   },
 
   timelineText: {
