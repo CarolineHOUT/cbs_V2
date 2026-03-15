@@ -195,6 +195,9 @@ export default function PatientView({
     });
   }, [editablePatient.notes]);
 
+  const activeNote = sortedNotes[0];
+  const postItTheme = getPostItTheme(activeNote?.type || "info");
+
   return (
     <div style={styles.page}>
       <header style={styles.appHeader}>
@@ -269,16 +272,19 @@ export default function PatientView({
           </div>
         </div>
 
-        <div style={styles.patientMetrics}>
+        <div style={styles.kpiRow}>
           <StatusPill label={status.label} tone={status.tone} />
-          <MetricCell label="Sortant médical" value={editablePatient.sortantMedicalement ? "Oui" : "Non"} />
-          <MetricCell label="Jours évitables" value={editablePatient.joursEvitables || 0} accent="amber" />
-          <MetricCell label="Notes non lues" value={unreadCount} accent={unreadCount > 0 ? "red" : "neutral"} />
+          <MetricCell compact label="Sortant médical" value={editablePatient.sortantMedicalement ? "Oui" : "Non"} />
+          <MetricCell compact label="Jours évitables" value={editablePatient.joursEvitables || 0} accent="amber" />
+          <MetricCell compact label="Notes non lues" value={unreadCount} accent={unreadCount > 0 ? "red" : "neutral"} />
+          {urgentCount > 0 ? (
+            <MetricCell compact label="Urgentes" value={urgentCount} accent="red" />
+          ) : null}
 
-          <div style={styles.scoreCard}>
-            <div style={styles.scoreTop}>
-              <span style={styles.scoreLabel}>Score parcours</span>
-              <span style={styles.scoreValue}>{scoreParcours}</span>
+          <div style={styles.scoreCompactCard}>
+            <div style={styles.scoreCompactTop}>
+              <span style={styles.scoreCompactLabel}>Score parcours</span>
+              <span style={styles.scoreCompactValue}>{scoreParcours}</span>
             </div>
             <div style={styles.scoreBarTrack}>
               <div
@@ -289,16 +295,19 @@ export default function PatientView({
                 }}
               />
             </div>
-            <div style={styles.scoreBottom}>
-              <span style={{ ...styles.scoreBadge, color: scoreVisual.color, borderColor: scoreVisual.softBorder, background: scoreVisual.softBg }}>
+            <div style={styles.scoreCompactBottom}>
+              <span
+                style={{
+                  ...styles.scoreBadge,
+                  color: scoreVisual.color,
+                  borderColor: scoreVisual.softBorder,
+                  background: scoreVisual.softBg,
+                }}
+              >
                 {scoreVisual.label}
               </span>
             </div>
           </div>
-
-          {urgentCount > 0 ? (
-            <MetricCell label="Urgentes" value={urgentCount} accent="red" />
-          ) : null}
         </div>
       </section>
 
@@ -311,57 +320,56 @@ export default function PatientView({
         </section>
       ) : null}
 
-      <section style={styles.topRow}>
+      <section style={styles.mainGrid}>
         <Card title="Situation de sortie" subtitle="Décision et préparation">
-          <div style={styles.situationLayout}>
-            <div style={styles.primaryBlock}>
-              <div style={styles.primaryBlockLabel}>Frein actif</div>
-              <div style={styles.primaryBlockValue}>
-                {activeFrein || editablePatient.blocage || "Non renseigné"}
-              </div>
-              <div style={styles.primaryBlockHint}>
-                {freinInsight.impact}
-              </div>
+          <div style={styles.situationHero}>
+            <div style={styles.situationLeft}>
+              <div style={styles.heroLabel}>Frein actif</div>
+              <div style={styles.heroTitle}>{activeFrein || editablePatient.blocage || "Non renseigné"}</div>
+              <div style={styles.heroText}>{freinInsight.impact}</div>
 
-              <div style={styles.freinsInsightBox}>
-                <div style={styles.freinsInsightRow}>
-                  <span style={styles.freinsInsightKey}>Action associée</span>
-                  <span style={styles.freinsInsightValue}>{freinInsight.action}</span>
+              <div style={styles.heroMiniGrid}>
+                <div style={styles.heroMiniItem}>
+                  <span style={styles.heroMiniLabel}>Action associée</span>
+                  <strong>{freinInsight.action}</strong>
                 </div>
-                <div style={styles.freinsInsightRow}>
-                  <span style={styles.freinsInsightKey}>Acteur concerné</span>
-                  <span style={styles.freinsInsightValue}>{freinInsight.actor}</span>
+                <div style={styles.heroMiniItem}>
+                  <span style={styles.heroMiniLabel}>Acteur concerné</span>
+                  <strong>{freinInsight.actor}</strong>
                 </div>
               </div>
             </div>
 
-            <div style={styles.planBoard}>
-              <PlanRow
-                label="Orientation prévue"
-                value={editablePatient.destinationPrevue || ""}
-                onChange={(value) => updateField("destinationPrevue", value)}
-              />
-              <PlanRow
-                label="Date cible"
-                value={editablePatient.dateCible || "20/02/2026"}
-                onChange={(value) => updateField("dateCible", value)}
-              />
-              <PlanRow
-                label="Transport"
-                value={editablePatient.transport || ""}
-                onChange={(value) => updateField("transport", value)}
-              />
-              <PlanRow
-                label="Documents"
-                value={editablePatient.documentsSortie || ""}
-                onChange={(value) => updateField("documentsSortie", value)}
-              />
-              <PlanRow
-                label="Prochaine action"
-                value={editablePatient.nextStep || ""}
-                onChange={(value) => updateField("nextStep", value)}
-                wide
-              />
+            <div style={styles.situationRight}>
+              <div style={styles.planCardGrid}>
+                <PlanCard
+                  label="Orientation prévue"
+                  value={editablePatient.destinationPrevue || ""}
+                  onChange={(value) => updateField("destinationPrevue", value)}
+                />
+                <PlanCard
+                  label="Date cible"
+                  value={editablePatient.dateCible || "20/02/2026"}
+                  onChange={(value) => updateField("dateCible", value)}
+                />
+                <PlanCard
+                  label="Transport"
+                  value={editablePatient.transport || ""}
+                  onChange={(value) => updateField("transport", value)}
+                />
+                <PlanCard
+                  label="Documents"
+                  value={editablePatient.documentsSortie || ""}
+                  onChange={(value) => updateField("documentsSortie", value)}
+                />
+                <PlanCard
+                  label="Prochaine action"
+                  value={editablePatient.nextStep || ""}
+                  onChange={(value) => updateField("nextStep", value)}
+                  wide
+                  highlight
+                />
+              </div>
             </div>
           </div>
 
@@ -388,14 +396,30 @@ export default function PatientView({
         </Card>
 
         <Card title="Coordination" subtitle="Centre opérationnel">
-          <div style={styles.activeNoteCard}>
+          <div
+            style={{
+              ...styles.activeNoteCard,
+              background: postItTheme.bg,
+              borderColor: postItTheme.border,
+            }}
+          >
             <div style={styles.activeNoteTop}>
-              <span style={styles.postItBadge}>POST-IT</span>
-              <span style={styles.activeNoteType}>{labelForType(newNoteType)}</span>
+              <span
+                style={{
+                  ...styles.postItBadge,
+                  background: postItTheme.badgeBg,
+                  color: postItTheme.badgeColor,
+                }}
+              >
+                POST-IT
+              </span>
+              <span style={{ ...styles.activeNoteType, color: postItTheme.badgeColor }}>
+                {labelForType(activeNote?.type || "info")}
+              </span>
             </div>
 
             <div style={styles.activeNoteText}>
-              {sortedNotes[0]?.text || "Aucune note récente."}
+              {activeNote?.text || "Aucune note récente."}
             </div>
 
             <div style={styles.activeNoteMeta}>
@@ -457,7 +481,7 @@ export default function PatientView({
         </Card>
       </section>
 
-      <section style={styles.middleRow}>
+      <section style={styles.supportGrid}>
         <Card title="Freins à la sortie">
           <div style={styles.tagsList}>
             {editablePatient.freins.map((frein, index) => (
@@ -537,9 +561,9 @@ export default function PatientView({
         </Card>
       </section>
 
-      <section style={styles.bottomRow}>
+      <section style={styles.bottomGrid}>
         <Card title="Entourage et protection">
-          <div style={styles.contactGrid}>
+          <div style={styles.contactGridTall}>
             <ContactCard
               title="Personne de confiance"
               name={editablePatient.personneConfiance || "Non renseignée"}
@@ -571,7 +595,7 @@ export default function PatientView({
         </Card>
 
         <Card title="Historique opérationnel">
-          <div style={styles.timeline}>
+          <div style={styles.timelineCompact}>
             {sortedNotes.map((note) => (
               <button
                 key={note.id}
@@ -618,14 +642,20 @@ function Card({ title, subtitle, children }) {
   );
 }
 
-function PlanRow({ label, value, onChange, wide = false }) {
+function PlanCard({ label, value, onChange, wide = false, highlight = false }) {
   return (
-    <div style={{ ...styles.planRow, ...(wide ? styles.planRowWide : {}) }}>
-      <div style={styles.planRowLabel}>{label}</div>
+    <div
+      style={{
+        ...styles.planCard,
+        ...(wide ? styles.planCardWide : {}),
+        ...(highlight ? styles.planCardHighlight : {}),
+      }}
+    >
+      <div style={styles.planCardLabel}>{label}</div>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={styles.planRowInput}
+        style={styles.planCardInput}
       />
     </div>
   );
@@ -636,10 +666,10 @@ function ContactCard({ title, name, phone, onCopy, copied }) {
   const telHref = canCall ? `tel:${phone}` : undefined;
 
   return (
-    <div style={styles.contactCard}>
+    <div style={styles.contactCardTall}>
       <div style={styles.contactTitle}>{title}</div>
       <div style={styles.contactName}>{name}</div>
-      <div style={styles.contactRow}>
+      <div style={styles.contactPhoneBlock}>
         {canCall ? (
           <a href={telHref} style={styles.contactPhoneLink}>
             {phone}
@@ -647,10 +677,10 @@ function ContactCard({ title, name, phone, onCopy, copied }) {
         ) : (
           <span style={styles.contactPhoneMuted}>{phone}</span>
         )}
-        <button type="button" onClick={onCopy} style={styles.copyButton} disabled={!canCall}>
-          {copied ? "Copié" : "Copier"}
-        </button>
       </div>
+      <button type="button" onClick={onCopy} style={styles.copyButton} disabled={!canCall}>
+        {copied ? "Copié" : "Copier"}
+      </button>
     </div>
   );
 }
@@ -667,7 +697,7 @@ function StatusPill({ label, tone = "neutral" }) {
   return <div style={{ ...styles.statusPill, background: t.bg, color: t.color }}>{label}</div>;
 }
 
-function MetricCell({ label, value, accent = "neutral" }) {
+function MetricCell({ label, value, accent = "neutral", compact = false }) {
   const colors = {
     neutral: "#0F172A",
     amber: "#D97706",
@@ -675,7 +705,7 @@ function MetricCell({ label, value, accent = "neutral" }) {
   };
 
   return (
-    <div style={styles.metricCell}>
+    <div style={{ ...styles.metricCell, ...(compact ? styles.metricCellCompact : {}) }}>
       <div style={styles.metricCellLabel}>{label}</div>
       <div style={{ ...styles.metricCellValue, color: colors[accent] || colors.neutral }}>
         {value}
@@ -723,6 +753,7 @@ function buildFreinsFromPatient(patient) {
   const defaults = {
     "Recherche EHPAD": ["Isolement social", "Logement inadapté", "Aidant épuisé"],
     "Recherche SSIAD": ["Retour domicile non sécurisé", "Aides non organisées"],
+    "Recherche HAD": ["Organisation domicile", "Coordination ville", "Transport à prévoir"],
     "Logement insalubre": ["Logement inadapté", "Coordination sociale"],
   };
   return [...new Set([...base, ...(defaults[patient?.blocage] || [])])];
@@ -739,6 +770,11 @@ function getFreinInsight(frein, patient) {
       action: "Contacter SSIAD et sécuriser le retour",
       actor: patient.assistanteSociale || "Assistante sociale",
       impact: "Retour domicile non sécurisé sans coordination de prise en charge.",
+    },
+    "Recherche HAD": {
+      action: "Relancer structure HAD",
+      actor: patient.cadre || "Cadre",
+      impact: "La sortie dépend d’une mise en place coordonnée à domicile.",
     },
     "Logement insalubre": {
       action: "Relancer solution logement",
@@ -813,6 +849,36 @@ function getScoreVisual(score) {
   };
 }
 
+function getPostItTheme(type) {
+  const themes = {
+    info: {
+      bg: "#EFF6FF",
+      border: "#BFDBFE",
+      badgeBg: "#DBEAFE",
+      badgeColor: "#1D4ED8",
+    },
+    action: {
+      bg: "#ECFDF5",
+      border: "#A7F3D0",
+      badgeBg: "#D1FAE5",
+      badgeColor: "#059669",
+    },
+    famille: {
+      bg: "#FFF7ED",
+      border: "#FED7AA",
+      badgeBg: "#FFEDD5",
+      badgeColor: "#EA580C",
+    },
+    urgent: {
+      bg: "#FEF2F2",
+      border: "#FECACA",
+      badgeBg: "#FEE2E2",
+      badgeColor: "#DC2626",
+    },
+  };
+  return themes[type] || themes.info;
+}
+
 function notePriorityFromType(type) {
   const map = {
     urgent: 4,
@@ -885,10 +951,11 @@ function activeNotePillStyle(type) {
 
 const styles = {
   page: {
-    padding: 20,
+    padding: 16,
     background: "#F1F5F9",
     minHeight: "100vh",
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto",
+    color: "#0F172A",
   },
 
   appHeader: {
@@ -897,9 +964,9 @@ const styles = {
     alignItems: "center",
     background: "#1E3A8A",
     color: "white",
-    padding: "12px 16px",
+    padding: "10px 14px",
     borderRadius: 10,
-    marginBottom: 16,
+    marginBottom: 12,
   },
 
   appHeaderLeft: {
@@ -909,12 +976,12 @@ const styles = {
   },
 
   appTitle: {
-    fontSize: 20,
-    fontWeight: 700,
+    fontSize: 18,
+    fontWeight: 800,
   },
 
   appSubtitle: {
-    fontSize: 12,
+    fontSize: 11,
     opacity: 0.85,
   },
 
@@ -929,6 +996,7 @@ const styles = {
     borderRadius: 6,
     padding: "6px 10px",
     cursor: "pointer",
+    fontWeight: 600,
   },
 
   headerDuoButton: {
@@ -938,6 +1006,7 @@ const styles = {
     borderRadius: 6,
     padding: "6px 12px",
     cursor: "pointer",
+    fontWeight: 700,
   },
 
   headerCrisisButton: {
@@ -947,6 +1016,7 @@ const styles = {
     borderRadius: 6,
     padding: "6px 12px",
     cursor: "pointer",
+    fontWeight: 700,
   },
 
   burgerButton: {
@@ -965,50 +1035,56 @@ const styles = {
   },
 
   patientRibbon: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 16,
+    display: "grid",
+    gridTemplateColumns: "1.1fr 1.4fr",
+    gap: 14,
     background: "white",
-    padding: 14,
+    padding: 12,
     borderRadius: 10,
-    marginBottom: 14,
-    alignItems: "flex-start",
+    marginBottom: 12,
+    alignItems: "center",
   },
 
   patientIdentity: {
     display: "flex",
     flexDirection: "column",
     gap: 4,
-    flex: 1,
+    minWidth: 0,
   },
 
   patientName: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 800,
+    lineHeight: 1.05,
   },
 
   patientMetaLine: {
-    fontSize: 13,
+    fontSize: 12,
     color: "#475569",
     display: "flex",
     gap: 6,
     flexWrap: "wrap",
+    lineHeight: 1.35,
   },
 
-  patientMetrics: {
+  kpiRow: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(100px, auto))",
-    gap: 10,
+    gridTemplateColumns: "repeat(5, minmax(90px, auto)) 1.35fr",
+    gap: 8,
     alignItems: "stretch",
+    justifyContent: "end",
   },
 
   statusPill: {
     padding: "8px 10px",
     borderRadius: 8,
     fontSize: 13,
-    fontWeight: 700,
+    fontWeight: 800,
     textAlign: "center",
-    minWidth: 96,
+    minWidth: 92,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   metricCell: {
@@ -1017,47 +1093,56 @@ const styles = {
     border: "1px solid #E2E8F0",
     borderRadius: 8,
     padding: "8px 10px",
-    minWidth: 96,
+    minWidth: 92,
+    display: "grid",
+    alignContent: "center",
+  },
+
+  metricCellCompact: {
+    minHeight: 66,
   },
 
   metricCellLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: "#64748B",
     marginBottom: 4,
+    textTransform: "uppercase",
+    fontWeight: 700,
   },
 
   metricCellValue: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 800,
+    lineHeight: 1.05,
   },
 
-  scoreCard: {
-    gridColumn: "span 2",
+  scoreCompactCard: {
     background: "#F8FAFC",
     border: "1px solid #E2E8F0",
     borderRadius: 8,
     padding: 10,
-    minWidth: 220,
+    minWidth: 180,
+    display: "grid",
+    alignContent: "center",
   },
 
-  scoreTop: {
+  scoreCompactTop: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 6,
   },
 
-  scoreLabel: {
-    fontSize: 11,
+  scoreCompactLabel: {
+    fontSize: 10,
     color: "#64748B",
     textTransform: "uppercase",
     fontWeight: 700,
   },
 
-  scoreValue: {
+  scoreCompactValue: {
     fontSize: 22,
     fontWeight: 800,
-    color: "#0F172A",
   },
 
   scoreBarTrack: {
@@ -1073,166 +1158,183 @@ const styles = {
     borderRadius: 999,
   },
 
-  scoreBottom: {
-    marginTop: 8,
+  scoreCompactBottom: {
+    marginTop: 6,
     display: "flex",
     justifyContent: "flex-end",
   },
 
   scoreBadge: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 800,
     border: "1px solid",
     borderRadius: 999,
-    padding: "4px 8px",
+    padding: "3px 7px",
   },
 
   alertBanner: {
     background: "#FEF2F2",
     border: "1px solid #FECACA",
-    padding: 10,
+    padding: 9,
     borderRadius: 8,
-    marginBottom: 14,
+    marginBottom: 12,
   },
 
   alertTitle: {
-    fontWeight: 700,
+    fontWeight: 800,
     color: "#DC2626",
+    fontSize: 12,
+    marginBottom: 2,
   },
 
   alertText: {
-    fontSize: 13,
+    fontSize: 12,
   },
 
-  topRow: {
+  mainGrid: {
     display: "grid",
-    gridTemplateColumns: "2fr 1fr",
-    gap: 14,
-    marginBottom: 14,
+    gridTemplateColumns: "1.7fr 1fr",
+    gap: 12,
+    marginBottom: 12,
+    alignItems: "start",
   },
 
-  middleRow: {
+  supportGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr 1fr",
-    gap: 14,
-    marginBottom: 14,
+    gap: 12,
+    marginBottom: 12,
+    alignItems: "start",
   },
 
-  bottomRow: {
+  bottomGrid: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 14,
+    gridTemplateColumns: "1.2fr 1fr",
+    gap: 12,
+    alignItems: "start",
   },
 
   card: {
     background: "white",
     borderRadius: 10,
-    padding: 14,
+    padding: 12,
+    boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
   },
 
   cardTitle: {
-    fontWeight: 700,
-    fontSize: 22,
+    fontWeight: 800,
+    fontSize: 18,
+    lineHeight: 1.1,
   },
 
   cardSubtitle: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#64748B",
+    marginTop: 2,
   },
 
-  situationLayout: {
+  situationHero: {
     display: "grid",
-    gridTemplateColumns: "1fr 1.4fr",
+    gridTemplateColumns: "0.9fr 1.3fr",
     gap: 12,
   },
 
-  primaryBlock: {
-    background: "#F8FAFC",
-    padding: 14,
+  situationLeft: {
+    background: "linear-gradient(180deg, #F8FAFC 0%, #EFF6FF 100%)",
+    border: "1px solid #DBEAFE",
     borderRadius: 10,
-    border: "1px solid #E2E8F0",
+    padding: 14,
+    display: "grid",
+    alignContent: "start",
+    gap: 10,
   },
 
-  primaryBlockLabel: {
-    fontSize: 12,
-    color: "#64748B",
-    marginBottom: 6,
+  heroLabel: {
+    fontSize: 11,
+    color: "#1E40AF",
     textTransform: "uppercase",
-    fontWeight: 700,
-  },
-
-  primaryBlockValue: {
-    fontSize: 20,
     fontWeight: 800,
-    lineHeight: 1.15,
-    marginBottom: 8,
+    letterSpacing: 0.2,
   },
 
-  primaryBlockHint: {
+  heroTitle: {
+    fontSize: 26,
+    fontWeight: 800,
+    lineHeight: 1.05,
+  },
+
+  heroText: {
     fontSize: 13,
     color: "#475569",
     lineHeight: 1.4,
   },
 
-  freinsInsightBox: {
-    marginTop: 12,
+  heroMiniGrid: {
+    display: "grid",
+    gap: 8,
+    marginTop: 2,
+  },
+
+  heroMiniItem: {
     background: "white",
     border: "1px solid #E2E8F0",
     borderRadius: 8,
     padding: 10,
+    display: "grid",
+    gap: 4,
   },
 
-  freinsInsightRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 10,
-    marginBottom: 8,
-  },
-
-  freinsInsightKey: {
-    fontSize: 12,
+  heroMiniLabel: {
+    fontSize: 10,
     color: "#64748B",
-  },
-
-  freinsInsightValue: {
-    fontSize: 12,
-    color: "#0F172A",
+    textTransform: "uppercase",
     fontWeight: 700,
-    textAlign: "right",
   },
 
-  planBoard: {
+  situationRight: {
+    display: "grid",
+    alignContent: "start",
+  },
+
+  planCardGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: 8,
   },
 
-  planRow: {
-    display: "flex",
-    flexDirection: "column",
+  planCard: {
     background: "#F8FAFC",
     border: "1px solid #E2E8F0",
     borderRadius: 8,
     padding: 8,
+    display: "grid",
+    gap: 4,
   },
 
-  planRowWide: {
+  planCardWide: {
     gridColumn: "1 / 3",
   },
 
-  planRowLabel: {
-    fontSize: 11,
+  planCardHighlight: {
+    background: "#EFF6FF",
+    border: "1px solid #BFDBFE",
+  },
+
+  planCardLabel: {
+    fontSize: 10,
     color: "#64748B",
-    marginBottom: 4,
     textTransform: "uppercase",
     fontWeight: 700,
   },
 
-  planRowInput: {
-    border: "1px solid #CBD5F5",
+  planCardInput: {
+    border: "1px solid #CBD5E1",
     borderRadius: 6,
-    padding: "6px 8px",
+    padding: "7px 8px",
+    fontSize: 13,
     background: "white",
+    width: "100%",
+    boxSizing: "border-box",
   },
 
   situationFooter: {
@@ -1272,14 +1374,14 @@ const styles = {
     display: "flex",
     gap: 4,
     alignItems: "center",
+    fontSize: 13,
   },
 
   activeNoteCard: {
-    background: "#FFF7ED",
-    border: "1px solid #FED7AA",
+    border: "1px solid",
     borderRadius: 10,
     padding: 12,
-    marginBottom: 12,
+    marginBottom: 10,
   },
 
   activeNoteTop: {
@@ -1290,10 +1392,8 @@ const styles = {
   },
 
   postItBadge: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 800,
-    background: "#F59E0B",
-    color: "white",
     borderRadius: 999,
     padding: "4px 8px",
   },
@@ -1301,18 +1401,17 @@ const styles = {
   activeNoteType: {
     fontSize: 12,
     fontWeight: 700,
-    color: "#92400E",
   },
 
   activeNoteText: {
     fontSize: 14,
     fontWeight: 700,
-    color: "#0F172A",
+    lineHeight: 1.35,
   },
 
   activeNoteMeta: {
     marginTop: 6,
-    fontSize: 12,
+    fontSize: 11,
     color: "#64748B",
   },
 
@@ -1320,13 +1419,13 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 10,
   },
 
   actionButton: {
     padding: "8px 10px",
     borderRadius: 8,
-    border: "1px solid #CBD5F5",
+    border: "1px solid #CBD5E1",
     background: "#EFF6FF",
     color: "#1D4ED8",
     fontWeight: 700,
@@ -1334,7 +1433,7 @@ const styles = {
   },
 
   noteComposer: {
-    marginTop: 12,
+    marginTop: 6,
   },
 
   noteTypePills: {
@@ -1345,21 +1444,21 @@ const styles = {
   },
 
   noteTypePill: {
-    border: "1px solid #CBD5F5",
-    background: "white",
-    borderRadius: 6,
+    borderRadius: 999,
     padding: "4px 8px",
-    fontSize: 12,
+    fontSize: 11,
     cursor: "pointer",
   },
 
   textarea: {
     width: "100%",
-    minHeight: 60,
+    minHeight: 54,
     borderRadius: 6,
-    border: "1px solid #CBD5F5",
-    padding: 6,
+    border: "1px solid #CBD5E1",
+    padding: 8,
     boxSizing: "border-box",
+    resize: "vertical",
+    fontSize: 13,
   },
 
   noteActions: {
@@ -1374,13 +1473,16 @@ const styles = {
     border: "none",
     padding: "6px 10px",
     borderRadius: 6,
+    fontWeight: 700,
+    fontSize: 12,
   },
 
   secondaryButton: {
-    border: "1px solid #CBD5F5",
+    border: "1px solid #CBD5E1",
     background: "white",
     padding: "6px 10px",
     borderRadius: 6,
+    fontSize: 12,
   },
 
   tagsList: {
@@ -1395,9 +1497,10 @@ const styles = {
     alignItems: "center",
     background: "#F1F5F9",
     padding: "6px 8px",
-    borderRadius: 8,
+    borderRadius: 999,
     border: "1px solid #E2E8F0",
     cursor: "pointer",
+    fontSize: 12,
   },
 
   freinTagActive: {
@@ -1422,7 +1525,7 @@ const styles = {
   },
 
   activeFreinFooterTitle: {
-    fontSize: 11,
+    fontSize: 10,
     color: "#64748B",
     textTransform: "uppercase",
     fontWeight: 700,
@@ -1442,9 +1545,10 @@ const styles = {
 
   addInput: {
     flex: 1,
-    border: "1px solid #CBD5F5",
+    border: "1px solid #CBD5E1",
     borderRadius: 6,
     padding: 6,
+    fontSize: 13,
   },
 
   addMiniButton: {
@@ -1453,12 +1557,13 @@ const styles = {
     color: "white",
     padding: "4px 10px",
     borderRadius: 6,
+    fontWeight: 700,
   },
 
   actorList: {
     display: "flex",
     flexDirection: "column",
-    gap: 6,
+    gap: 4,
   },
 
   actorRow: {
@@ -1471,12 +1576,12 @@ const styles = {
 
   actorRole: {
     color: "#64748B",
-    fontSize: 13,
+    fontSize: 12,
   },
 
   actorName: {
     fontWeight: 700,
-    fontSize: 13,
+    fontSize: 12,
     textAlign: "right",
   },
 
@@ -1490,7 +1595,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     gap: 12,
-    fontSize: 13,
+    fontSize: 12,
   },
 
   summaryHighlight: {
@@ -1501,6 +1606,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: 4,
+    fontSize: 12,
   },
 
   riskHigh: {
@@ -1508,73 +1614,85 @@ const styles = {
   },
 
   suggestionButton: {
-    marginTop: 6,
+    marginTop: 4,
     border: "none",
     background: "#1E3A8A",
     color: "white",
     borderRadius: 6,
     padding: "8px 10px",
     fontWeight: 700,
+    fontSize: 12,
   },
 
-  contactGrid: {
+  contactGridTall: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr 1fr",
-    gap: 8,
+    gap: 10,
+    minHeight: 128,
   },
 
-  contactCard: {
+  contactCardTall: {
     background: "#F8FAFC",
-    padding: 10,
-    borderRadius: 8,
+    padding: 12,
+    borderRadius: 10,
     border: "1px solid #E2E8F0",
+    display: "grid",
+    alignContent: "space-between",
+    minHeight: 118,
   },
 
   contactTitle: {
-    fontSize: 12,
+    fontSize: 10,
     color: "#64748B",
+    textTransform: "uppercase",
+    fontWeight: 700,
+    marginBottom: 6,
   },
 
   contactName: {
-    fontWeight: 700,
-    fontSize: 13,
+    fontWeight: 800,
+    fontSize: 14,
+    marginBottom: 10,
   },
 
-  contactRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginTop: 4,
-    gap: 8,
+  contactPhoneBlock: {
+    marginBottom: 10,
   },
 
   contactPhoneLink: {
     color: "#2563EB",
-    fontSize: 13,
+    fontSize: 15,
+    fontWeight: 700,
+    textDecoration: "none",
   },
 
   contactPhoneMuted: {
     color: "#94A3B8",
-    fontSize: 13,
+    fontSize: 14,
   },
 
   copyButton: {
     fontSize: 11,
     border: "none",
     background: "#E2E8F0",
-    borderRadius: 4,
-    padding: "2px 6px",
+    borderRadius: 6,
+    padding: "6px 8px",
+    justifySelf: "start",
   },
 
-  timeline: {
+  timelineCompact: {
     display: "flex",
     flexDirection: "column",
     gap: 8,
+    maxHeight: 170,
+    overflow: "auto",
+    paddingRight: 2,
   },
 
   timelineItem: {
     display: "flex",
     gap: 8,
-    border: "none",
+    border: "1px solid #E2E8F0",
     background: "#F8FAFC",
     padding: 10,
     borderRadius: 8,
@@ -1622,28 +1740,32 @@ const styles = {
 
   noteTypeBadge: {
     padding: "2px 6px",
-    borderRadius: 4,
-    fontSize: 11,
+    borderRadius: 999,
+    fontSize: 10,
+    fontWeight: 700,
   },
 
   unreadBadge: {
     fontSize: 10,
     background: "#DC2626",
     color: "white",
-    padding: "2px 4px",
-    borderRadius: 4,
+    padding: "2px 5px",
+    borderRadius: 999,
+    fontWeight: 700,
   },
 
   priorityBadge: {
     fontSize: 10,
     background: "#7C3AED",
     color: "white",
-    padding: "2px 4px",
-    borderRadius: 4,
+    padding: "2px 5px",
+    borderRadius: 999,
+    fontWeight: 700,
   },
 
   timelineText: {
-    fontSize: 13,
+    fontSize: 12,
     marginTop: 4,
+    lineHeight: 1.35,
   },
 };
