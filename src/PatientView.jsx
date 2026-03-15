@@ -212,7 +212,7 @@ export default function PatientView({
         <div style={styles.identityCard}>
           <div style={styles.identityName}>{editablePatient.nom} {editablePatient.prenom}</div>
 
-          <div style={styles.identityLine}>
+          <div style={styles.identityMetaRow}>
             <span>{editablePatient.birthDate}</span>
             <span>•</span>
             <span>{editablePatient.age} ans</span>
@@ -222,7 +222,7 @@ export default function PatientView({
             <span>IEP {editablePatient.iep}</span>
           </div>
 
-          <div style={styles.identityLine}>
+          <div style={styles.identityMetaRow}>
             <span>{editablePatient.service}</span>
             <span>•</span>
             <span>Chambre {editablePatient.chambre}</span>
@@ -230,41 +230,24 @@ export default function PatientView({
             <span>Lit {editablePatient.lit}</span>
           </div>
 
-          <div style={styles.identityLine}>
+          <div style={styles.identityMetaRow}>
             <span>Entrée : {editablePatient.entryDate}</span>
             <span>•</span>
             <span>{stayDays} jours de présence</span>
           </div>
         </div>
 
-        <div style={styles.identitySummary}>
-          <div style={styles.identitySummaryGrid}>
-            <SummaryTile
-              label="Statut"
-              value={status.label}
-              tone={status.tone}
-            />
-            <SummaryTile
-              label="Sortant médical"
-              value={editablePatient.sortantMedicalement ? "Oui" : "Non"}
-            />
-            <SummaryTile
-              label="Jours évitables"
-              value={editablePatient.joursEvitables}
-              alert
-            />
-            <SummaryTile
-              label="Score parcours"
-              value={scoreParcours}
-            />
-            <SummaryTile
-              label="Notes non lues"
-              value={unreadCount}
-              subtle
-            />
+        <div style={styles.identitySummaryCard}>
+          <div style={styles.kpiPanel}>
+            <StatusChip label={status.label} tone={status.tone} />
+
+            <KpiMini label="Sortant médical" value={editablePatient.sortantMedicalement ? "Oui" : "Non"} />
+            <KpiMini label="Jours évitables" value={editablePatient.joursEvitables} alert />
+            <KpiMini label="Score parcours" value={scoreParcours} />
+            <KpiMini label="Notes non lues" value={unreadCount} subtle />
             <button
               type="button"
-              style={styles.duoTile}
+              style={styles.duoButton}
               onClick={() =>
                 onOpenDuo
                   ? onOpenDuo(editablePatient)
@@ -288,7 +271,7 @@ export default function PatientView({
 
       <section style={styles.topRow}>
         <Card title="Situation de sortie" subtitle="Décision et préparation">
-          <div style={styles.situationMainGrid}>
+          <div style={styles.situationGrid}>
             <div style={styles.focusCard}>
               <div style={styles.focusLabel}>Frein principal</div>
               <div style={styles.focusValue}>{editablePatient.blocage || "Non renseigné"}</div>
@@ -609,13 +592,7 @@ function ContactCard({ title, name, phone, onCopy, copied }) {
         ) : (
           <span style={styles.contactPhoneMuted}>{phone}</span>
         )}
-
-        <button
-          type="button"
-          onClick={onCopy}
-          style={styles.copyButton}
-          disabled={!canCall}
-        >
+        <button type="button" onClick={onCopy} style={styles.copyButton} disabled={!canCall}>
           {copied ? "Copié" : "Copier"}
         </button>
       </div>
@@ -623,38 +600,35 @@ function ContactCard({ title, name, phone, onCopy, copied }) {
   );
 }
 
-function StatusBadge({ label, tone = "neutral" }) {
+function StatusChip({ label, tone = "neutral" }) {
   const tones = {
-    neutral: { bg: "#E2E8F0", color: "#334155" },
-    red: { bg: "#FEE2E2", color: "#DC2626" },
-    amber: { bg: "#FEF3C7", color: "#D97706" },
-    green: { bg: "#D1FAE5", color: "#059669" },
+    neutral: { bg: "#E2E8F0", color: "#334155", border: "#CBD5E1" },
+    red: { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA" },
+    amber: { bg: "#FEF3C7", color: "#D97706", border: "#FDE68A" },
+    green: { bg: "#D1FAE5", color: "#059669", border: "#A7F3D0" },
   };
-
   const t = tones[tone] || tones.neutral;
 
   return (
-    <span style={{ ...styles.statusBadge, background: t.bg, color: t.color }}>
-      {label}
-    </span>
+    <div style={{ ...styles.statusChip, background: t.bg, color: t.color, borderColor: t.border }}>
+      <div style={styles.statusChipLabel}>Statut</div>
+      <div style={styles.statusChipValue}>{label}</div>
+    </div>
   );
 }
 
-function SummaryTile({ label, value, tone = "neutral", alert = false, subtle = false }) {
-  const toneMap = {
-    neutral: { bg: "#FFFFFF", border: "#E5E7EB", value: "#0F172A" },
-    red: { bg: "#FEF2F2", border: "#FECACA", value: "#DC2626" },
-    amber: { bg: "#FFFBEB", border: "#FDE68A", value: "#D97706" },
-    green: { bg: "#ECFDF5", border: "#A7F3D0", value: "#059669" },
-  };
-
-  const current = toneMap[tone] || toneMap.neutral;
-  const valueColor = alert ? "#D97706" : subtle ? "#DC2626" : current.value;
-
+function KpiMini({ label, value, alert = false, subtle = false }) {
   return (
-    <div style={{ ...styles.summaryTile, background: current.bg, borderColor: current.border }}>
-      <div style={styles.summaryTileLabel}>{label}</div>
-      <div style={{ ...styles.summaryTileValue, color: valueColor }}>{value}</div>
+    <div style={styles.kpiMini}>
+      <div style={styles.kpiMiniLabel}>{label}</div>
+      <div
+        style={{
+          ...styles.kpiMiniValue,
+          color: alert ? "#D97706" : subtle ? "#DC2626" : "#0F172A",
+        }}
+      >
+        {value}
+      </div>
     </div>
   );
 }
@@ -830,7 +804,7 @@ const styles = {
 
   identitySection: {
     display: "grid",
-    gridTemplateColumns: "1.25fr 0.95fr",
+    gridTemplateColumns: "1.18fr 0.92fr",
     gap: 16,
     marginBottom: 16,
     alignItems: "stretch",
@@ -840,44 +814,43 @@ const styles = {
     background: "#FFFFFF",
     border: "1px solid #E5E7EB",
     borderRadius: 20,
-    padding: 22,
+    padding: "18px 20px",
     boxShadow: "0 10px 24px rgba(15,23,42,0.04)",
   },
 
   identityName: {
-    fontSize: 36,
+    fontSize: 34,
     fontWeight: 900,
     color: "#0F172A",
     lineHeight: 1.05,
   },
 
-  identityLine: {
+  identityMetaRow: {
     display: "flex",
     flexWrap: "wrap",
     gap: 8,
     marginTop: 8,
-    fontSize: 15,
+    fontSize: 14,
     color: "#475569",
     lineHeight: 1.45,
   },
 
-  identitySummary: {
-    background: "#FFFFFF",
+  identitySummaryCard: {
+    background: "linear-gradient(180deg, #FFFFFF 0%, #FBFDFF 100%)",
     border: "1px solid #E5E7EB",
     borderRadius: 20,
-    padding: 18,
+    padding: 16,
     boxShadow: "0 10px 24px rgba(15,23,42,0.04)",
-    display: "grid",
-    alignItems: "center",
   },
 
-  identitySummaryGrid: {
+  kpiPanel: {
     display: "grid",
     gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gap: 10,
+    height: "100%",
   },
 
-  summaryTile: {
+  statusChip: {
     border: "1px solid #E5E7EB",
     borderRadius: 14,
     padding: "12px 12px",
@@ -886,7 +859,31 @@ const styles = {
     alignContent: "space-between",
   },
 
-  summaryTileLabel: {
+  statusChipLabel: {
+    fontSize: 11,
+    fontWeight: 800,
+    textTransform: "uppercase",
+    letterSpacing: 0.2,
+    opacity: 0.8,
+  },
+
+  statusChipValue: {
+    fontSize: 22,
+    fontWeight: 900,
+    lineHeight: 1.1,
+  },
+
+  kpiMini: {
+    background: "#F8FAFC",
+    border: "1px solid #E5E7EB",
+    borderRadius: 14,
+    padding: "12px 12px",
+    minHeight: 72,
+    display: "grid",
+    alignContent: "space-between",
+  },
+
+  kpiMiniLabel: {
     fontSize: 11,
     color: "#64748B",
     fontWeight: 800,
@@ -894,13 +891,13 @@ const styles = {
     letterSpacing: 0.2,
   },
 
-  summaryTileValue: {
+  kpiMiniValue: {
     fontSize: 22,
     fontWeight: 900,
     lineHeight: 1.1,
   },
 
-  duoTile: {
+  duoButton: {
     border: "1px solid #BFDBFE",
     background: "#EFF6FF",
     color: "#1D4ED8",
@@ -908,15 +905,6 @@ const styles = {
     minHeight: 72,
     fontWeight: 800,
     fontSize: 16,
-  },
-
-  statusBadge: {
-    display: "inline-block",
-    padding: "8px 12px",
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: 800,
-    justifySelf: "start",
   },
 
   alertBanner: {
@@ -942,7 +930,7 @@ const styles = {
 
   topRow: {
     display: "grid",
-    gridTemplateColumns: "1.3fr 0.95fr",
+    gridTemplateColumns: "1.28fr 0.95fr",
     gap: 18,
     marginBottom: 18,
     alignItems: "start",
@@ -984,9 +972,9 @@ const styles = {
     color: "#64748B",
   },
 
-  situationMainGrid: {
+  situationGrid: {
     display: "grid",
-    gridTemplateColumns: "0.8fr 1.2fr",
+    gridTemplateColumns: "0.78fr 1.22fr",
     gap: 16,
     alignItems: "start",
   },
@@ -996,7 +984,7 @@ const styles = {
     padding: 18,
     background: "linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)",
     border: "1px solid #BFDBFE",
-    minHeight: 100,
+    minHeight: 168,
   },
 
   focusLabel: {
@@ -1009,8 +997,8 @@ const styles = {
   },
 
   focusValue: {
-    fontSize: 34,
-    lineHeight: 1.08,
+    fontSize: 28,
+    lineHeight: 1.1,
     fontWeight: 900,
     color: "#0F172A",
   },
@@ -1052,7 +1040,7 @@ const styles = {
     border: "1px solid #CBD5E1",
     borderRadius: 10,
     padding: "10px 12px",
-    fontSize: 15,
+    fontSize: 14,
     boxSizing: "border-box",
   },
 
@@ -1132,7 +1120,7 @@ const styles = {
   },
 
   coordText: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#0F172A",
     fontWeight: 700,
     lineHeight: 1.45,
@@ -1152,14 +1140,14 @@ const styles = {
   },
 
   actionButton: {
-    padding: 12,
+    padding: 11,
     borderRadius: 12,
     border: "1px solid #CBD5E1",
     background: "#EFF6FF",
     color: "#1D4ED8",
     fontWeight: 700,
     cursor: "pointer",
-    fontSize: 14,
+    fontSize: 13,
   },
 
   noteComposer: {
@@ -1184,7 +1172,7 @@ const styles = {
   },
 
   textarea: {
-    minHeight: 110,
+    minHeight: 104,
     resize: "vertical",
     border: "1px solid #CBD5E1",
     borderRadius: 12,
@@ -1235,7 +1223,7 @@ const styles = {
     border: "1px solid #FEE2E2",
     color: "#0F172A",
     fontWeight: 600,
-    fontSize: 15,
+    fontSize: 14,
   },
 
   freinDot: {
@@ -1292,7 +1280,7 @@ const styles = {
   },
 
   actorName: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#0F172A",
     fontWeight: 700,
   },
@@ -1357,7 +1345,7 @@ const styles = {
   },
 
   contactName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 800,
     color: "#0F172A",
   },
