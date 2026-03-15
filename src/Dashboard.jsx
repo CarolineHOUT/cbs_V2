@@ -63,13 +63,8 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
     [enrichedPatients]
   );
 
-  const visibleServicePills = useMemo(() => {
-    return allServices.slice(0, 6);
-  }, [allServices]);
-
-  const hiddenServices = useMemo(() => {
-    return allServices.slice(6);
-  }, [allServices]);
+  const visibleServicePills = useMemo(() => allServices.slice(0, 7), [allServices]);
+  const hiddenServices = useMemo(() => allServices.slice(7), [allServices]);
 
   const barriers = useMemo(
     () => ["Tous", ...new Set(enrichedPatients.map((p) => p.blocage))],
@@ -135,7 +130,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
       recoverableBeds,
       totalPresence,
       tension:
-        blocked >= 2 ? "Élevée" : blocked === 1 ? "Sous tension" : "Modérée",
+        blocked >= 3 ? "Critique" : blocked >= 2 ? "Élevée" : blocked === 1 ? "Sous tension" : "Modérée",
     };
   }, [medicalReadyPatients]);
 
@@ -194,7 +189,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
         const rank = { critical: 4, high: 3, medium: 2, low: 1 };
         return rank[b.level] - rank[a.level] || b.days - a.days;
       })
-      .slice(0, 5);
+      .slice(0, 6);
   }, [medicalReadyPatients]);
 
   useEffect(() => {
@@ -324,14 +319,20 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
       <section
         style={{
           ...styles.grid,
-          gridTemplateColumns: isMobile ? "1fr" : "minmax(0,1.85fr) minmax(360px,1fr)",
+          gridTemplateColumns: isMobile ? "1fr" : "minmax(0,1.9fr) minmax(360px,1fr)",
         }}
       >
         <div>
           <section style={styles.panel}>
             <div style={styles.panelHeader}>
-              <div style={styles.panelTitle}>Patients prioritaires</div>
-              <div style={styles.panelSubtitle}>Coordination de sortie et gestion capacitaire</div>
+              <div>
+                <div style={styles.panelTitle}>Patients prioritaires</div>
+                <div style={styles.panelSubtitle}>Coordination de sortie et gestion capacitaire</div>
+              </div>
+
+              <div style={styles.listCount}>
+                {filtered.length} patient(s)
+              </div>
             </div>
 
             {filtered.length === 0 ? (
@@ -341,7 +342,7 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
                 {filtered.map((p) => (
                   <div key={p.id} style={styles.patientCard}>
                     <div style={styles.patientTop}>
-                      <div>
+                      <div style={styles.patientIdentity}>
                         <div style={styles.patientName}>
                           {p.nom} {p.prenom}
                         </div>
@@ -358,17 +359,32 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
                       </div>
                     </div>
 
-                    <div style={styles.infoGrid}>
-                      <InfoBlock label="Service" value={`${p.service} • ch ${p.chambre} • lit ${p.lit}`} />
-                      <InfoBlock label="Frein" value={p.blocage} />
-                      <InfoBlock label="Admission" value={p.entryDate || "Non renseignée"} />
-                      <InfoBlock label="Présence" value={`${p.stayDays} j`} />
-                      <InfoBlock
+                    <div style={styles.patientMainRow}>
+                      <div style={styles.mainInfo}>
+                        <div style={styles.mainInfoTitle}>{p.service}</div>
+                        <div style={styles.mainInfoText}>ch {p.chambre} • lit {p.lit}</div>
+                      </div>
+
+                      <div style={styles.mainInfo}>
+                        <div style={styles.mainInfoTitle}>Frein</div>
+                        <div style={styles.mainInfoText}>{p.blocage}</div>
+                      </div>
+
+                      <div style={styles.mainInfo}>
+                        <div style={styles.mainInfoTitle}>Admission</div>
+                        <div style={styles.mainInfoText}>{p.entryDate || "Non renseignée"}</div>
+                      </div>
+                    </div>
+
+                    <div style={styles.patientBottomRow}>
+                      <MiniStat label="Présence" value={`${p.stayDays} j`} />
+                      <MiniStat
                         label="Jours évitables"
                         value={p.sortantMedicalement ? `${p.joursEvitables} j` : "—"}
                       />
-                      <div>
-                        <div style={styles.infoLabel}>Sortant médical</div>
+
+                      <div style={styles.sortantBox}>
+                        <div style={styles.miniLabel}>Sortant médical</div>
                         <label style={styles.checkboxWrap}>
                           <input
                             type="checkbox"
@@ -497,15 +513,6 @@ export default function Dashboard({ patients = [], onOpenPatient }) {
   );
 }
 
-function InfoBlock({ label, value }) {
-  return (
-    <div>
-      <div style={styles.infoLabel}>{label}</div>
-      <div style={styles.infoValue}>{value}</div>
-    </div>
-  );
-}
-
 function KpiTile({ label, value, tone = "blue" }) {
   const colorMap = {
     blue: "#2563EB",
@@ -514,15 +521,15 @@ function KpiTile({ label, value, tone = "blue" }) {
   };
 
   const glowMap = {
-    blue: "rgba(37,99,235,0.08)",
-    red: "rgba(220,38,38,0.08)",
-    amber: "rgba(217,119,6,0.08)",
+    blue: "rgba(37,99,235,0.10)",
+    red: "rgba(220,38,38,0.10)",
+    amber: "rgba(217,119,6,0.10)",
   };
 
   return (
     <div style={{ ...styles.kpiTile, boxShadow: `0 12px 24px ${glowMap[tone]}` }}>
-      <div style={styles.kpiValueHero}>{value}</div>
-      <div style={{ ...styles.kpiLabelHero, color: colorMap[tone] }}>{label}</div>
+      <div style={{ ...styles.kpiValueHero, color: colorMap[tone] }}>{value}</div>
+      <div style={styles.kpiLabelHero}>{label}</div>
     </div>
   );
 }
@@ -559,6 +566,15 @@ function MetricGrid({ items }) {
   );
 }
 
+function MiniStat({ label, value }) {
+  return (
+    <div style={styles.miniStat}>
+      <div style={styles.miniLabel}>{label}</div>
+      <div style={styles.miniValue}>{value}</div>
+    </div>
+  );
+}
+
 function StatusBadge({ score }) {
   if (score >= 8) return <span style={styles.badgeRed}>Bloqué</span>;
   if (score >= 6) return <span style={styles.badgeAmber}>Risque</span>;
@@ -589,7 +605,7 @@ function ServiceBadge({ level }) {
 
 const styles = {
   page: {
-    maxWidth: 1320,
+    maxWidth: 1340,
     margin: "0 auto",
     padding: 18,
     background: "#F8FAFC",
@@ -676,16 +692,16 @@ const styles = {
   },
 
   kpiValueHero: {
-    fontSize: 42,
+    fontSize: 44,
     fontWeight: 900,
     lineHeight: 1,
-    color: "#111827",
   },
 
   kpiLabelHero: {
     fontSize: 13,
     fontWeight: 700,
     marginTop: 10,
+    color: "#475569",
   },
 
   filtersPanel: {
@@ -790,6 +806,11 @@ const styles = {
 
   panelHeader: {
     marginBottom: 12,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+    flexWrap: "wrap",
   },
 
   panelTitle: {
@@ -816,15 +837,25 @@ const styles = {
     color: "#64748B",
   },
 
+  listCount: {
+    padding: "8px 12px",
+    borderRadius: 999,
+    background: "#F8FAFC",
+    border: "1px solid #E2E8F0",
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#334155",
+  },
+
   patientList: {
     display: "grid",
-    gap: 14,
+    gap: 12,
   },
 
   patientCard: {
     border: "1px solid #E5E7EB",
     borderRadius: 18,
-    padding: 18,
+    padding: 16,
     background: "linear-gradient(180deg, #FFFFFF 0%, #FCFDFF 100%)",
     boxShadow: "0 10px 24px rgba(15,23,42,0.04)",
   },
@@ -835,7 +866,11 @@ const styles = {
     alignItems: "flex-start",
     gap: 12,
     flexWrap: "wrap",
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+
+  patientIdentity: {
+    minWidth: 0,
   },
 
   patientActions: {
@@ -858,27 +893,70 @@ const styles = {
     marginTop: 5,
   },
 
-  infoGrid: {
+  patientMainRow: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: 16,
-    paddingTop: 14,
+    gridTemplateColumns: "1.2fr 1fr 0.8fr",
+    gap: 12,
+    paddingTop: 12,
     borderTop: "1px solid #EDF2F7",
   },
 
-  infoLabel: {
+  mainInfo: {
+    minWidth: 0,
+  },
+
+  mainInfoTitle: {
     fontSize: 11,
     color: "#64748B",
     fontWeight: 800,
-    marginBottom: 5,
     textTransform: "uppercase",
     letterSpacing: 0.25,
+    marginBottom: 4,
   },
 
-  infoValue: {
+  mainInfoText: {
     fontSize: 14,
     color: "#0F172A",
     lineHeight: 1.45,
+    fontWeight: 600,
+  },
+
+  patientBottomRow: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+    marginTop: 12,
+    paddingTop: 12,
+    borderTop: "1px solid #F1F5F9",
+  },
+
+  miniStat: {
+    minWidth: 120,
+    padding: "10px 12px",
+    borderRadius: 12,
+    background: "#F8FAFC",
+    border: "1px solid #E5E7EB",
+  },
+
+  miniLabel: {
+    fontSize: 11,
+    color: "#64748B",
+    fontWeight: 700,
+    marginBottom: 4,
+  },
+
+  miniValue: {
+    fontSize: 16,
+    fontWeight: 800,
+    color: "#0F172A",
+  },
+
+  sortantBox: {
+    minWidth: 150,
+    padding: "10px 12px",
+    borderRadius: 12,
+    background: "#F8FAFC",
+    border: "1px solid #E5E7EB",
   },
 
   checkboxWrap: {
