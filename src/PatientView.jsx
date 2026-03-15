@@ -1,444 +1,435 @@
-import { useMemo } from "react";
+import { useState } from "react";
+import Dashboard from "./Dashboard";
+import PatientView from "./PatientView";
 
-export default function PatientView({ patient, onBack }) {
-  const status = useMemo(() => {
-    if (!patient) return { label: "", tone: "neutral" };
-    if (patient.score >= 8) return { label: "Bloqué", tone: "red" };
-    if (patient.score >= 6) return { label: "Risque", tone: "amber" };
-    return { label: "Suivi", tone: "green" };
-  }, [patient]);
+const patientsData = [
+  {
+    id: 1,
+    nom: "Dubois",
+    prenom: "Jean",
+    age: 81,
+    birthDate: "12/05/1943",
+    ins: "1800543210987",
+    iep: "CHX0002452",
+    entryDate: "10/03/2026",
+    service: "Pneumologie",
+    chambre: "320",
+    lit: "C",
+    blocage: "Logement insalubre",
+    joursEvitables: 8,
+    score: 9,
+    sortantMedicalement: true,
+    destinationPrevue: "Domicile avec aides",
+    besoinAval: "Aide au retour + coordination sociale",
+    transport: "Transport assis à confirmer",
+    documentsSortie: "Ordonnance en cours",
+    referentMedical: "Dr Martin",
+    cadre: "Mme Leroy",
+    assistanteSociale: "Mme Bernard",
+    nextStep: "Relancer solution logement aujourd’hui",
+    personneConfiance: "Marie Dubois",
+    personneAPrevenir: "Paul Dubois",
+    protectionJuridique: "Aucune mesure connue",
+    notes: [
+      "Patient médicalement stabilisé.",
+      "Frein social majeur à la sortie.",
+      "Relance assistante sociale prévue ce jour.",
+    ],
+  },
+  {
+    id: 2,
+    nom: "Martin",
+    prenom: "Pierre",
+    age: 85,
+    birthDate: "01/10/1939",
+    ins: "1800654321789",
+    iep: "CHX0002451",
+    entryDate: "09/03/2026",
+    service: "Médecine",
+    chambre: "118",
+    lit: "A",
+    blocage: "Recherche SSIAD",
+    joursEvitables: 6,
+    score: 8,
+    sortantMedicalement: true,
+    destinationPrevue: "Domicile",
+    besoinAval: "SSIAD",
+    transport: "Famille",
+    documentsSortie: "Lettre de sortie à finaliser",
+    referentMedical: "Dr Faure",
+    cadre: "Mme Colin",
+    assistanteSociale: "Mme Perez",
+    nextStep: "Valider SSIAD avant 16h",
+    personneConfiance: "Anne Martin",
+    personneAPrevenir: "Anne Martin",
+    protectionJuridique: "Aucune mesure connue",
+    notes: [
+      "Retour domicile envisagé.",
+      "SSIAD non confirmé.",
+      "Patient et famille informés.",
+    ],
+  },
+  {
+    id: 3,
+    nom: "Renard",
+    prenom: "Camille",
+    age: 76,
+    birthDate: "12/03/1948",
+    ins: "1800612345987",
+    iep: "CHX0002464",
+    entryDate: "11/03/2026",
+    service: "Oncologie",
+    chambre: "214",
+    lit: "B",
+    blocage: "Coordination ville insuffisante",
+    joursEvitables: 3,
+    score: 6,
+    sortantMedicalement: true,
+    notes: [
+      "Coordination IDEL à organiser.",
+      "Besoin de sécuriser relais ville.",
+    ],
+  },
+  {
+    id: 4,
+    nom: "Leroy",
+    prenom: "Michel",
+    age: 75,
+    birthDate: "18/02/1949",
+    ins: "1800321456987",
+    iep: "CHX0002454",
+    entryDate: "20/03/2026",
+    service: "Pneumologie",
+    chambre: "219",
+    lit: "A",
+    blocage: "Isolement social",
+    joursEvitables: 0,
+    score: 5,
+    sortantMedicalement: false,
+    notes: [
+      "Patient non médicalement sortant à ce stade.",
+      "Surveillance sociale à maintenir.",
+    ],
+  },
+  {
+    id: 5,
+    nom: "Moreau",
+    prenom: "Alice",
+    age: 68,
+    birthDate: "04/07/1957",
+    ins: "1800456123789",
+    iep: "CHX0002501",
+    entryDate: "08/03/2026",
+    service: "Chirurgie",
+    chambre: "402",
+    lit: "B",
+    blocage: "Attente place SSR",
+    joursEvitables: 7,
+    score: 8,
+    sortantMedicalement: true,
+    notes: [
+      "Indication SSR validée.",
+      "Attente de place disponible.",
+    ],
+  },
+  {
+    id: 6,
+    nom: "Faure",
+    prenom: "Louis",
+    age: 73,
+    birthDate: "21/01/1952",
+    ins: "1800789456123",
+    iep: "CHX0002502",
+    entryDate: "14/03/2026",
+    service: "Chirurgie",
+    chambre: "405",
+    lit: "A",
+    blocage: "Transport sanitaire",
+    joursEvitables: 2,
+    score: 6,
+    sortantMedicalement: true,
+    notes: [
+      "Bon état clinique.",
+      "Transport non planifié.",
+    ],
+  },
+  {
+    id: 7,
+    nom: "Bernard",
+    prenom: "Sophie",
+    age: 79,
+    birthDate: "16/09/1945",
+    ins: "1800123498765",
+    iep: "CHX0002503",
+    entryDate: "07/03/2026",
+    service: "Médecine polyvalente",
+    chambre: "155",
+    lit: "C",
+    blocage: "Retour domicile non sécurisé",
+    joursEvitables: 5,
+    score: 7,
+    sortantMedicalement: true,
+    notes: [
+      "Besoin d’aides renforcées au domicile.",
+      "Famille peu disponible.",
+    ],
+  },
+  {
+    id: 8,
+    nom: "Petit",
+    prenom: "Henri",
+    age: 84,
+    birthDate: "03/04/1941",
+    ins: "1800432198765",
+    iep: "CHX0002504",
+    entryDate: "06/03/2026",
+    service: "Médecine polyvalente",
+    chambre: "160",
+    lit: "B",
+    blocage: "Recherche EHPAD",
+    joursEvitables: 9,
+    score: 9,
+    sortantMedicalement: true,
+    notes: [
+      "Patient médicalement sortant depuis plusieurs jours.",
+      "Recherche EHPAD prioritaire.",
+    ],
+  },
+  {
+    id: 9,
+    nom: "Garnier",
+    prenom: "Lucie",
+    age: 70,
+    birthDate: "15/11/1955",
+    ins: "1800876543211",
+    iep: "CHX0002505",
+    entryDate: "13/03/2026",
+    service: "Neurologie",
+    chambre: "510",
+    lit: "A",
+    blocage: "Rééducation non organisée",
+    joursEvitables: 4,
+    score: 7,
+    sortantMedicalement: true,
+    notes: [
+      "Besoins de rééducation identifiés.",
+      "Attente organisation parcours aval.",
+    ],
+  },
+  {
+    id: 10,
+    nom: "Chevalier",
+    prenom: "Paul",
+    age: 82,
+    birthDate: "29/08/1943",
+    ins: "1800549876123",
+    iep: "CHX0002506",
+    entryDate: "05/03/2026",
+    service: "Neurologie",
+    chambre: "512",
+    lit: "C",
+    blocage: "Attente accord famille",
+    joursEvitables: 3,
+    score: 6,
+    sortantMedicalement: true,
+    notes: [
+      "Famille hésitante sur le projet de sortie.",
+      "Nécessité d’une réunion de coordination.",
+    ],
+  },
+  {
+    id: 11,
+    nom: "Roux",
+    prenom: "Claire",
+    age: 77,
+    birthDate: "22/06/1948",
+    ins: "1800112233445",
+    iep: "CHX0002507",
+    entryDate: "04/03/2026",
+    service: "Cardiologie",
+    chambre: "610",
+    lit: "B",
+    blocage: "Education thérapeutique incomplète",
+    joursEvitables: 2,
+    score: 6,
+    sortantMedicalement: true,
+    notes: [
+      "Éducation thérapeutique à finaliser.",
+      "Sortie possible rapidement après validation.",
+    ],
+  },
+  {
+    id: 12,
+    nom: "Masson",
+    prenom: "André",
+    age: 88,
+    birthDate: "10/12/1936",
+    ins: "1800998877665",
+    iep: "CHX0002508",
+    entryDate: "02/03/2026",
+    service: "Cardiologie",
+    chambre: "615",
+    lit: "A",
+    blocage: "Recherche HAD",
+    joursEvitables: 6,
+    score: 8,
+    sortantMedicalement: true,
+    notes: [
+      "Indication HAD discutée.",
+      "Attente confirmation structure.",
+    ],
+  },
+  {
+    id: 13,
+    nom: "Perrot",
+    prenom: "Nadia",
+    age: 66,
+    birthDate: "14/02/1959",
+    ins: "1800765432198",
+    iep: "CHX0002509",
+    entryDate: "16/03/2026",
+    service: "Médecine",
+    chambre: "122",
+    lit: "B",
+    blocage: "Ordonnances non finalisées",
+    joursEvitables: 1,
+    score: 5,
+    sortantMedicalement: false,
+    notes: [
+      "Sortie pas encore validée.",
+      "Ordonnances à compléter.",
+    ],
+  },
+  {
+    id: 14,
+    nom: "Lemaire",
+    prenom: "Hugo",
+    age: 72,
+    birthDate: "30/01/1953",
+    ins: "1800456789123",
+    iep: "CHX0002510",
+    entryDate: "12/03/2026",
+    service: "Chirurgie",
+    chambre: "408",
+    lit: "C",
+    blocage: "Matériel domicile non livré",
+    joursEvitables: 4,
+    score: 7,
+    sortantMedicalement: true,
+    notes: [
+      "Matériel de retour attendu.",
+      "Sortie retardée pour raison logistique.",
+    ],
+  },
+  {
+    id: 15,
+    nom: "Blanc",
+    prenom: "Marianne",
+    age: 83,
+    birthDate: "05/05/1942",
+    ins: "1800678901234",
+    iep: "CHX0002511",
+    entryDate: "03/03/2026",
+    service: "Médecine polyvalente",
+    chambre: "162",
+    lit: "A",
+    blocage: "Tutelle à formaliser",
+    joursEvitables: 5,
+    score: 8,
+    sortantMedicalement: true,
+    notes: [
+      "Situation administrative complexe.",
+      "Mesure de protection à clarifier.",
+    ],
+  },
+  {
+    id: 16,
+    nom: "Rey",
+    prenom: "Thomas",
+    age: 69,
+    birthDate: "09/09/1956",
+    ins: "1800345612987",
+    iep: "CHX0002512",
+    entryDate: "18/03/2026",
+    service: "Neurologie",
+    chambre: "520",
+    lit: "B",
+    blocage: "Aide humaine à domicile absente",
+    joursEvitables: 2,
+    score: 6,
+    sortantMedicalement: true,
+    notes: [
+      "Aides humaines non encore sécurisées.",
+      "Relance domicile nécessaire.",
+    ],
+  },
+  {
+    id: 17,
+    nom: "Noel",
+    prenom: "Jacqueline",
+    age: 90,
+    birthDate: "17/01/1936",
+    ins: "1800222333444",
+    iep: "CHX0002513",
+    entryDate: "01/03/2026",
+    service: "Cardiologie",
+    chambre: "618",
+    lit: "C",
+    blocage: "Recherche EHPAD",
+    joursEvitables: 8,
+    score: 9,
+    sortantMedicalement: true,
+    notes: [
+      "Patient en attente d’orientation EHPAD.",
+      "Situation prioritaire au regard de la durée de séjour.",
+    ],
+  },
+  {
+    id: 18,
+    nom: "Colin",
+    prenom: "Marc",
+    age: 74,
+    birthDate: "11/06/1951",
+    ins: "1800555666777",
+    iep: "CHX0002514",
+    entryDate: "19/03/2026",
+    service: "Chirurgie",
+    chambre: "410",
+    lit: "A",
+    blocage: "Validation ordonnance de sortie",
+    joursEvitables: 1,
+    score: 5,
+    sortantMedicalement: false,
+    notes: [
+      "Patient proche de la sortie.",
+      "Validation médicale en attente.",
+    ],
+  },
+];
 
-  function parseFrenchDate(value) {
-    if (!value || typeof value !== "string") return null;
-    const parts = value.split("/");
-    if (parts.length !== 3) return null;
-    const [d, m, y] = parts;
-    const date = new Date(Number(y), Number(m) - 1, Number(d));
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-
-  function computeStayDays(dateString) {
-    const date = parseFrenchDate(dateString);
-    if (!date) return 0;
-    const today = new Date();
-    const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    return Math.max(0, Math.floor((end - start) / 86400000));
-  }
-
-  if (!patient) return null;
-
-  const stayDays = computeStayDays(patient.entryDate);
-
-  const extendedPatient = {
-    destinationPrevue: patient.destinationPrevue || "Domicile avec aides",
-    besoinAval: patient.besoinAval || "Coordination ville / aide au retour",
-    transport: patient.transport || "Transport assis professionnalisé à confirmer",
-    documentsSortie: patient.documentsSortie || "Ordonnance en cours de finalisation",
-    referentMedical: patient.referentMedical || "Dr Martin",
-    cadre: patient.cadre || "Cadre de service à renseigner",
-    assistanteSociale: patient.assistanteSociale || "Mme Leroy",
-    nextStep: patient.nextStep || "Relancer l’aval et sécuriser la date de sortie",
-    personneConfiance: patient.personneConfiance || "Non renseignée",
-    personneAPrevenir: patient.personneAPrevenir || "Non renseignée",
-    protectionJuridique: patient.protectionJuridique || "Aucune mesure connue",
-    notes:
-      patient.notes || [
-        "Patient médicalement stabilisé.",
-        "Frein principal à la sortie toujours actif.",
-        "Coordination d’aval à relancer aujourd’hui.",
-      ],
-  };
+export default function App() {
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
   return (
     <div style={styles.page}>
-      <div style={styles.topBar}>
-        <button onClick={onBack} style={styles.backButton}>
-          ← Retour au cockpit
-        </button>
-        <div style={styles.topBarTitle}>Fiche patient</div>
-      </div>
-
-      <section style={styles.identityHero}>
-        <div style={styles.identityLeft}>
-          <div style={styles.patientName}>
-            {patient.nom} {patient.prenom}
-          </div>
-          <div style={styles.identityMeta}>
-            {patient.birthDate} • {patient.age} ans • INS {patient.ins} • IEP {patient.iep}
-          </div>
-          <div style={styles.identityMeta}>
-            {patient.service} • chambre {patient.chambre} • lit {patient.lit}
-          </div>
-        </div>
-
-        <div style={styles.identityRight}>
-          <StatusBadge label={status.label} tone={status.tone} />
-        </div>
-      </section>
-
-      <section style={styles.mainGrid}>
-        <div style={styles.leftColumn}>
-          <Panel title="Pilotage sortie" subtitle="Lecture clinique et capacitaire">
-            <div style={styles.kpiGrid}>
-              <MiniKpi label="Admission" value={patient.entryDate || "—"} />
-              <MiniKpi label="Présence" value={`${stayDays} j`} />
-              <MiniKpi
-                label="Sortant médical"
-                value={patient.sortantMedicalement ? "Oui" : "Non"}
-                tone={patient.sortantMedicalement ? "blue" : "neutral"}
-              />
-              <MiniKpi
-                label="Jours évitables"
-                value={patient.sortantMedicalement ? `${patient.joursEvitables} j` : "—"}
-                tone="amber"
-              />
-            </div>
-
-            <div style={styles.focusCard}>
-              <div style={styles.focusLabel}>Frein principal</div>
-              <div style={styles.focusValue}>{patient.blocage}</div>
-            </div>
-
-            <div style={styles.kpiGrid}>
-              <MiniKpi label="Score" value={patient.score} tone="blue" />
-              <MiniKpi label="Niveau" value={status.label} tone={status.tone} />
-              <MiniKpi label="Service" value={patient.service} />
-              <MiniKpi label="Lit" value={`${patient.chambre} / ${patient.lit}`} />
-            </div>
-          </Panel>
-
-          <Panel title="Parcours et aval" subtitle="Organisation de la sortie">
-            <InfoGrid
-              items={[
-                ["Destination prévue", extendedPatient.destinationPrevue],
-                ["Besoin d’aval", extendedPatient.besoinAval],
-                ["Transport", extendedPatient.transport],
-                ["Documents de sortie", extendedPatient.documentsSortie],
-              ]}
-            />
-          </Panel>
-
-          <Panel title="Entourage et protection" subtitle="Sécurisation administrative et familiale">
-            <InfoGrid
-              items={[
-                ["Personne de confiance", extendedPatient.personneConfiance],
-                ["Personne à prévenir", extendedPatient.personneAPrevenir],
-                ["Tutelle / curatelle", extendedPatient.protectionJuridique],
-              ]}
-            />
-          </Panel>
-        </div>
-
-        <div style={styles.rightColumn}>
-          <Panel title="Coordination" subtitle="Acteurs et prochaines actions">
-            <InfoGrid
-              items={[
-                ["Référent médical", extendedPatient.referentMedical],
-                ["Cadre", extendedPatient.cadre],
-                ["Assistante sociale", extendedPatient.assistanteSociale],
-                ["Prochaine action", extendedPatient.nextStep],
-              ]}
-            />
-          </Panel>
-
-          <Panel title="Notes opérationnelles" subtitle="À suivre aujourd’hui">
-            <div style={styles.notesList}>
-              {extendedPatient.notes.map((note, index) => (
-                <div key={index} style={styles.noteItem}>
-                  <div style={styles.noteBullet} />
-                  <div style={styles.noteText}>{note}</div>
-                </div>
-              ))}
-            </div>
-          </Panel>
-        </div>
-      </section>
+      {selectedPatient ? (
+        <PatientView
+          patient={selectedPatient}
+          onBack={() => setSelectedPatient(null)}
+        />
+      ) : (
+        <Dashboard
+          patients={patientsData}
+          onOpenPatient={setSelectedPatient}
+        />
+      )}
     </div>
-  );
-}
-
-function Panel({ title, subtitle, children }) {
-  return (
-    <section style={styles.panel}>
-      <div style={styles.panelTitle}>{title}</div>
-      {subtitle ? <div style={styles.panelSubtitle}>{subtitle}</div> : null}
-      <div style={{ marginTop: 14 }}>{children}</div>
-    </section>
-  );
-}
-
-function MiniKpi({ label, value, tone = "neutral" }) {
-  const toneStyles = {
-    neutral: { bg: "#FFFFFF", color: "#0F172A", border: "#E5E7EB" },
-    blue: { bg: "#EFF6FF", color: "#1D4ED8", border: "#BFDBFE" },
-    amber: { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A" },
-    red: { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA" },
-    green: { bg: "#ECFDF5", color: "#059669", border: "#A7F3D0" },
-  };
-
-  const t = toneStyles[tone] || toneStyles.neutral;
-
-  return (
-    <div style={{ ...styles.miniKpi, background: t.bg, borderColor: t.border }}>
-      <div style={styles.miniKpiLabel}>{label}</div>
-      <div style={{ ...styles.miniKpiValue, color: t.color }}>{value}</div>
-    </div>
-  );
-}
-
-function InfoGrid({ items }) {
-  return (
-    <div style={styles.infoGrid}>
-      {items.map(([label, value]) => (
-        <div key={label} style={styles.infoCard}>
-          <div style={styles.infoLabel}>{label}</div>
-          <div style={styles.infoValue}>{value}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function StatusBadge({ label, tone = "neutral" }) {
-  const tones = {
-    neutral: { bg: "#E2E8F0", color: "#334155" },
-    red: { bg: "#FEE2E2", color: "#DC2626" },
-    amber: { bg: "#FEF3C7", color: "#D97706" },
-    green: { bg: "#D1FAE5", color: "#059669" },
-  };
-
-  const t = tones[tone] || tones.neutral;
-
-  return (
-    <span style={{ ...styles.badge, background: t.bg, color: t.color }}>
-      {label}
-    </span>
   );
 }
 
 const styles = {
   page: {
-    maxWidth: 1360,
-    margin: "0 auto",
-    padding: 18,
-    background: "#F8FAFC",
     minHeight: "100vh",
-  },
-
-  topBar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 16,
-    flexWrap: "wrap",
-  },
-
-  backButton: {
-    border: "1px solid #CBD5E1",
-    background: "#FFFFFF",
-    borderRadius: 12,
-    padding: "10px 14px",
-    fontWeight: 700,
-    color: "#334155",
-  },
-
-  topBarTitle: {
-    fontSize: 14,
-    color: "#64748B",
-    fontWeight: 700,
-  },
-
-  identityHero: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 16,
-    background: "linear-gradient(90deg, #1E3A8A 0%, #2563EB 100%)",
-    color: "#FFFFFF",
-    borderRadius: 22,
-    padding: 22,
-    boxShadow: "0 20px 44px rgba(37,99,235,0.18)",
-    marginBottom: 18,
-    flexWrap: "wrap",
-  },
-
-  identityLeft: {
-    minWidth: 0,
-  },
-
-  patientName: {
-    fontSize: 34,
-    fontWeight: 900,
-    lineHeight: 1.05,
-  },
-
-  identityMeta: {
-    marginTop: 8,
-    fontSize: 14,
-    opacity: 0.95,
-    lineHeight: 1.5,
-  },
-
-  identityRight: {
-    display: "flex",
-    alignItems: "flex-start",
-  },
-
-  badge: {
-    display: "inline-block",
-    padding: "8px 12px",
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: 800,
-  },
-
-  mainGrid: {
-    display: "grid",
-    gridTemplateColumns: "minmax(0,1.8fr) minmax(320px,1fr)",
-    gap: 16,
-    alignItems: "start",
-  },
-
-  leftColumn: {
-    display: "grid",
-    gap: 16,
-  },
-
-  rightColumn: {
-    display: "grid",
-    gap: 16,
-  },
-
-  panel: {
-    background: "#FFFFFF",
-    border: "1px solid #E5E7EB",
-    borderRadius: 20,
-    padding: 18,
-    boxShadow: "0 12px 28px rgba(15,23,42,0.05)",
-  },
-
-  panelTitle: {
-    fontSize: 20,
-    fontWeight: 800,
-    color: "#0F172A",
-  },
-
-  panelSubtitle: {
-    marginTop: 4,
-    fontSize: 13,
-    color: "#64748B",
-  },
-
-  kpiGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-    gap: 12,
-  },
-
-  miniKpi: {
-    border: "1px solid #E5E7EB",
-    borderRadius: 16,
-    padding: 14,
-  },
-
-  miniKpiLabel: {
-    fontSize: 11,
-    color: "#64748B",
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: 0.25,
-    marginBottom: 6,
-  },
-
-  miniKpiValue: {
-    fontSize: 22,
-    fontWeight: 900,
-    lineHeight: 1.1,
-  },
-
-  focusCard: {
-    marginTop: 12,
-    marginBottom: 12,
-    border: "1px solid #DBEAFE",
-    background: "linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)",
-    borderRadius: 18,
-    padding: 16,
-  },
-
-  focusLabel: {
-    fontSize: 11,
-    color: "#1E40AF",
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: 0.25,
-    marginBottom: 6,
-  },
-
-  focusValue: {
-    fontSize: 22,
-    fontWeight: 800,
-    color: "#0F172A",
-    lineHeight: 1.25,
-  },
-
-  infoGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: 12,
-  },
-
-  infoCard: {
-    border: "1px solid #E5E7EB",
-    borderRadius: 16,
-    padding: 14,
-    background: "#FFFFFF",
-  },
-
-  infoLabel: {
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: 0.2,
-    color: "#64748B",
-    fontWeight: 800,
-    marginBottom: 6,
-  },
-
-  infoValue: {
-    fontSize: 14,
-    color: "#0F172A",
-    fontWeight: 600,
-    lineHeight: 1.45,
-  },
-
-  notesList: {
-    display: "grid",
-    gap: 10,
-  },
-
-  noteItem: {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: 10,
-    border: "1px solid #E5E7EB",
-    borderRadius: 14,
-    padding: 12,
-    background: "#FFFFFF",
-  },
-
-  noteBullet: {
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-    background: "#2563EB",
-    marginTop: 7,
-    flexShrink: 0,
-  },
-
-  noteText: {
-    fontSize: 14,
-    color: "#0F172A",
-    lineHeight: 1.5,
+    background: "#F8FAFC",
   },
 };
