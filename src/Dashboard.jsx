@@ -1,167 +1,227 @@
-export default function Dashboard({ patients }) {
-  const totalPatients = patients.length;
+export default function Dashboard({ patients, onOpenPatient }) {
 
-  const blockedPatients = patients.filter(
-    (p) => p.sortantMedicalement && p.score >= 8
-  ).length;
+  const sortedPatients = [...patients].sort((a, b) => b.score - a.score)
 
-  const riskPatients = patients.filter(
-    (p) => !p.sortantMedicalement && p.score >= 7
-  ).length;
+  const totalPatients = patients.length
 
-  const avoidableDays = patients
-    .filter((p) => p.sortantMedicalement)
-    .reduce((sum, p) => sum + p.joursEvitables, 0);
+  const blockedPatients = patients.filter(p => p.score >= 8).length
 
-  const recoverableBeds = Math.max(0, Math.round(avoidableDays / 7));
+  const riskPatients = patients.filter(p => p.score >= 6 && p.score < 8).length
+
+  const avoidableDays = patients.reduce(
+    (sum, p) => sum + (p.score >= 8 ? 6 : p.score >= 6 ? 3 : 1),
+    0
+  )
+
+  const recoverableBeds = Math.round(avoidableDays / 7)
 
   return (
-    <div style={{ padding: 24, maxWidth: 1300, margin: "0 auto" }}>
-      <div
-        style={{
-          background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
-          color: "white",
-          borderRadius: 18,
-          padding: 24,
-          marginBottom: 20,
-          boxShadow: "0 10px 30px rgba(79,70,229,0.18)",
-        }}
-      >
-        <div style={{ fontSize: 13, opacity: 0.85, textTransform: "uppercase", letterSpacing: 1 }}>
+    <div style={{ padding: 24, maxWidth: 1200, margin: "auto" }}>
+
+      {/* Bandeau principal */}
+
+      <div style={{
+        background: "linear-gradient(135deg,#6366f1,#7c3aed)",
+        borderRadius: 20,
+        padding: 30,
+        color: "white",
+        marginBottom: 30
+      }}>
+
+        <div style={{ fontSize: 14, opacity: 0.8 }}>
           CARABBAS
         </div>
-        <h1 style={{ margin: "8px 0 10px 0", fontSize: 32 }}>
+
+        <div style={{
+          fontSize: 34,
+          fontWeight: "bold",
+          marginTop: 6
+        }}>
           Tableau de bord des sorties complexes
-        </h1>
-        <div style={{ fontSize: 16, lineHeight: 1.5 }}>
-          {patients.filter((p) => p.sortantMedicalement).length} patient(s) sortant(s) médicalement encore présent(s),{" "}
-          {blockedPatients} bloqué(s), {avoidableDays} jours évitables estimés, soit environ{" "}
-          {recoverableBeds} lit(s) récupérable(s).
         </div>
+
+        <div style={{ marginTop: 10 }}>
+          {totalPatients} patients suivis, {blockedPatients} bloqués,
+          {avoidableDays} jours évitables estimés,
+          soit environ {recoverableBeds} lits récupérables.
+        </div>
+
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 16,
-          marginBottom: 24,
-        }}
-      >
-        <KpiCard title="Patients suivis" value={totalPatients} color="#ede9fe" textColor="#5b21b6" />
-        <KpiCard title="Patients bloqués" value={blockedPatients} color="#fee2e2" textColor="#b91c1c" />
-        <KpiCard title="Patients à risque" value={riskPatients} color="#ffedd5" textColor="#c2410c" />
-        <KpiCard title="Jours évitables" value={avoidableDays} color="#dcfce7" textColor="#166534" />
+      {/* KPI */}
+
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+        gap: 20,
+        marginBottom: 30
+      }}>
+
+        <StatCard
+          title="Patients suivis"
+          value={totalPatients}
+          color="#ede9fe"
+        />
+
+        <StatCard
+          title="Patients bloqués"
+          value={blockedPatients}
+          color="#fee2e2"
+        />
+
+        <StatCard
+          title="Patients à risque"
+          value={riskPatients}
+          color="#fef3c7"
+        />
+
+        <StatCard
+          title="Jours évitables"
+          value={avoidableDays}
+          color="#dcfce7"
+        />
+
       </div>
 
-      <div
-        style={{
-          background: "white",
-          border: "1px solid #e2e8f0",
-          borderRadius: 18,
-          padding: 20,
-          boxShadow: "0 4px 16px rgba(15,23,42,0.05)",
-        }}
-      >
-        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
+      {/* Liste patients */}
+
+      <div>
+
+        <h2 style={{ marginBottom: 10 }}>
           Patients prioritaires
-        </div>
+        </h2>
 
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-            <thead>
-              <tr style={{ textAlign: "left", color: "#64748b" }}>
-                <th style={thStyle}>Patient</th>
-                <th style={thStyle}>INS</th>
-                <th style={thStyle}>Service</th>
-                <th style={thStyle}>Chambre</th>
-                <th style={thStyle}>Lit</th>
-                <th style={thStyle}>Blocage</th>
-                <th style={thStyle}>Jours évitables</th>
-                <th style={thStyle}>Score</th>
-              </tr>
-            </thead>
-            <tbody>
-              {patients.map((p) => (
-                <tr key={p.id} style={{ borderTop: "1px solid #f1f5f9" }}>
-                  <td style={tdStyle}>
-                    <div style={{ fontWeight: 600 }}>
-                      {p.prenom} {p.nom}
-                    </div>
-                    <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
-                      {p.age} ans · {p.birthDate} · IEP {p.iep}
-                    </div>
-                  </td>
-                  <td style={tdStyle}>{p.ins}</td>
-                  <td style={tdStyle}>{p.service}</td>
-                  <td style={tdStyle}>{p.chambre}</td>
-                  <td style={tdStyle}>{p.lit}</td>
-                  <td style={tdStyle}>{p.blocage}</td>
-                  <td style={{ ...tdStyle, fontWeight: 700, color: "#c2410c" }}>
-                    {p.sortantMedicalement ? p.joursEvitables : 0}
-                  </td>
-                  <td style={tdStyle}>
-                    <span
-                      style={{
-                        display: "inline-block",
-                        padding: "6px 10px",
-                        borderRadius: 999,
-                        fontSize: 12,
-                        fontWeight: 700,
-                        background: getScoreBg(p.score),
-                        color: getScoreText(p.score),
-                      }}
-                    >
-                      {p.score}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {sortedPatients.map((p) => (
+
+          <div
+            key={p.id}
+            style={{
+              border: "1px solid #e2e8f0",
+              borderRadius: 14,
+              padding: 18,
+              marginBottom: 12,
+              background: "white",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 10
+            }}
+          >
+
+            <div>
+
+              <div style={{
+                fontWeight: "bold",
+                fontSize: 16
+              }}>
+                {p.nom} {p.prenom}
+              </div>
+
+              <div style={{
+                fontSize: 13,
+                color: "#64748b"
+              }}>
+                {p.service} • chambre {p.chambre}
+              </div>
+
+              <div style={{
+                marginTop: 4,
+                fontSize: 13
+              }}>
+                Frein : {p.blocage}
+              </div>
+
+            </div>
+
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10
+            }}>
+
+              <ScoreBadge score={p.score} />
+
+              <button
+                onClick={() => onOpenPatient(p)}
+                style={{
+                  border: "none",
+                  background: "#6366f1",
+                  color: "white",
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  cursor: "pointer"
+                }}
+              >
+                Ouvrir dossier
+              </button>
+
+            </div>
+
+          </div>
+
+        ))}
+
       </div>
+
     </div>
-  );
+  )
 }
 
-function KpiCard({ title, value, color, textColor }) {
+function StatCard({ title, value, color }) {
+
   return (
-    <div
-      style={{
-        background: color,
-        borderRadius: 18,
-        padding: 18,
-        border: "1px solid rgba(15,23,42,0.06)",
-      }}
-    >
-      <div style={{ fontSize: 13, color: "#475569", marginBottom: 10 }}>{title}</div>
-      <div style={{ fontSize: 34, fontWeight: 800, color: textColor }}>{value}</div>
+
+    <div style={{
+      background: color,
+      borderRadius: 16,
+      padding: 24
+    }}>
+
+      <div style={{ fontSize: 15 }}>
+        {title}
+      </div>
+
+      <div style={{
+        fontSize: 38,
+        fontWeight: "bold",
+        marginTop: 4
+      }}>
+        {value}
+      </div>
+
     </div>
-  );
+
+  )
 }
 
-function getScoreBg(score) {
-  if (score >= 9) return "#fee2e2";
-  if (score >= 7) return "#ffedd5";
-  if (score >= 5) return "#fef3c7";
-  return "#dcfce7";
+function ScoreBadge({ score }) {
+
+  let bg = "#dcfce7"
+  let text = "#166534"
+
+  if (score >= 8) {
+    bg = "#fee2e2"
+    text = "#b91c1c"
+  }
+
+  else if (score >= 6) {
+    bg = "#fef3c7"
+    text = "#92400e"
+  }
+
+  return (
+
+    <div style={{
+      background: bg,
+      color: text,
+      padding: "8px 12px",
+      borderRadius: 999,
+      fontWeight: "bold",
+      fontSize: 13
+    }}>
+      Score {score}
+    </div>
+
+  )
 }
-
-function getScoreText(score) {
-  if (score >= 9) return "#b91c1c";
-  if (score >= 7) return "#c2410c";
-  if (score >= 5) return "#a16207";
-  return "#166534";
-}
-
-const thStyle = {
-  paddingBottom: 12,
-  paddingTop: 4,
-  fontWeight: 600,
-};
-
-const tdStyle = {
-  paddingTop: 14,
-  paddingBottom: 14,
-};
