@@ -697,8 +697,7 @@ function labelForType(type) {
 
 function activeNotePillStyle(type) {
   const stylesByType = {
-    info:
-    info: {
+        info: {
       background: "#EFF6FF",
       color: "#1D4ED8",
       border: "1px solid #BFDBFE",
