@@ -54,10 +54,13 @@ export default function PatientView({
   const [newNoteType, setNewNoteType] = useState("info");
   const [newFrein, setNewFrein] = useState("");
   const [copiedPhone, setCopiedPhone] = useState("");
+  const [activeFrein, setActiveFrein] = useState(
+    patient?.blocage || buildFreinsFromPatient(patient || {})[0] || ""
+  );
 
   const status = useMemo(() => {
-    if (editablePatient.score >= 8) return { label: "Bloqué", tone: "red" };
-    if (editablePatient.score >= 6) return { label: "Risque", tone: "amber" };
+    if ((editablePatient.score || 0) >= 8) return { label: "Bloqué", tone: "red" };
+    if ((editablePatient.score || 0) >= 6) return { label: "Risque", tone: "amber" };
     return { label: "Suivi", tone: "green" };
   }, [editablePatient.score]);
 
@@ -93,6 +96,7 @@ export default function PatientView({
       type: newNoteType,
       unread: true,
       timestamp: buildTimestamp(),
+      priority: notePriorityFromType(newNoteType),
     };
 
     setEditablePatient((prev) => ({
@@ -111,6 +115,7 @@ export default function PatientView({
       type,
       unread: true,
       timestamp: buildTimestamp(),
+      priority: notePriorityFromType(type),
     };
 
     setEditablePatient((prev) => ({
@@ -136,7 +141,7 @@ export default function PatientView({
       ...prev,
       freins: [...prev.freins, value],
     }));
-
+    setActiveFrein(value);
     setNewFrein("");
     quickAction(`Frein ajouté : ${value}`, "action");
   }
@@ -166,6 +171,8 @@ export default function PatientView({
     return base + days + freins;
   }, [editablePatient.score, editablePatient.joursEvitables, editablePatient.freins]);
 
+  const scoreVisual = getScoreVisual(scoreParcours);
+
   const canEscalate =
     editablePatient.sortantMedicalement &&
     ((editablePatient.score || 0) >= 8 || (editablePatient.joursEvitables || 0) >= 5);
@@ -176,6 +183,17 @@ export default function PatientView({
       : (editablePatient.score || 0) >= 6
         ? "Modéré"
         : "Faible";
+
+  const freinInsight = getFreinInsight(activeFrein, editablePatient);
+
+  const sortedNotes = useMemo(() => {
+    return [...editablePatient.notes].sort((a, b) => {
+      const priorityDiff = (b.priority || 0) - (a.priority || 0);
+      if (priorityDiff !== 0) return priorityDiff;
+      if (a.unread !== b.unread) return a.unread ? -1 : 1;
+      return 0;
+    });
+  }, [editablePatient.notes]);
 
   return (
     <div style={styles.page}>
@@ -255,8 +273,29 @@ export default function PatientView({
           <StatusPill label={status.label} tone={status.tone} />
           <MetricCell label="Sortant médical" value={editablePatient.sortantMedicalement ? "Oui" : "Non"} />
           <MetricCell label="Jours évitables" value={editablePatient.joursEvitables || 0} accent="amber" />
-          <MetricCell label="Score parcours" value={scoreParcours} />
           <MetricCell label="Notes non lues" value={unreadCount} accent={unreadCount > 0 ? "red" : "neutral"} />
+
+          <div style={styles.scoreCard}>
+            <div style={styles.scoreTop}>
+              <span style={styles.scoreLabel}>Score parcours</span>
+              <span style={styles.scoreValue}>{scoreParcours}</span>
+            </div>
+            <div style={styles.scoreBarTrack}>
+              <div
+                style={{
+                  ...styles.scoreBarFill,
+                  width: `${scoreVisual.percent}%`,
+                  background: scoreVisual.color,
+                }}
+              />
+            </div>
+            <div style={styles.scoreBottom}>
+              <span style={{ ...styles.scoreBadge, color: scoreVisual.color, borderColor: scoreVisual.softBorder, background: scoreVisual.softBg }}>
+                {scoreVisual.label}
+              </span>
+            </div>
+          </div>
+
           {urgentCount > 0 ? (
             <MetricCell label="Urgentes" value={urgentCount} accent="red" />
           ) : null}
@@ -276,12 +315,23 @@ export default function PatientView({
         <Card title="Situation de sortie" subtitle="Décision et préparation">
           <div style={styles.situationLayout}>
             <div style={styles.primaryBlock}>
-              <div style={styles.primaryBlockLabel}>Frein principal</div>
+              <div style={styles.primaryBlockLabel}>Frein actif</div>
               <div style={styles.primaryBlockValue}>
-                {editablePatient.blocage || "Non renseigné"}
+                {activeFrein || editablePatient.blocage || "Non renseigné"}
               </div>
               <div style={styles.primaryBlockHint}>
-                Point prioritaire à lever pour débloquer la sortie et récupérer de la capacité.
+                {freinInsight.impact}
+              </div>
+
+              <div style={styles.freinsInsightBox}>
+                <div style={styles.freinsInsightRow}>
+                  <span style={styles.freinsInsightKey}>Action associée</span>
+                  <span style={styles.freinsInsightValue}>{freinInsight.action}</span>
+                </div>
+                <div style={styles.freinsInsightRow}>
+                  <span style={styles.freinsInsightKey}>Acteur concerné</span>
+                  <span style={styles.freinsInsightValue}>{freinInsight.actor}</span>
+                </div>
               </div>
             </div>
 
@@ -345,7 +395,7 @@ export default function PatientView({
             </div>
 
             <div style={styles.activeNoteText}>
-              {editablePatient.notes[0]?.text || "Aucune note récente."}
+              {sortedNotes[0]?.text || "Aucune note récente."}
             </div>
 
             <div style={styles.activeNoteMeta}>
@@ -411,11 +461,25 @@ export default function PatientView({
         <Card title="Freins à la sortie">
           <div style={styles.tagsList}>
             {editablePatient.freins.map((frein, index) => (
-              <div key={`${frein}-${index}`} style={styles.freinTag}>
+              <button
+                key={`${frein}-${index}`}
+                onClick={() => setActiveFrein(frein)}
+                style={{
+                  ...styles.freinTag,
+                  ...(activeFrein === frein ? styles.freinTagActive : {}),
+                }}
+              >
                 <span style={styles.freinDot} />
                 <span>{frein}</span>
-              </div>
+              </button>
             ))}
+          </div>
+
+          <div style={styles.activeFreinFooter}>
+            <div style={styles.activeFreinFooterTitle}>Frein sélectionné</div>
+            <div style={styles.activeFreinFooterText}>
+              {activeFrein || "Aucun frein sélectionné"}
+            </div>
           </div>
 
           <div style={styles.addRow}>
@@ -508,13 +572,14 @@ export default function PatientView({
 
         <Card title="Historique opérationnel">
           <div style={styles.timeline}>
-            {editablePatient.notes.map((note) => (
+            {sortedNotes.map((note) => (
               <button
                 key={note.id}
                 onClick={() => markAsRead(note.id)}
                 style={{
                   ...styles.timelineItem,
                   ...(note.unread ? styles.timelineUnread : {}),
+                  ...(note.priority >= 4 ? styles.timelineUrgent : {}),
                 }}
               >
                 <div
@@ -528,6 +593,7 @@ export default function PatientView({
                     <div style={styles.timelineDate}>{note.timestamp}</div>
                     <div style={styles.timelineBadges}>
                       <NoteTypeBadge type={note.type} />
+                      {note.priority >= 4 ? <span style={styles.priorityBadge}>Prioritaire</span> : null}
                       {note.unread ? <span style={styles.unreadBadge}>Non lu</span> : null}
                     </div>
                   </div>
@@ -598,11 +664,7 @@ function StatusPill({ label, tone = "neutral" }) {
   };
   const t = tones[tone] || tones.neutral;
 
-  return (
-    <div style={{ ...styles.statusPill, background: t.bg, color: t.color }}>
-      {label}
-    </div>
-  );
+  return <div style={{ ...styles.statusPill, background: t.bg, color: t.color }}>{label}</div>;
 }
 
 function MetricCell({ label, value, accent = "neutral" }) {
@@ -647,19 +709,118 @@ function normalizeNotes(notes) {
           type: "info",
           unread: true,
           timestamp: buildTimestamp(),
+          priority: 1,
         }
-      : note
+      : {
+          ...note,
+          priority: note.priority ?? notePriorityFromType(note.type || "info"),
+        }
   );
 }
 
 function buildFreinsFromPatient(patient) {
-  const base = patient.blocage ? [patient.blocage] : [];
+  const base = patient?.blocage ? [patient.blocage] : [];
   const defaults = {
     "Recherche EHPAD": ["Isolement social", "Logement inadapté", "Aidant épuisé"],
     "Recherche SSIAD": ["Retour domicile non sécurisé", "Aides non organisées"],
     "Logement insalubre": ["Logement inadapté", "Coordination sociale"],
   };
-  return [...new Set([...base, ...(defaults[patient.blocage] || [])])];
+  return [...new Set([...base, ...(defaults[patient?.blocage] || [])])];
+}
+
+function getFreinInsight(frein, patient) {
+  const map = {
+    "Recherche EHPAD": {
+      action: "Relancer admissions EHPAD",
+      actor: patient.assistanteSociale || "Assistante sociale",
+      impact: "Frein d’aval majeur retardant la sortie et la récupération de lit.",
+    },
+    "Recherche SSIAD": {
+      action: "Contacter SSIAD et sécuriser le retour",
+      actor: patient.assistanteSociale || "Assistante sociale",
+      impact: "Retour domicile non sécurisé sans coordination de prise en charge.",
+    },
+    "Logement insalubre": {
+      action: "Relancer solution logement",
+      actor: patient.assistanteSociale || "Assistante sociale",
+      impact: "Impossibilité de retour dans les conditions actuelles de logement.",
+    },
+    "Isolement social": {
+      action: "Mobiliser entourage et réseau de ville",
+      actor: patient.referentMedical || "Médecin référent",
+      impact: "Manque d’appui extérieur pour sécuriser la sortie.",
+    },
+    "Logement inadapté": {
+      action: "Évaluer adaptation du domicile",
+      actor: patient.cadre || "Cadre",
+      impact: "Risque de retour non sécurisé au domicile actuel.",
+    },
+    "Aidant épuisé": {
+      action: "Revoir l’organisation familiale",
+      actor: patient.assistanteSociale || "Assistante sociale",
+      impact: "L’entourage ne peut plus soutenir le retour dans les conditions actuelles.",
+    },
+    "Coordination sociale": {
+      action: "Planifier une réunion de coordination",
+      actor: patient.assistanteSociale || "Assistante sociale",
+      impact: "Dépendance à une action de coordination externe encore non finalisée.",
+    },
+  };
+
+  return (
+    map[frein] || {
+      action: patient.nextStep || "À préciser",
+      actor: patient.assistanteSociale || patient.referentMedical || "À préciser",
+      impact: "Frein actif à suivre dans le parcours de sortie.",
+    }
+  );
+}
+
+function getScoreVisual(score) {
+  if (score >= 240) {
+    return {
+      label: "Critique",
+      color: "#DC2626",
+      softBg: "#FEF2F2",
+      softBorder: "#FECACA",
+      percent: 100,
+    };
+  }
+  if (score >= 180) {
+    return {
+      label: "Élevé",
+      color: "#EA580C",
+      softBg: "#FFF7ED",
+      softBorder: "#FED7AA",
+      percent: 78,
+    };
+  }
+  if (score >= 120) {
+    return {
+      label: "Modéré",
+      color: "#D97706",
+      softBg: "#FFFBEB",
+      softBorder: "#FDE68A",
+      percent: 54,
+    };
+  }
+  return {
+    label: "Faible",
+    color: "#059669",
+    softBg: "#ECFDF5",
+    softBorder: "#A7F3D0",
+    percent: 28,
+  };
+}
+
+function notePriorityFromType(type) {
+  const map = {
+    urgent: 4,
+    action: 3,
+    famille: 2,
+    info: 1,
+  };
+  return map[type] || 1;
 }
 
 function cryptoRandom() {
@@ -697,7 +858,7 @@ function labelForType(type) {
 
 function activeNotePillStyle(type) {
   const stylesByType = {
-        info: {
+    info: {
       background: "#EFF6FF",
       color: "#1D4ED8",
       border: "1px solid #BFDBFE",
@@ -729,8 +890,6 @@ const styles = {
     minHeight: "100vh",
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto",
   },
-
-  /* HEADER */
 
   appHeader: {
     display: "flex",
@@ -805,26 +964,27 @@ const styles = {
     background: "white",
   },
 
-  /* RUBAN PATIENT */
-
   patientRibbon: {
     display: "flex",
     justifyContent: "space-between",
+    gap: 16,
     background: "white",
     padding: 14,
     borderRadius: 10,
     marginBottom: 14,
+    alignItems: "flex-start",
   },
 
   patientIdentity: {
     display: "flex",
     flexDirection: "column",
     gap: 4,
+    flex: 1,
   },
 
   patientName: {
-    fontSize: 22,
-    fontWeight: 700,
+    fontSize: 24,
+    fontWeight: 800,
   },
 
   patientMetaLine: {
@@ -837,33 +997,95 @@ const styles = {
 
   patientMetrics: {
     display: "grid",
-    gridTemplateColumns: "repeat(3,auto)",
+    gridTemplateColumns: "repeat(3, minmax(100px, auto))",
     gap: 10,
-    alignItems: "center",
+    alignItems: "stretch",
   },
 
   statusPill: {
-    padding: "6px 10px",
-    borderRadius: 6,
-    fontSize: 12,
-    fontWeight: 600,
+    padding: "8px 10px",
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: 700,
+    textAlign: "center",
+    minWidth: 96,
   },
 
   metricCell: {
     textAlign: "center",
+    background: "#F8FAFC",
+    border: "1px solid #E2E8F0",
+    borderRadius: 8,
+    padding: "8px 10px",
+    minWidth: 96,
   },
 
   metricCellLabel: {
     fontSize: 11,
     color: "#64748B",
+    marginBottom: 4,
   },
 
   metricCellValue: {
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: 800,
+  },
+
+  scoreCard: {
+    gridColumn: "span 2",
+    background: "#F8FAFC",
+    border: "1px solid #E2E8F0",
+    borderRadius: 8,
+    padding: 10,
+    minWidth: 220,
+  },
+
+  scoreTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+
+  scoreLabel: {
+    fontSize: 11,
+    color: "#64748B",
+    textTransform: "uppercase",
     fontWeight: 700,
   },
 
-  /* ALERT */
+  scoreValue: {
+    fontSize: 22,
+    fontWeight: 800,
+    color: "#0F172A",
+  },
+
+  scoreBarTrack: {
+    width: "100%",
+    height: 8,
+    background: "#E5E7EB",
+    borderRadius: 999,
+    overflow: "hidden",
+  },
+
+  scoreBarFill: {
+    height: "100%",
+    borderRadius: 999,
+  },
+
+  scoreBottom: {
+    marginTop: 8,
+    display: "flex",
+    justifyContent: "flex-end",
+  },
+
+  scoreBadge: {
+    fontSize: 11,
+    fontWeight: 800,
+    border: "1px solid",
+    borderRadius: 999,
+    padding: "4px 8px",
+  },
 
   alertBanner: {
     background: "#FEF2F2",
@@ -881,8 +1103,6 @@ const styles = {
   alertText: {
     fontSize: 13,
   },
-
-  /* LAYOUT */
 
   topRow: {
     display: "grid",
@@ -912,6 +1132,7 @@ const styles = {
 
   cardTitle: {
     fontWeight: 700,
+    fontSize: 22,
   },
 
   cardSubtitle: {
@@ -919,33 +1140,65 @@ const styles = {
     color: "#64748B",
   },
 
-  /* SITUATION */
-
   situationLayout: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns: "1fr 1.4fr",
     gap: 12,
   },
 
   primaryBlock: {
     background: "#F8FAFC",
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,
+    borderRadius: 10,
+    border: "1px solid #E2E8F0",
   },
 
   primaryBlockLabel: {
     fontSize: 12,
     color: "#64748B",
-  },
-
-  primaryBlockValue: {
-    fontSize: 18,
+    marginBottom: 6,
+    textTransform: "uppercase",
     fontWeight: 700,
   },
 
+  primaryBlockValue: {
+    fontSize: 20,
+    fontWeight: 800,
+    lineHeight: 1.15,
+    marginBottom: 8,
+  },
+
   primaryBlockHint: {
-    fontSize: 12,
+    fontSize: 13,
     color: "#475569",
+    lineHeight: 1.4,
+  },
+
+  freinsInsightBox: {
+    marginTop: 12,
+    background: "white",
+    border: "1px solid #E2E8F0",
+    borderRadius: 8,
+    padding: 10,
+  },
+
+  freinsInsightRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 10,
+    marginBottom: 8,
+  },
+
+  freinsInsightKey: {
+    fontSize: 12,
+    color: "#64748B",
+  },
+
+  freinsInsightValue: {
+    fontSize: 12,
+    color: "#0F172A",
+    fontWeight: 700,
+    textAlign: "right",
   },
 
   planBoard: {
@@ -957,41 +1210,62 @@ const styles = {
   planRow: {
     display: "flex",
     flexDirection: "column",
+    background: "#F8FAFC",
+    border: "1px solid #E2E8F0",
+    borderRadius: 8,
+    padding: 8,
   },
 
   planRowWide: {
-    gridColumn: "1/3",
+    gridColumn: "1 / 3",
   },
 
   planRowLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#64748B",
+    marginBottom: 4,
+    textTransform: "uppercase",
+    fontWeight: 700,
   },
 
   planRowInput: {
     border: "1px solid #CBD5F5",
     borderRadius: 6,
-    padding: "4px 6px",
+    padding: "6px 8px",
+    background: "white",
   },
 
   situationFooter: {
     marginTop: 10,
     display: "flex",
     justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 8,
   },
 
   integrateButton: {
     background: "#2563EB",
     color: "white",
     border: "none",
-    padding: "6px 10px",
+    padding: "8px 12px",
     borderRadius: 6,
+    fontWeight: 700,
   },
 
   toggleInline: {
     display: "flex",
-    gap: 6,
+    gap: 8,
     alignItems: "center",
+    background: "#F8FAFC",
+    border: "1px solid #E2E8F0",
+    borderRadius: 8,
+    padding: "8px 10px",
+  },
+
+  toggleInlineLabel: {
+    fontSize: 12,
+    color: "#64748B",
+    fontWeight: 700,
   },
 
   checkboxWrap: {
@@ -1000,212 +1274,64 @@ const styles = {
     alignItems: "center",
   },
 
-  /* FREINS */
-
-  tagsList: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 6,
+  activeNoteCard: {
+    background: "#FFF7ED",
+    border: "1px solid #FED7AA",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
   },
 
-  freinTag: {
+  activeNoteTop: {
     display: "flex",
-    gap: 4,
+    gap: 8,
     alignItems: "center",
-    background: "#F1F5F9",
-    padding: "4px 6px",
-    borderRadius: 6,
+    marginBottom: 8,
   },
 
-  freinDot: {
-    width: 6,
-    height: 6,
-    borderRadius: "50%",
-    background: "#DC2626",
-  },
-
-  addRow: {
-    display: "flex",
-    gap: 6,
-    marginTop: 8,
-  },
-
-  addInput: {
-    flex: 1,
-    border: "1px solid #CBD5F5",
-    borderRadius: 6,
-    padding: 4,
-  },
-
-  addMiniButton: {
-    border: "none",
-    background: "#2563EB",
+  postItBadge: {
+    fontSize: 11,
+    fontWeight: 800,
+    background: "#F59E0B",
     color: "white",
+    borderRadius: 999,
     padding: "4px 8px",
-    borderRadius: 6,
   },
 
-  /* ACTEURS */
-
-  actorList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
+  activeNoteType: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#92400E",
   },
 
-  actorRow: {
-    display: "flex",
-    justifyContent: "space-between",
+  activeNoteText: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: "#0F172A",
   },
 
-  actorRole: {
-    color: "#64748B",
-  },
-
-  actorName: {
-    fontWeight: 600,
-  },
-
-  /* SUMMARY */
-
-  summaryBlock: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
-  },
-
-  summaryRow: {
-    display: "flex",
-    justifyContent: "space-between",
-  },
-
-  summaryHighlight: {
-    background: "#F8FAFC",
-    padding: 8,
-    borderRadius: 6,
-  },
-
-  suggestionButton: {
+  activeNoteMeta: {
     marginTop: 6,
-    border: "none",
-    background: "#1E3A8A",
-    color: "white",
-    borderRadius: 6,
-    padding: "6px 8px",
-  },
-
-  /* CONTACTS */
-
-  contactGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr",
-    gap: 8,
-  },
-
-  contactCard: {
-    background: "#F8FAFC",
-    padding: 10,
-    borderRadius: 8,
-  },
-
-  contactTitle: {
     fontSize: 12,
     color: "#64748B",
   },
 
-  contactName: {
-    fontWeight: 600,
-  },
-
-  contactRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginTop: 4,
-  },
-
-  contactPhoneLink: {
-    color: "#2563EB",
-  },
-
-  contactPhoneMuted: {
-    color: "#94A3B8",
-  },
-
-  copyButton: {
-    fontSize: 11,
-    border: "none",
-    background: "#E2E8F0",
-    borderRadius: 4,
-    padding: "2px 6px",
-  },
-
-  /* TIMELINE */
-
-  timeline: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
-  },
-
-  timelineItem: {
-    display: "flex",
+  quickActions: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
     gap: 8,
-    border: "none",
-    background: "#F8FAFC",
-    padding: 8,
-    borderRadius: 6,
-    textAlign: "left",
+    marginBottom: 12,
   },
 
-  timelineUnread: {
-    borderLeft: "4px solid #DC2626",
+  actionButton: {
+    padding: "8px 10px",
+    borderRadius: 8,
+    border: "1px solid #CBD5F5",
+    background: "#EFF6FF",
+    color: "#1D4ED8",
+    fontWeight: 700,
+    fontSize: 12,
   },
-
-  timelineDot: {
-    width: 8,
-    height: 8,
-    borderRadius: "50%",
-    marginTop: 6,
-  },
-
-  timelineContent: {
-    flex: 1,
-  },
-
-  timelineTop: {
-    display: "flex",
-    justifyContent: "space-between",
-  },
-
-  timelineDate: {
-    fontSize: 11,
-    color: "#64748B",
-  },
-
-  timelineBadges: {
-    display: "flex",
-    gap: 4,
-  },
-
-  noteTypeBadge: {
-    padding: "2px 6px",
-    borderRadius: 4,
-    fontSize: 11,
-  },
-
-  unreadBadge: {
-    fontSize: 10,
-    background: "#DC2626",
-    color: "white",
-    padding: "2px 4px",
-    borderRadius: 4,
-  },
-
-  timelineText: {
-    fontSize: 13,
-  },
-
-  /* NOTE COMPOSER */
 
   noteComposer: {
     marginTop: 12,
@@ -1215,6 +1341,7 @@ const styles = {
     display: "flex",
     gap: 6,
     marginBottom: 6,
+    flexWrap: "wrap",
   },
 
   noteTypePill: {
@@ -1232,6 +1359,7 @@ const styles = {
     borderRadius: 6,
     border: "1px solid #CBD5F5",
     padding: 6,
+    boxSizing: "border-box",
   },
 
   noteActions: {
@@ -1253,5 +1381,269 @@ const styles = {
     background: "white",
     padding: "6px 10px",
     borderRadius: 6,
+  },
+
+  tagsList: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+
+  freinTag: {
+    display: "flex",
+    gap: 6,
+    alignItems: "center",
+    background: "#F1F5F9",
+    padding: "6px 8px",
+    borderRadius: 8,
+    border: "1px solid #E2E8F0",
+    cursor: "pointer",
+  },
+
+  freinTagActive: {
+    background: "#EFF6FF",
+    border: "1px solid #93C5FD",
+    color: "#1D4ED8",
+  },
+
+  freinDot: {
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    background: "#DC2626",
+  },
+
+  activeFreinFooter: {
+    marginTop: 10,
+    padding: 10,
+    background: "#F8FAFC",
+    borderRadius: 8,
+    border: "1px solid #E2E8F0",
+  },
+
+  activeFreinFooterTitle: {
+    fontSize: 11,
+    color: "#64748B",
+    textTransform: "uppercase",
+    fontWeight: 700,
+    marginBottom: 4,
+  },
+
+  activeFreinFooterText: {
+    fontSize: 13,
+    fontWeight: 700,
+  },
+
+  addRow: {
+    display: "flex",
+    gap: 6,
+    marginTop: 8,
+  },
+
+  addInput: {
+    flex: 1,
+    border: "1px solid #CBD5F5",
+    borderRadius: 6,
+    padding: 6,
+  },
+
+  addMiniButton: {
+    border: "none",
+    background: "#2563EB",
+    color: "white",
+    padding: "4px 10px",
+    borderRadius: 6,
+  },
+
+  actorList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+  },
+
+  actorRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "8px 0",
+    borderBottom: "1px solid #F1F5F9",
+  },
+
+  actorRole: {
+    color: "#64748B",
+    fontSize: 13,
+  },
+
+  actorName: {
+    fontWeight: 700,
+    fontSize: 13,
+    textAlign: "right",
+  },
+
+  summaryBlock: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+
+  summaryRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    fontSize: 13,
+  },
+
+  summaryHighlight: {
+    background: "#F8FAFC",
+    padding: 10,
+    borderRadius: 8,
+    border: "1px solid #E2E8F0",
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+  },
+
+  riskHigh: {
+    color: "#DC2626",
+  },
+
+  suggestionButton: {
+    marginTop: 6,
+    border: "none",
+    background: "#1E3A8A",
+    color: "white",
+    borderRadius: 6,
+    padding: "8px 10px",
+    fontWeight: 700,
+  },
+
+  contactGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr",
+    gap: 8,
+  },
+
+  contactCard: {
+    background: "#F8FAFC",
+    padding: 10,
+    borderRadius: 8,
+    border: "1px solid #E2E8F0",
+  },
+
+  contactTitle: {
+    fontSize: 12,
+    color: "#64748B",
+  },
+
+  contactName: {
+    fontWeight: 700,
+    fontSize: 13,
+  },
+
+  contactRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: 4,
+    gap: 8,
+  },
+
+  contactPhoneLink: {
+    color: "#2563EB",
+    fontSize: 13,
+  },
+
+  contactPhoneMuted: {
+    color: "#94A3B8",
+    fontSize: 13,
+  },
+
+  copyButton: {
+    fontSize: 11,
+    border: "none",
+    background: "#E2E8F0",
+    borderRadius: 4,
+    padding: "2px 6px",
+  },
+
+  timeline: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+
+  timelineItem: {
+    display: "flex",
+    gap: 8,
+    border: "none",
+    background: "#F8FAFC",
+    padding: 10,
+    borderRadius: 8,
+    textAlign: "left",
+    borderLeft: "4px solid transparent",
+  },
+
+  timelineUnread: {
+    borderLeft: "4px solid #2563EB",
+  },
+
+  timelineUrgent: {
+    background: "#FEF2F2",
+  },
+
+  timelineDot: {
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    marginTop: 6,
+    flexShrink: 0,
+  },
+
+  timelineContent: {
+    flex: 1,
+  },
+
+  timelineTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+
+  timelineDate: {
+    fontSize: 11,
+    color: "#64748B",
+  },
+
+  timelineBadges: {
+    display: "flex",
+    gap: 4,
+    flexWrap: "wrap",
+  },
+
+  noteTypeBadge: {
+    padding: "2px 6px",
+    borderRadius: 4,
+    fontSize: 11,
+  },
+
+  unreadBadge: {
+    fontSize: 10,
+    background: "#DC2626",
+    color: "white",
+    padding: "2px 4px",
+    borderRadius: 4,
+  },
+
+  priorityBadge: {
+    fontSize: 10,
+    background: "#7C3AED",
+    color: "white",
+    padding: "2px 4px",
+    borderRadius: 4,
+  },
+
+  timelineText: {
+    fontSize: 13,
+    marginTop: 4,
   },
 };
