@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Dashboard from "./Dashboard.jsx";
+import PatientView from "./PatientView.jsx";
 
 const patientsData = [
   {
@@ -13,6 +14,7 @@ const patientsData = [
     service: "Oncologie",
     chambre: "214",
     lit: "B",
+    territory: "Cherbourg",
     blocage: "Coordination ville insuffisante",
     score: 6,
     joursEvitables: 3,
@@ -29,6 +31,7 @@ const patientsData = [
     service: "Médecine",
     chambre: "118",
     lit: "A",
+    territory: "Valognes",
     blocage: "Recherche SSIAD",
     score: 8,
     joursEvitables: 6,
@@ -45,6 +48,7 @@ const patientsData = [
     service: "Pneumologie",
     chambre: "320",
     lit: "C",
+    territory: "Cherbourg",
     blocage: "Logement insalubre",
     score: 9,
     joursEvitables: 8,
@@ -61,6 +65,7 @@ const patientsData = [
     service: "Pneumologie",
     chambre: "219",
     lit: "A",
+    territory: "Valognes",
     blocage: "Isolement social",
     score: 7,
     joursEvitables: 4,
@@ -70,10 +75,18 @@ const patientsData = [
 
 export default function App() {
   const [patients] = useState(patientsData);
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", color: "#0f172a" }}>
-      <Dashboard patients={patients} />
+      {!selectedPatient ? (
+        <Dashboard patients={patients} onOpenPatient={setSelectedPatient} />
+      ) : (
+        <PatientView
+          patient={selectedPatient}
+          onBack={() => setSelectedPatient(null)}
+        />
+      )}
     </div>
   );
 }
