@@ -1,12 +1,13 @@
 .patient-view-page {
   min-height: 100vh;
   background: #f4f7fb;
+  color: #172b4d;
 }
 
 .pv-top-header {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 60;
   height: 72px;
   display: flex;
   align-items: center;
@@ -41,15 +42,16 @@
 .pv-icon-btn,
 .pv-ghost-btn,
 .pv-crisis-button,
-.pv-primary-action {
+.pv-primary-action,
+.pv-quick-link {
   border: none;
-  border-radius: 999px;
   cursor: pointer;
 }
 
 .pv-icon-btn {
   width: 40px;
   height: 40px;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.14);
   color: white;
   font-size: 18px;
@@ -61,6 +63,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
   color: white;
   font-weight: 700;
@@ -70,9 +73,35 @@
 .pv-primary-action {
   min-height: 42px;
   padding: 0 16px;
+  border-radius: 999px;
   background: white;
   color: #153e9f;
   font-weight: 800;
+}
+
+.coordination-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coordination-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: white;
+  color: #153e9f;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.coordination-badge.urgent {
+  background: #ffdbdf;
+  color: #b42318;
 }
 
 .pv-left-sidebar {
@@ -80,43 +109,33 @@
   top: 72px;
   left: 0;
   bottom: 0;
+  width: 88px;
   z-index: 30;
   background: white;
   border-right: 1px solid #e7edf5;
   box-shadow: 0 8px 24px rgba(15, 35, 95, 0.06);
-  transition: width 0.25s ease, transform 0.25s ease;
-  overflow: hidden;
-}
-
-.pv-left-sidebar.expanded {
-  width: 220px;
-}
-
-.pv-left-sidebar.collapsed {
-  width: 72px;
 }
 
 .pv-left-sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px 12px;
+  padding: 14px 10px;
 }
 
 .pv-sidebar-link {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  min-height: 46px;
-  padding: 0 12px;
-  border: none;
-  border-radius: 12px;
+  gap: 6px;
+  min-height: 72px;
+  padding: 10px 8px;
+  border-radius: 14px;
   background: transparent;
   color: #172b4d;
-  font-size: 15px;
+  font-size: 11px;
   font-weight: 700;
-  text-align: left;
-  white-space: nowrap;
+  text-align: center;
 }
 
 .pv-sidebar-link:hover {
@@ -130,8 +149,12 @@
 }
 
 .pv-sidebar-icon {
-  min-width: 22px;
-  text-align: center;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.pv-mobile-overlay {
+  display: none;
 }
 
 .pv-right-rail {
@@ -139,8 +162,8 @@
   top: 72px;
   right: 0;
   bottom: 0;
-  width: 320px;
-  z-index: 25;
+  width: 340px;
+  z-index: 35;
   background: white;
   border-left: 1px solid #e7edf5;
   box-shadow: 0 8px 24px rgba(15, 35, 95, 0.06);
@@ -157,9 +180,19 @@
   transform: translateX(100%);
 }
 
+.pv-right-rail-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e7edf5;
+}
+
+.pv-right-rail-title {
+  font-size: 18px;
+  font-weight: 800;
+}
+
 .pv-right-tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   border-bottom: 1px solid #e7edf5;
 }
 
@@ -168,7 +201,7 @@
   border: none;
   background: white;
   color: #5f6b7a;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -217,23 +250,12 @@
 
 .pv-main {
   padding: 18px;
-  transition: margin-left 0.25s ease, margin-right 0.25s ease;
-}
-
-.pv-main.with-left-sidebar {
-  margin-left: 220px;
-}
-
-.pv-main.with-left-sidebar-collapsed {
-  margin-left: 72px;
+  margin-left: 88px;
+  transition: margin-right 0.25s ease;
 }
 
 .pv-main.with-right-rail {
-  margin-right: 320px;
-}
-
-.pv-main.without-right-rail {
-  margin-right: 0;
+  margin-right: 340px;
 }
 
 .pv-identity-banner,
@@ -294,19 +316,18 @@
   font-size: 13px;
   font-weight: 800;
   padding: 0;
-  cursor: pointer;
 }
 
 .pv-summary-banner {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   padding: 14px;
   margin-bottom: 14px;
 }
 
 .pv-summary-card {
-  min-height: 90px;
+  min-height: 92px;
   border: 1px solid #e7edf5;
   border-radius: 14px;
   background: #f8fbff;
@@ -331,7 +352,6 @@
   color: #1d5132;
   font-size: 13px;
   font-weight: 800;
-  cursor: pointer;
 }
 
 .pv-sortmed-toggle.active {
@@ -393,6 +413,19 @@
 .pv-block-title {
   font-size: 18px;
   font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.pv-source-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #214b9c;
+  font-size: 11px;
+  font-weight: 800;
   margin-bottom: 12px;
 }
 
@@ -419,12 +452,59 @@
   line-height: 1.5;
 }
 
+.pv-duo-sections {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pv-duo-column {
+  display: grid;
+  gap: 10px;
+}
+
+.pv-subtitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: #172b4d;
+}
+
+.pv-action-card {
+  border: 1px solid #e7edf5;
+  border-radius: 14px;
+  background: #f8fbff;
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.pv-action-card.current {
+  background: #fff8e9;
+  border-color: #f8dfae;
+}
+
+.pv-action-card.future {
+  background: #f5f8ff;
+  border-color: #dbe5f0;
+}
+
+.pv-action-title {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.pv-action-meta {
+  font-size: 12px;
+  color: #5f6b7a;
+}
+
 .pv-new-postit {
   display: grid;
   gap: 8px;
   margin-bottom: 12px;
 }
 
+.pv-new-postit input,
 .pv-new-postit select,
 .pv-new-postit textarea {
   width: 100%;
@@ -432,6 +512,7 @@
   border-radius: 12px;
   padding: 10px 12px;
   background: white;
+  color: #172b4d;
 }
 
 .pv-new-postit textarea {
@@ -449,7 +530,9 @@
   cursor: pointer;
 }
 
-.pv-postit-list {
+.pv-postit-list,
+.pv-history-list,
+.pv-quick-actions {
   display: grid;
   gap: 10px;
 }
@@ -507,7 +590,6 @@
   background: white;
   font-size: 12px;
   font-weight: 800;
-  cursor: pointer;
 }
 
 .postit-urgent {
@@ -524,11 +606,6 @@
 
 .postit-info {
   border-left: 4px solid #64748b;
-}
-
-.pv-history-list {
-  display: grid;
-  gap: 10px;
 }
 
 .pv-history-item {
@@ -555,44 +632,36 @@
   line-height: 1.4;
 }
 
-.coordination-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.coordination-badge {
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
+.pv-quick-link {
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
-  background: white;
-  color: #153e9f;
-  font-size: 11px;
+  border-radius: 12px;
+  background: #eef4ff;
+  color: #1d4ed8;
   font-weight: 800;
-}
-
-.coordination-badge.urgent {
-  background: #ffdbdf;
-  color: #b42318;
+  text-align: center;
+  padding: 0 12px;
 }
 
 @media (max-width: 1400px) {
   .pv-summary-banner {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  .pv-duo-sections {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 1100px) {
   .pv-right-rail {
-    width: 280px;
+    width: 300px;
   }
 
   .pv-main.with-right-rail {
-    margin-right: 280px;
+    margin-right: 300px;
   }
 
   .pv-content-grid {
@@ -623,17 +692,31 @@
   }
 
   .pv-left-sidebar {
+    width: 250px;
     top: 94px;
+    transform: translateX(-105%);
+    transition: transform 0.25s ease;
+    z-index: 55;
   }
 
-  .pv-left-sidebar.expanded {
-    width: 240px;
+  .pv-left-sidebar.mobile-open {
     transform: translateX(0);
   }
 
-  .pv-left-sidebar.collapsed {
-    width: 240px;
-    transform: translateX(-105%);
+  .pv-sidebar-link {
+    flex-direction: row;
+    justify-content: flex-start;
+    min-height: 48px;
+    text-align: left;
+  }
+
+  .pv-mobile-overlay {
+    display: block;
+    position: fixed;
+    inset: 94px 0 0 0;
+    background: rgba(15, 23, 42, 0.35);
+    border: none;
+    z-index: 50;
   }
 
   .pv-right-rail {
@@ -641,19 +724,13 @@
     width: 92%;
   }
 
-  .pv-main,
-  .pv-main.with-left-sidebar,
-  .pv-main.with-left-sidebar-collapsed {
-    margin-left: 0;
-  }
-
-  .pv-main.with-right-rail,
-  .pv-main.without-right-rail {
-    margin-right: 0;
-  }
-
   .pv-main {
+    margin-left: 0;
     padding: 12px;
+  }
+
+  .pv-main.with-right-rail {
+    margin-right: 0;
   }
 
   .pv-identity-banner {
@@ -689,6 +766,6 @@
   }
 
   .pv-right-tabs {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
