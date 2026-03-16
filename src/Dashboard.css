@@ -1,7 +1,9 @@
 /* ============================= */
 /* GLOBAL */
 /* ============================= */
-
+body{
+background:red;
+}
 .dashboard-container{
 padding:20px;
 max-width:1400px;
