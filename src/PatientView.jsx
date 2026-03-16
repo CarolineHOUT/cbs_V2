@@ -60,63 +60,6 @@ const allPatients = [
     datePrevisionnelleSortie: "2026-03-20",
     prochaineAction: "Recueil des besoins",
   },
-  {
-    id: 4,
-    priorite: 4,
-    nom: "MOREL",
-    prenom: "Sébastien",
-    dateNaissance: "1969-02-12",
-    age: 56,
-    ins: "1 69 02 12 888 999",
-    iep: "54567890",
-    service: "Chirurgie",
-    chambre: "C07",
-    lit: "01",
-    sortMedActive: true,
-    sortMedActivatedAt: "2026-03-13T11:15:00",
-    maturiteSortie: "Solution prête",
-    freinPrincipal: "Administratif",
-    datePrevisionnelleSortie: "2026-03-18",
-    prochaineAction: "Finaliser validation",
-  },
-  {
-    id: 5,
-    priorite: 5,
-    nom: "DEAN",
-    prenom: "Jane",
-    dateNaissance: "1958-08-12",
-    age: 67,
-    ins: "1 58 08 12 222 111",
-    iep: "99887766",
-    service: "Oncologie",
-    chambre: "A05",
-    lit: "05",
-    sortMedActive: false,
-    sortMedActivatedAt: null,
-    maturiteSortie: "Organisation sortie",
-    freinPrincipal: "Place aval",
-    datePrevisionnelleSortie: "2026-03-21",
-    prochaineAction: "Relance place aval",
-  },
-  {
-    id: 6,
-    priorite: 6,
-    nom: "BERNARD",
-    prenom: "Luc",
-    dateNaissance: "1961-06-03",
-    age: 64,
-    ins: "1 61 06 03 111 222",
-    iep: "11223344",
-    service: "Neurologie",
-    chambre: "D03",
-    lit: "02",
-    sortMedActive: true,
-    sortMedActivatedAt: "2026-03-15T14:00:00",
-    maturiteSortie: "Organisation sortie",
-    freinPrincipal: "Famille",
-    datePrevisionnelleSortie: "2026-03-19",
-    prochaineAction: "Appeler la famille",
-  },
 ];
 
 function formatDate(dateString) {
@@ -236,14 +179,12 @@ export default function PatientView() {
           libelle: "Recueil initial des besoins de sortie",
           responsable: "Sophie Martin",
           date: "2026-03-15T10:00:00",
-          source: "Vue duo",
         },
         {
           id: "p2",
           libelle: "Premier contact avec la famille",
           responsable: "Claire Morel",
           date: "2026-03-16T14:10:00",
-          source: "Vue duo",
         },
       ],
       enCours: [
@@ -252,14 +193,12 @@ export default function PatientView() {
           libelle: basePatient.prochaineAction,
           responsable: "Assistante sociale - Claire Morel",
           echeance: "2026-03-18T16:00:00",
-          source: "Vue duo",
         },
         {
           id: "c2",
           libelle: "Vérification administrative patient",
           responsable: "Bureau des entrées - Nadia Leroy",
           echeance: "2026-03-18T17:30:00",
-          source: "Vue duo",
         },
       ],
       aVenir: [
@@ -268,7 +207,6 @@ export default function PatientView() {
           libelle: "Réévaluation staff si pas de réponse",
           responsable: "Dr Bernard",
           echeance: "2026-03-19T09:00:00",
-          source: "Vue duo",
         },
       ],
     },
@@ -279,8 +217,7 @@ export default function PatientView() {
       decision:
         "Maintenir orientation SMR, relance structure aval et suivi administratif.",
       prochaineRevue: "2026-03-19T09:00:00",
-      note:
-        "Patient à suivre quotidiennement tant que la solution de sortie n’est pas validée.",
+      note: "Patient à suivre quotidiennement tant que la solution de sortie n’est pas validée.",
       source: "Staff",
     },
 
@@ -518,13 +455,13 @@ export default function PatientView() {
 
         <div className="pv-header-right">
           <button
-            className="pv-ghost-btn coordination-btn"
+            className="pv-ghost-btn pv-coordination-btn"
             onClick={() => setRightRailOpen((prev) => !prev)}
           >
             <span>Coordination patient</span>
             {unresolvedCount > 0 && (
               <span
-                className={`coordination-badge ${urgentCount > 0 ? "urgent" : ""}`}
+                className={`pv-badge-counter ${urgentCount > 0 ? "urgent" : ""}`}
               >
                 {urgentCount > 0 ? "!" : unresolvedCount}
               </span>
@@ -535,7 +472,7 @@ export default function PatientView() {
             className="pv-crisis-button"
             onClick={() => alert("Ouvrir le formulaire cellule de crise")}
           >
-            Déclencher une cellule de crise
+            Déclencher cellule de crise
           </button>
         </div>
       </header>
@@ -584,7 +521,7 @@ export default function PatientView() {
           >
             Post-it
             {unresolvedCount > 0 && (
-              <span className="tab-badge">{unresolvedCount}</span>
+              <span className="pv-tab-badge">{unresolvedCount}</span>
             )}
           </button>
 
@@ -622,7 +559,7 @@ export default function PatientView() {
             <div className="pv-rail-section">
               <h3>Post-it de coordination</h3>
 
-              <div className="pv-new-postit">
+              <div className="pv-new-form">
                 <select
                   value={newPostIt.type}
                   onChange={(e) =>
@@ -647,59 +584,44 @@ export default function PatientView() {
               </div>
 
               <div className="pv-postit-list">
-                {postIts
-                  .slice()
-                  .sort((a, b) => {
-                    const aOpen = a.statut !== "Répondu" && a.statut !== "Clos";
-                    const bOpen = b.statut !== "Répondu" && b.statut !== "Clos";
-                    const aUrgent = a.type === "Urgent";
-                    const bUrgent = b.type === "Urgent";
-                    if (aOpen !== bOpen) return aOpen ? -1 : 1;
-                    if (aUrgent !== bUrgent) return aUrgent ? -1 : 1;
-                    return 0;
-                  })
-                  .map((item) => (
-                    <div
-                      key={item.id}
-                      className={`pv-postit-card ${getPostItClass(item.type)}`}
-                    >
-                      <div className="pv-postit-header">
-                        <span className="pv-postit-type">{item.type}</span>
-                        <span className="pv-postit-status">{item.statut}</span>
-                      </div>
+                {postIts.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`pv-postit-card ${getPostItClass(item.type)}`}
+                  >
+                    <div className="pv-postit-header">
+                      <span className="pv-postit-type">{item.type}</span>
+                      <span className="pv-postit-status">{item.statut}</span>
+                    </div>
 
-                      <div className="pv-postit-message">{item.message}</div>
+                    <div className="pv-postit-message">{item.message}</div>
+                    <div className="pv-postit-meta">
+                      {item.auteur} · {formatDateTime(item.createdAt)}
+                    </div>
 
-                      <div className="pv-postit-meta">
-                        {item.auteur} · {formatDateTime(item.createdAt)}
-                      </div>
-
-                      {item.reponse && (
-                        <div className="pv-postit-response">
-                          <strong>Réponse :</strong>
-                          <div>{item.reponse}</div>
-                          <div className="pv-postit-meta">
-                            {item.repondant} · {formatDateTime(item.repliedAt)}
-                          </div>
+                    {item.reponse && (
+                      <div className="pv-postit-response">
+                        <strong>Réponse :</strong>
+                        <div>{item.reponse}</div>
+                        <div className="pv-postit-meta">
+                          {item.repondant} · {formatDateTime(item.repliedAt)}
                         </div>
+                      </div>
+                    )}
+
+                    <div className="pv-postit-actions">
+                      {item.statut !== "Répondu" && item.statut !== "Clos" && (
+                        <button onClick={() => replyToPostIt(item.id)}>
+                          Répondre
+                        </button>
                       )}
 
-                      <div className="pv-postit-actions">
-                        {item.statut !== "Répondu" &&
-                          item.statut !== "Clos" && (
-                            <button onClick={() => replyToPostIt(item.id)}>
-                              Répondre
-                            </button>
-                          )}
-
-                        {item.statut !== "Clos" && (
-                          <button onClick={() => closePostIt(item.id)}>
-                            Clore
-                          </button>
-                        )}
-                      </div>
+                      {item.statut !== "Clos" && (
+                        <button onClick={() => closePostIt(item.id)}>Clore</button>
+                      )}
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -710,8 +632,7 @@ export default function PatientView() {
               <div className="pv-contact-card">
                 <div>
                   <strong>
-                    {patient.personneConfiance.nom}{" "}
-                    {patient.personneConfiance.prenom}
+                    {patient.personneConfiance.nom} {patient.personneConfiance.prenom}
                   </strong>
                 </div>
                 <div>{patient.personneConfiance.lien}</div>
@@ -723,8 +644,7 @@ export default function PatientView() {
               <div className="pv-contact-card">
                 <div>
                   <strong>
-                    {patient.personneAPrevenir.nom}{" "}
-                    {patient.personneAPrevenir.prenom}
+                    {patient.personneAPrevenir.nom} {patient.personneAPrevenir.prenom}
                   </strong>
                 </div>
                 <div>{patient.personneAPrevenir.lien}</div>
@@ -738,7 +658,7 @@ export default function PatientView() {
             <div className="pv-rail-section">
               <h3>Compte rendu staff</h3>
 
-              <div className="pv-new-postit">
+              <div className="pv-new-form">
                 <input
                   type="text"
                   placeholder="Titre du compte rendu"
@@ -916,9 +836,7 @@ export default function PatientView() {
 
           <div className="pv-summary-card">
             <span className="pv-summary-label">Jours évitables</span>
-            <strong>
-              {joursEvitables === null ? "—" : `J+${joursEvitables}`}
-            </strong>
+            <strong>{joursEvitables === null ? "—" : `J+${joursEvitables}`}</strong>
           </div>
 
           <div className="pv-summary-card">
@@ -1006,8 +924,6 @@ export default function PatientView() {
 
             <section className="pv-block">
               <div className="pv-block-title">Actions vue duo</div>
-              <div className="pv-source-tag">Source : Vue duo</div>
-
               <div className="pv-duo-sections">
                 <div className="pv-duo-column">
                   <div className="pv-subtitle">Passées</div>
@@ -1092,16 +1008,14 @@ export default function PatientView() {
                 <div className="pv-full-width">
                   <span className="pv-field-label">Personne de confiance</span>
                   <div>
-                    {patient.personneConfiance.nom}{" "}
-                    {patient.personneConfiance.prenom} ·{" "}
+                    {patient.personneConfiance.nom} {patient.personneConfiance.prenom} ·{" "}
                     {patient.personneConfiance.lien}
                   </div>
                 </div>
                 <div className="pv-full-width">
                   <span className="pv-field-label">Personne à prévenir</span>
                   <div>
-                    {patient.personneAPrevenir.nom}{" "}
-                    {patient.personneAPrevenir.prenom} ·{" "}
+                    {patient.personneAPrevenir.nom} {patient.personneAPrevenir.prenom} ·{" "}
                     {patient.personneAPrevenir.lien}
                   </div>
                 </div>
