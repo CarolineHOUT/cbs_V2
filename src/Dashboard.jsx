@@ -320,16 +320,34 @@ search,
 ]);
 
 const kpis = useMemo(() => {
-const occupiedBeds = 92;
-const capacityBeds = 100;
+const occupiedBeds = filteredPatients.length;
+
+const capacityByService = {
+Pneumologie: 30,
+Médecine: 40,
+Oncologie: 20,
+Chirurgie: 35,
+Neurologie: 25,
+};
+
+const selectedPool =
+selectedServices.length > 0 ? selectedServices : Object.keys(capacityByService);
+
+const capacityBeds = selectedPool.reduce(
+(sum, service) => sum + (capacityByService[service] || 0),
+0
+);
 
 const sortMedCount = filteredPatients.filter((p) => p.sortMedActive).length;
+
 const withoutSolution = filteredPatients.filter(
 (p) => p.sortMedActive && p.maturiteSortie !== "Solution prête"
 ).length;
+
 const avoidableDays = filteredPatients
 .filter((p) => p.sortMedActive)
 .reduce((sum, p) => sum + diffInDays(p.sortMedActivatedAt), 0);
+
 const recoverableBeds = filteredPatients.filter(
 (p) => p.sortMedActive && p.maturiteSortie === "Solution prête"
 ).length;
@@ -342,7 +360,7 @@ withoutSolution,
 avoidableDays,
 recoverableBeds,
 };
-}, [filteredPatients]);
+}, [filteredPatients, selectedServices]);
 
 const servicesRailData = useMemo(() => {
 return services
