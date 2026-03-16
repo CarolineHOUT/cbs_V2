@@ -10,6 +10,7 @@ const SERVICE_CAPACITIES = {
   Cardiologie: 22,
 };
 
+
 export default function Dashboard({ patients = [], onOpenPatient }) {
   const [service, setService] = useState("Tous");
   const [status, setStatus] = useState("Tous");
