@@ -168,8 +168,7 @@
   border-left: 1px solid #e7edf5;
   box-shadow: 0 8px 24px rgba(15, 35, 95, 0.06);
   transition: transform 0.25s ease;
-  display: flex;
-  flex-direction: column;
+  overflow: auto;
 }
 
 .pv-right-rail.open {
@@ -227,8 +226,6 @@
 }
 
 .pv-right-content {
-  flex: 1;
-  overflow: auto;
   padding: 14px;
 }
 
