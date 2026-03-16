@@ -1,4 +1,3 @@
-
 import { Navigate, Route, Routes } from "react-router-dom";
 import Dashboard from "./Dashboard";
 import PatientView from "./PatientView";
