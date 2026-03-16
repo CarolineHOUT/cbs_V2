@@ -42,7 +42,6 @@
 .pv-icon-btn,
 .pv-ghost-btn,
 .pv-crisis-button,
-.pv-primary-action,
 .pv-quick-link {
   border: none;
   cursor: pointer;
@@ -69,8 +68,7 @@
   font-weight: 700;
 }
 
-.pv-crisis-button,
-.pv-primary-action {
+.pv-crisis-button {
   min-height: 42px;
   padding: 0 16px;
   border-radius: 999px;
@@ -79,13 +77,7 @@
   font-weight: 800;
 }
 
-.coordination-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.coordination-badge {
+.pv-badge-counter {
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
@@ -99,7 +91,7 @@
   font-weight: 800;
 }
 
-.coordination-badge.urgent {
+.pv-badge-counter.urgent {
   background: #ffdbdf;
   color: #b42318;
 }
@@ -210,7 +202,7 @@
   color: #1d4ed8;
 }
 
-.tab-badge {
+.pv-tab-badge {
   margin-left: 6px;
   min-width: 18px;
   height: 18px;
@@ -302,17 +294,12 @@
   border: 1px solid #f8dfae;
 }
 
-.pv-alert-icon {
-  font-size: 16px;
-}
-
 .pv-alert-link {
   border: none;
   background: transparent;
   color: #1d4ed8;
   font-size: 13px;
   font-weight: 800;
-  padding: 0;
 }
 
 .pv-summary-banner {
@@ -342,19 +329,19 @@
 
 .pv-sortmed-toggle {
   min-height: 34px;
-  padding: 0 12px;
   border: 1px solid #cfe0d7;
-  border-radius: 999px;
   background: #f4fbf6;
   color: #1d5132;
+  border-radius: 999px;
+  padding: 0 12px;
   font-size: 13px;
   font-weight: 800;
 }
 
 .pv-sortmed-toggle.active {
   background: #eaf7ee;
-  color: #15803d;
   border-color: #abd5b6;
+  color: #15803d;
 }
 
 .pv-risk-banner {
@@ -367,10 +354,6 @@
   font-size: 18px;
   font-weight: 800;
   margin-bottom: 4px;
-}
-
-.pv-risk-reason {
-  font-size: 14px;
 }
 
 .risk-high {
@@ -463,7 +446,6 @@
 .pv-subtitle {
   font-size: 14px;
   font-weight: 800;
-  color: #172b4d;
 }
 
 .pv-action-card {
@@ -482,7 +464,6 @@
 
 .pv-action-card.future {
   background: #f5f8ff;
-  border-color: #dbe5f0;
 }
 
 .pv-action-title {
@@ -490,20 +471,21 @@
   font-weight: 800;
 }
 
-.pv-action-meta {
+.pv-action-meta,
+.pv-postit-meta {
   font-size: 12px;
   color: #5f6b7a;
 }
 
-.pv-new-postit {
+.pv-new-form {
   display: grid;
   gap: 8px;
   margin-bottom: 12px;
 }
 
-.pv-new-postit input,
-.pv-new-postit select,
-.pv-new-postit textarea {
+.pv-new-form input,
+.pv-new-form select,
+.pv-new-form textarea {
   width: 100%;
   border: 1px solid #dbe5f0;
   border-radius: 12px;
@@ -512,12 +494,12 @@
   color: #172b4d;
 }
 
-.pv-new-postit textarea {
+.pv-new-form textarea {
   min-height: 90px;
   resize: vertical;
 }
 
-.pv-new-postit button {
+.pv-new-form button {
   min-height: 40px;
   border: none;
   border-radius: 10px;
@@ -558,11 +540,6 @@
   font-size: 14px;
   line-height: 1.45;
   margin-bottom: 6px;
-}
-
-.pv-postit-meta {
-  font-size: 12px;
-  color: #5f6b7a;
 }
 
 .pv-postit-response {
