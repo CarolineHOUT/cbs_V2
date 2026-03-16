@@ -448,6 +448,17 @@ body {
   gap: 3px;
 }
 
+.patient-link {
+  font-weight: 800;
+  font-size: 15px;
+  color: #0f4cb8;
+  text-decoration: none;
+}
+
+.patient-link:hover {
+  text-decoration: underline;
+}
+
 .identity-name,
 .location-service {
   font-weight: 800;
