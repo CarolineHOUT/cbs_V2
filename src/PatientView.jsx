@@ -10,8 +10,8 @@ const allPatients = [
     prenom: "Jean",
     dateNaissance: "1946-03-12",
     age: 78,
-    iep: "12345678",
     ins: "1 84 03 12 345 678",
+    iep: "12345678",
     service: "Pneumologie",
     chambre: "A12",
     lit: "03",
@@ -29,8 +29,8 @@ const allPatients = [
     prenom: "Henri",
     dateNaissance: "1944-11-16",
     age: 79,
-    iep: "87654321",
     ins: "1 44 11 22 333 444",
+    iep: "87654321",
     service: "Pneumologie",
     chambre: "A04",
     lit: "01",
@@ -48,8 +48,8 @@ const allPatients = [
     prenom: "Jocelyn",
     dateNaissance: "1975-08-25",
     age: 50,
-    iep: "23456789",
     ins: "1 75 08 25 987 654",
+    iep: "23456789",
     service: "Médecine",
     chambre: "B10",
     lit: "02",
@@ -67,8 +67,8 @@ const allPatients = [
     prenom: "Sébastien",
     dateNaissance: "1969-02-12",
     age: 56,
-    iep: "54567890",
     ins: "1 69 02 12 888 999",
+    iep: "54567890",
     service: "Chirurgie",
     chambre: "C07",
     lit: "01",
@@ -86,8 +86,8 @@ const allPatients = [
     prenom: "Jane",
     dateNaissance: "1958-08-12",
     age: 67,
-    iep: "99887766",
     ins: "1 58 08 12 222 111",
+    iep: "99887766",
     service: "Oncologie",
     chambre: "A05",
     lit: "05",
@@ -105,8 +105,8 @@ const allPatients = [
     prenom: "Luc",
     dateNaissance: "1961-06-03",
     age: 64,
-    iep: "11223344",
     ins: "1 61 06 03 111 222",
+    iep: "11223344",
     service: "Neurologie",
     chambre: "D03",
     lit: "02",
@@ -156,12 +156,12 @@ function getRisk(patient, postIts) {
   if (
     patient.sortMedActive &&
     patient.maturiteSortie !== "Solution prête" &&
-    patient.freinPrincipal &&
     (avoidableDays >= 1 || hasUrgentUnanswered)
   ) {
     return {
       level: "Élevé",
-      reason: "Sort Med actif sans solution prête et frein principal non résolu",
+      reason:
+        "Sort Med actif sans solution prête, avec risque de dérive de sortie.",
       className: "risk-high",
     };
   }
@@ -173,14 +173,15 @@ function getRisk(patient, postIts) {
   ) {
     return {
       level: "Modéré",
-      reason: "Préparation de sortie incomplète ou vigilance de coordination",
+      reason:
+        "Préparation de sortie incomplète ou coordination à consolider.",
       className: "risk-medium",
     };
   }
 
   return {
     level: "Faible",
-    reason: "Sortie suffisamment préparée à ce stade",
+    reason: "Sortie suffisamment préparée à ce stade.",
     className: "risk-low",
   };
 }
@@ -204,34 +205,95 @@ export default function PatientView() {
   const basePatient =
     allPatients.find((p) => String(p.id) === String(id)) || allPatients[0];
 
-  const [leftMenuOpen, setLeftMenuOpen] = useState(true);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [rightRailOpen, setRightRailOpen] = useState(true);
-  const [rightRailTab, setRightRailTab] = useState("contacts");
+  const [rightRailTab, setRightRailTab] = useState("postits");
 
   const [patient, setPatient] = useState({
     ...basePatient,
+
+    dpisynthese: {
+      freinPrincipal: basePatient.freinPrincipal,
+      blocage: "Attente retour structure aval / coordination partenaire",
+      administratifPatient: "Dossier administratif incomplet",
+      statutAdministratif: "À consolider",
+      source: "DPI",
+    },
+
     situationSortie: {
       besoinsIdentifies: "Retour en structure aval avec coordination",
       orientationSortie: "SMR",
       solutionEnvisagee: "Place aval demandée",
       solutionValidee: "Non",
       pointsVigilance: "Attente confirmation structure et famille",
+      source: "Fiche patient / DPI",
     },
+
+    duoActions: {
+      passees: [
+        {
+          id: "p1",
+          libelle: "Recueil initial des besoins de sortie",
+          responsable: "Sophie Martin",
+          date: "2026-03-15T10:00:00",
+          source: "Vue duo",
+        },
+        {
+          id: "p2",
+          libelle: "Premier contact avec la famille",
+          responsable: "Claire Morel",
+          date: "2026-03-16T14:10:00",
+          source: "Vue duo",
+        },
+      ],
+      enCours: [
+        {
+          id: "c1",
+          libelle: basePatient.prochaineAction,
+          responsable: "Assistante sociale - Claire Morel",
+          echeance: "2026-03-18T16:00:00",
+          source: "Vue duo",
+        },
+        {
+          id: "c2",
+          libelle: "Vérification administrative patient",
+          responsable: "Bureau des entrées - Nadia Leroy",
+          echeance: "2026-03-18T17:30:00",
+          source: "Vue duo",
+        },
+      ],
+      aVenir: [
+        {
+          id: "a1",
+          libelle: "Réévaluation staff si pas de réponse",
+          responsable: "Dr Bernard",
+          echeance: "2026-03-19T09:00:00",
+          source: "Vue duo",
+        },
+      ],
+    },
+
     staff: {
+      dernierStaff: "2026-03-17T09:30:00",
       aPresenter: true,
-      dernierStaff: "2026-03-17",
-      decision: "Maintenir orientation SMR, relance structure aval",
-      prochaineRevue: "2026-03-19",
-      note: "Réévaluer si pas de réponse sous 24h",
+      decision:
+        "Maintenir orientation SMR, relance structure aval et suivi administratif.",
+      prochaineRevue: "2026-03-19T09:00:00",
+      note: "Patient à suivre quotidiennement tant que la solution de sortie n’est pas validée.",
+      source: "Staff",
     },
-    coordination: {
-      acteurs: "Service / Assistante sociale / Cadre",
-      statut: "En cours",
-      prochaineAction: basePatient.prochaineAction,
-      dateSuivi: "2026-03-18",
-      note: "Famille informée, accord de principe",
-      responsable: "Assistante sociale",
-    },
+
+    comptesRendusStaff: [
+      {
+        id: 1,
+        date: "2026-03-17T09:30:00",
+        titre: "Staff hebdomadaire",
+        decision:
+          "Orientation SMR maintenue. Relance structure aval. Contrôle administratif demandé.",
+        redacteur: "Dr Bernard",
+      },
+    ],
+
     personneConfiance: {
       nom: "DUPONT",
       prenom: "Marie",
@@ -239,12 +301,15 @@ export default function PatientView() {
       telephone: "06 12 34 56 78",
       email: "marie.dupont@example.fr",
     },
+
     personneAPrevenir: {
       nom: "DUPONT",
       prenom: "Claire",
       lien: "Fille",
       telephone: "06 87 65 43 21",
+      email: "claire.dupont@example.fr",
     },
+
     celluleCrise: {
       concerne: false,
       active: false,
@@ -273,7 +338,7 @@ export default function PatientView() {
       auteur: "Sophie L.",
       createdAt: "2026-03-18T10:20:00",
       statut: "Répondu",
-      reponse: "Famille contactée à 11h10, accord confirmé",
+      reponse: "Famille contactée à 11h10, accord confirmé.",
       repondant: "Sophie L.",
       repliedAt: "2026-03-18T11:10:00",
     },
@@ -303,6 +368,12 @@ export default function PatientView() {
   const [newPostIt, setNewPostIt] = useState({
     type: "Action",
     message: "",
+  });
+
+  const [newStaffReport, setNewStaffReport] = useState({
+    titre: "",
+    decision: "",
+    redacteur: "",
   });
 
   const unresolvedCount = postIts.filter(
@@ -394,13 +465,45 @@ export default function PatientView() {
     );
   };
 
+  const addStaffReport = () => {
+    if (
+      !newStaffReport.titre.trim() ||
+      !newStaffReport.decision.trim() ||
+      !newStaffReport.redacteur.trim()
+    ) {
+      return;
+    }
+
+    const report = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      titre: newStaffReport.titre.trim(),
+      decision: newStaffReport.decision.trim(),
+      redacteur: newStaffReport.redacteur.trim(),
+    };
+
+    setPatient((prev) => ({
+      ...prev,
+      comptesRendusStaff: [report, ...prev.comptesRendusStaff],
+    }));
+
+    setNewStaffReport({
+      titre: "",
+      decision: "",
+      redacteur: "",
+    });
+
+    setRightRailTab("staff");
+    setRightRailOpen(true);
+  };
+
   return (
     <div className="patient-view-page">
       <header className="pv-top-header">
         <div className="pv-header-left">
           <button
             className="pv-icon-btn"
-            onClick={() => setLeftMenuOpen((prev) => !prev)}
+            onClick={() => setMobileNavOpen((prev) => !prev)}
             aria-label="Ouvrir le menu"
           >
             ☰
@@ -418,7 +521,6 @@ export default function PatientView() {
             onClick={() => setRightRailOpen((prev) => !prev)}
           >
             <span>Coordination</span>
-
             {unresolvedCount > 0 && (
               <span
                 className={`coordination-badge ${urgentCount > 0 ? "urgent" : ""}`}
@@ -437,31 +539,43 @@ export default function PatientView() {
         </div>
       </header>
 
-      <aside className={`pv-left-sidebar ${leftMenuOpen ? "expanded" : "collapsed"}`}>
+      <aside className={`pv-left-sidebar ${mobileNavOpen ? "mobile-open" : ""}`}>
         <nav className="pv-left-sidebar-nav">
           <Link to="/dashboard" className="pv-sidebar-link">
             <span className="pv-sidebar-icon">🏠</span>
-            {leftMenuOpen && <span>Tableau de bord</span>}
+            <span>Tableau de bord</span>
           </Link>
 
           <button className="pv-sidebar-link active">
             <span className="pv-sidebar-icon">🧑</span>
-            {leftMenuOpen && <span>Fiche patient</span>}
+            <span>Fiche patient</span>
           </button>
 
           <button className="pv-sidebar-link">
             <span className="pv-sidebar-icon">🤝</span>
-            {leftMenuOpen && <span>Vue duo</span>}
+            <span>Vue duo</span>
           </button>
 
           <button className="pv-sidebar-link">
             <span className="pv-sidebar-icon">⚠️</span>
-            {leftMenuOpen && <span>Cellule de crise</span>}
+            <span>Cellule de crise</span>
           </button>
         </nav>
       </aside>
 
+      {mobileNavOpen && (
+        <button
+          className="pv-mobile-overlay"
+          onClick={() => setMobileNavOpen(false)}
+          aria-label="Fermer le menu"
+        />
+      )}
+
       <aside className={`pv-right-rail ${rightRailOpen ? "open" : "closed"}`}>
+        <div className="pv-right-rail-header">
+          <div className="pv-right-rail-title">Coordination</div>
+        </div>
+
         <div className="pv-right-tabs">
           <button
             className={rightRailTab === "postits" ? "active" : ""}
@@ -478,6 +592,13 @@ export default function PatientView() {
             onClick={() => setRightRailTab("contacts")}
           >
             Contacts
+          </button>
+
+          <button
+            className={rightRailTab === "staff" ? "active" : ""}
+            onClick={() => setRightRailTab("staff")}
+          >
+            Staff
           </button>
 
           <button
@@ -563,14 +684,17 @@ export default function PatientView() {
                       )}
 
                       <div className="pv-postit-actions">
-                        {item.statut !== "Répondu" && item.statut !== "Clos" && (
-                          <button onClick={() => replyToPostIt(item.id)}>
-                            Répondre
-                          </button>
-                        )}
+                        {item.statut !== "Répondu" &&
+                          item.statut !== "Clos" && (
+                            <button onClick={() => replyToPostIt(item.id)}>
+                              Répondre
+                            </button>
+                          )}
 
                         {item.statut !== "Clos" && (
-                          <button onClick={() => closePostIt(item.id)}>Clore</button>
+                          <button onClick={() => closePostIt(item.id)}>
+                            Clore
+                          </button>
                         )}
                       </div>
                     </div>
@@ -585,7 +709,8 @@ export default function PatientView() {
               <div className="pv-contact-card">
                 <div>
                   <strong>
-                    {patient.personneConfiance.nom} {patient.personneConfiance.prenom}
+                    {patient.personneConfiance.nom}{" "}
+                    {patient.personneConfiance.prenom}
                   </strong>
                 </div>
                 <div>{patient.personneConfiance.lien}</div>
@@ -597,11 +722,73 @@ export default function PatientView() {
               <div className="pv-contact-card">
                 <div>
                   <strong>
-                    {patient.personneAPrevenir.nom} {patient.personneAPrevenir.prenom}
+                    {patient.personneAPrevenir.nom}{" "}
+                    {patient.personneAPrevenir.prenom}
                   </strong>
                 </div>
                 <div>{patient.personneAPrevenir.lien}</div>
                 <div>{patient.personneAPrevenir.telephone}</div>
+                <div>{patient.personneAPrevenir.email}</div>
+              </div>
+            </div>
+          )}
+
+          {rightRailTab === "staff" && (
+            <div className="pv-rail-section">
+              <h3>Compte rendu staff</h3>
+
+              <div className="pv-new-postit">
+                <input
+                  type="text"
+                  placeholder="Titre du compte rendu"
+                  value={newStaffReport.titre}
+                  onChange={(e) =>
+                    setNewStaffReport((prev) => ({
+                      ...prev,
+                      titre: e.target.value,
+                    }))
+                  }
+                />
+
+                <textarea
+                  placeholder="Décision prise en staff"
+                  value={newStaffReport.decision}
+                  onChange={(e) =>
+                    setNewStaffReport((prev) => ({
+                      ...prev,
+                      decision: e.target.value,
+                    }))
+                  }
+                />
+
+                <input
+                  type="text"
+                  placeholder="Rédacteur / acteur responsable"
+                  value={newStaffReport.redacteur}
+                  onChange={(e) =>
+                    setNewStaffReport((prev) => ({
+                      ...prev,
+                      redacteur: e.target.value,
+                    }))
+                  }
+                />
+
+                <button onClick={addStaffReport}>Ajouter le compte rendu</button>
+              </div>
+
+              <div className="pv-history-list">
+                {patient.comptesRendusStaff.map((report) => (
+                  <div key={report.id} className="pv-history-item">
+                    <div className="pv-history-date">
+                      {formatDateTime(report.date)}
+                    </div>
+                    <div className="pv-history-label">{report.titre}</div>
+                    <div className="pv-history-detail">{report.decision}</div>
+                    <div className="pv-postit-meta">
+                      Rédacteur : {report.redacteur}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -638,36 +825,36 @@ export default function PatientView() {
                 <div>
                   <strong>Motif :</strong> {patient.celluleCrise.motif || "—"}
                 </div>
+                <div>
+                  <strong>Décisions :</strong>{" "}
+                  {patient.celluleCrise.decisions || "—"}
+                </div>
               </div>
             </div>
           )}
         </div>
       </aside>
 
-      <main
-        className={`pv-main ${
-          leftMenuOpen ? "with-left-sidebar" : "with-left-sidebar-collapsed"
-        } ${rightRailOpen ? "with-right-rail" : "without-right-rail"}`}
-      >
+      <main className={`pv-main ${rightRailOpen ? "with-right-rail" : ""}`}>
         <section className="pv-identity-banner">
           <div className="pv-identity-main">
             <div className="pv-patient-name">
               {patient.nom} {patient.prenom}
             </div>
             <div className="pv-identity-line">
-              Né le {formatDate(patient.dateNaissance)} · {patient.age} ans ·
-              Priorité {patient.priorite}
+              Né le {formatDate(patient.dateNaissance)} · {patient.age} ans
             </div>
             <div className="pv-identity-line">
-              IEP {patient.iep} · INS {patient.ins}
+              INS {patient.ins} · IEP {patient.iep}
+            </div>
+            <div className="pv-identity-line">
+              Chambre {patient.chambre} · Lit {patient.lit}
             </div>
           </div>
 
           <div className="pv-location-main">
             <div className="pv-location-service">{patient.service}</div>
-            <div className="pv-identity-line">
-              Chambre {patient.chambre} · Lit {patient.lit}
-            </div>
+            <div className="pv-identity-line">Priorité {patient.priorite}</div>
           </div>
         </section>
 
@@ -695,7 +882,9 @@ export default function PatientView() {
           <div className="pv-summary-card">
             <span className="pv-summary-label">Sort Med</span>
             <button
-              className={`pv-sortmed-toggle ${patient.sortMedActive ? "active" : ""}`}
+              className={`pv-sortmed-toggle ${
+                patient.sortMedActive ? "active" : ""
+              }`}
               onClick={toggleSortMed}
             >
               {patient.sortMedActive
@@ -706,7 +895,17 @@ export default function PatientView() {
 
           <div className="pv-summary-card">
             <span className="pv-summary-label">Frein principal</span>
-            <strong>{patient.freinPrincipal}</strong>
+            <strong>{patient.dpisynthese.freinPrincipal}</strong>
+          </div>
+
+          <div className="pv-summary-card">
+            <span className="pv-summary-label">Blocage</span>
+            <strong>{patient.dpisynthese.blocage}</strong>
+          </div>
+
+          <div className="pv-summary-card">
+            <span className="pv-summary-label">Administratif patient</span>
+            <strong>{patient.dpisynthese.administratifPatient}</strong>
           </div>
 
           <div className="pv-summary-card">
@@ -716,7 +915,9 @@ export default function PatientView() {
 
           <div className="pv-summary-card">
             <span className="pv-summary-label">Jours évitables</span>
-            <strong>{joursEvitables === null ? "—" : `J+${joursEvitables}`}</strong>
+            <strong>
+              {joursEvitables === null ? "—" : `J+${joursEvitables}`}
+            </strong>
           </div>
 
           <div className="pv-summary-card">
@@ -731,7 +932,9 @@ export default function PatientView() {
         </section>
 
         <section className={`pv-risk-banner ${risk.className}`}>
-          <div className="pv-risk-title">Risque de dérive sortie : {risk.level}</div>
+          <div className="pv-risk-title">
+            Risque de dérive sortie : {risk.level}
+          </div>
           <div className="pv-risk-reason">{risk.reason}</div>
         </section>
 
@@ -741,13 +944,17 @@ export default function PatientView() {
               <div className="pv-block-title">Synthèse opérationnelle</div>
               <div className="pv-synthesis-text">
                 {patient.sortMedActive
-                  ? `Sort Med actif, ${patient.maturiteSortie.toLowerCase()}, frein principal : ${patient.freinPrincipal.toLowerCase()}, prochaine action : ${patient.coordination.prochaineAction.toLowerCase()}.`
-                  : `Sort Med non activé, ${patient.maturiteSortie.toLowerCase()}, vigilance sur ${patient.freinPrincipal.toLowerCase()}, prochaine action : ${patient.coordination.prochaineAction.toLowerCase()}.`}
+                  ? `Sort Med actif, frein principal : ${patient.dpisynthese.freinPrincipal.toLowerCase()}, blocage : ${patient.dpisynthese.blocage.toLowerCase()}, prochaine action : ${patient.coordination.prochaineAction.toLowerCase()}.`
+                  : `Sort Med non activé, vigilance sur ${patient.dpisynthese.freinPrincipal.toLowerCase()}, prochaine action : ${patient.coordination.prochaineAction.toLowerCase()}.`}
               </div>
             </section>
 
             <section className="pv-block">
               <div className="pv-block-title">Situation de sortie</div>
+              <div className="pv-source-tag">
+                Source : {patient.situationSortie.source}
+              </div>
+
               <div className="pv-block-grid">
                 <div>
                   <span className="pv-field-label">Besoins identifiés</span>
@@ -773,37 +980,85 @@ export default function PatientView() {
             </section>
 
             <section className="pv-block">
-              <div className="pv-block-title">Coordination</div>
+              <div className="pv-block-title">Freins / blocages / administratif</div>
+              <div className="pv-source-tag">Source : {patient.dpisynthese.source}</div>
+
               <div className="pv-block-grid">
                 <div>
-                  <span className="pv-field-label">Acteurs concernés</span>
-                  <div>{patient.coordination.acteurs}</div>
+                  <span className="pv-field-label">Frein principal</span>
+                  <div>{patient.dpisynthese.freinPrincipal}</div>
                 </div>
                 <div>
-                  <span className="pv-field-label">Statut</span>
-                  <div>{patient.coordination.statut}</div>
+                  <span className="pv-field-label">Blocage</span>
+                  <div>{patient.dpisynthese.blocage}</div>
                 </div>
                 <div>
-                  <span className="pv-field-label">Prochaine action</span>
-                  <div>{patient.coordination.prochaineAction}</div>
+                  <span className="pv-field-label">Administratif patient</span>
+                  <div>{patient.dpisynthese.administratifPatient}</div>
                 </div>
                 <div>
-                  <span className="pv-field-label">Responsable</span>
-                  <div>{patient.coordination.responsable}</div>
+                  <span className="pv-field-label">Statut administratif</span>
+                  <div>{patient.dpisynthese.statutAdministratif}</div>
                 </div>
-                <div>
-                  <span className="pv-field-label">Date de suivi</span>
-                  <div>{formatDate(patient.coordination.dateSuivi)}</div>
+              </div>
+            </section>
+
+            <section className="pv-block">
+              <div className="pv-block-title">Actions vue duo</div>
+              <div className="pv-source-tag">Source : Vue duo</div>
+
+              <div className="pv-duo-sections">
+                <div className="pv-duo-column">
+                  <div className="pv-subtitle">Passées</div>
+                  {patient.duoActions.passees.map((action) => (
+                    <div key={action.id} className="pv-action-card">
+                      <div className="pv-action-title">{action.libelle}</div>
+                      <div className="pv-action-meta">
+                        Responsable : {action.responsable}
+                      </div>
+                      <div className="pv-action-meta">
+                        Date : {formatDateTime(action.date)}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="pv-full-width">
-                  <span className="pv-field-label">Note</span>
-                  <div>{patient.coordination.note}</div>
+
+                <div className="pv-duo-column">
+                  <div className="pv-subtitle">En cours</div>
+                  {patient.duoActions.enCours.map((action) => (
+                    <div key={action.id} className="pv-action-card current">
+                      <div className="pv-action-title">{action.libelle}</div>
+                      <div className="pv-action-meta">
+                        Responsable : {action.responsable}
+                      </div>
+                      <div className="pv-action-meta">
+                        Échéance : {formatDateTime(action.echeance)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pv-duo-column">
+                  <div className="pv-subtitle">À venir</div>
+                  {patient.duoActions.aVenir.map((action) => (
+                    <div key={action.id} className="pv-action-card future">
+                      <div className="pv-action-title">{action.libelle}</div>
+                      <div className="pv-action-meta">
+                        Responsable : {action.responsable}
+                      </div>
+                      <div className="pv-action-meta">
+                        Échéance : {formatDateTime(action.echeance)}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </section>
 
             <section className="pv-block">
               <div className="pv-block-title">Staff</div>
+              <div className="pv-source-tag">Source : {patient.staff.source}</div>
+
               <div className="pv-block-grid">
                 <div>
                   <span className="pv-field-label">Présenté en staff</span>
@@ -811,11 +1066,11 @@ export default function PatientView() {
                 </div>
                 <div>
                   <span className="pv-field-label">Dernier staff</span>
-                  <div>{formatDate(patient.staff.dernierStaff)}</div>
+                  <div>{formatDateTime(patient.staff.dernierStaff)}</div>
                 </div>
                 <div>
                   <span className="pv-field-label">Prochaine revue</span>
-                  <div>{formatDate(patient.staff.prochaineRevue)}</div>
+                  <div>{formatDateTime(patient.staff.prochaineRevue)}</div>
                 </div>
                 <div className="pv-full-width">
                   <span className="pv-field-label">Décision du staff</span>
@@ -836,17 +1091,46 @@ export default function PatientView() {
                 <div className="pv-full-width">
                   <span className="pv-field-label">Personne de confiance</span>
                   <div>
-                    {patient.personneConfiance.nom} {patient.personneConfiance.prenom} ·{" "}
+                    {patient.personneConfiance.nom}{" "}
+                    {patient.personneConfiance.prenom} ·{" "}
                     {patient.personneConfiance.lien}
                   </div>
                 </div>
                 <div className="pv-full-width">
                   <span className="pv-field-label">Personne à prévenir</span>
                   <div>
-                    {patient.personneAPrevenir.nom} {patient.personneAPrevenir.prenom} ·{" "}
+                    {patient.personneAPrevenir.nom}{" "}
+                    {patient.personneAPrevenir.prenom} ·{" "}
                     {patient.personneAPrevenir.lien}
                   </div>
                 </div>
+              </div>
+            </section>
+
+            <section className="pv-block">
+              <div className="pv-block-title">Navigation rapide</div>
+              <div className="pv-quick-actions">
+                <Link to="/dashboard" className="pv-quick-link">
+                  Retour tableau de bord
+                </Link>
+                <button
+                  className="pv-quick-link"
+                  onClick={() => {
+                    setRightRailOpen(true);
+                    setRightRailTab("staff");
+                  }}
+                >
+                  Ouvrir compte rendu staff
+                </button>
+                <button
+                  className="pv-quick-link"
+                  onClick={() => {
+                    setRightRailOpen(true);
+                    setRightRailTab("contacts");
+                  }}
+                >
+                  Ouvrir contacts
+                </button>
               </div>
             </section>
           </div>
