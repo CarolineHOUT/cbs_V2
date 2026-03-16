@@ -107,7 +107,6 @@ const initialPatients = [
 ];
 
 const services = [
-  "Tous",
   "Pneumologie",
   "Médecine",
   "Oncologie",
@@ -116,14 +115,12 @@ const services = [
 ];
 
 const maturites = [
-  "Toutes",
   "Besoins identifiés",
   "Organisation sortie",
   "Solution prête",
 ];
 
 const freins = [
-  "Tous",
   "Social",
   "Place aval",
   "Coordination",
@@ -152,10 +149,11 @@ function diffInDays(fromDate) {
   return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
 }
 
-function getSmLabel(patient) {
-  if (!patient.smActive) return "Activer SM";
-  const days = diffInDays(patient.smActivatedAt);
-  return days === 0 ? "SM J0" : `SM J+${days}`;
+function toggleInArray(value, list) {
+  if (list.includes(value)) {
+    return list.filter((item) => item !== value);
+  }
+  return [...list, value];
 }
 
 function getOccupationClass(value) {
@@ -172,9 +170,12 @@ function getAnticipationClass(value) {
 
 export default function Dashboard() {
   const [patients, setPatients] = useState(initialPatients);
-  const [selectedService, setSelectedService] = useState("Tous");
-  const [selectedMaturite, setSelectedMaturite] = useState("Toutes");
-  const [selectedFrein, setSelectedFrein] = useState("Tous");
+  const [leftMenuOpen, setLeftMenuOpen] = useState(false);
+  const [rightRailOpen, setRightRailOpen] = useState(true);
+
+  const [selectedServices, setSelectedServices] = useState([]);
+  const [selectedMaturites, setSelectedMaturites] = useState([]);
+  const [selectedFreins, setSelectedFreins] = useState([]);
   const [search, setSearch] = useState("");
 
   const toggleSM = (patientId) => {
@@ -204,41 +205,42 @@ export default function Dashboard() {
 
     return patients
       .filter((patient) => {
-        if (selectedService !== "Tous" && patient.service !== selectedService) {
-          return false;
-        }
+        const matchesService =
+          selectedServices.length === 0 ||
+          selectedServices.includes(patient.service);
 
-        if (
-          selectedMaturite !== "Toutes" &&
-          patient.maturiteSortie !== selectedMaturite
-        ) {
-          return false;
-        }
+        const matchesMaturite =
+          selectedMaturites.length === 0 ||
+          selectedMaturites.includes(patient.maturiteSortie);
 
-        if (
-          selectedFrein !== "Tous" &&
-          patient.freinPrincipal !== selectedFrein
-        ) {
-          return false;
-        }
+        const matchesFrein =
+          selectedFreins.length === 0 ||
+          selectedFreins.includes(patient.freinPrincipal);
 
-        if (!query) return true;
+        const matchesSearch =
+          !query ||
+          [
+            patient.nom,
+            patient.prenom,
+            patient.iep,
+            patient.ins,
+            patient.service,
+            patient.chambre,
+            patient.lit,
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(query);
 
-        const haystack = [
-          patient.nom,
-          patient.prenom,
-          patient.iep,
-          patient.ins,
-          patient.chambre,
-          patient.lit,
-        ]
-          .join(" ")
-          .toLowerCase();
-
-        return haystack.includes(query);
+        return (
+          matchesService &&
+          matchesMaturite &&
+          matchesFrein &&
+          matchesSearch
+        );
       })
       .sort((a, b) => a.priorite - b.priorite);
-  }, [patients, selectedService, selectedMaturite, selectedFrein, search]);
+  }, [patients, selectedServices, selectedMaturites, selectedFreins, search]);
 
   const kpis = useMemo(() => {
     const occupiedBeds = 92;
@@ -270,23 +272,29 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-page">
-      <aside className="sidebar">
-        <div className="brand">CARABBAS</div>
+      <header className="top-header">
+        <div className="header-left">
+          <button
+            className="icon-btn"
+            onClick={() => setLeftMenuOpen((prev) => !prev)}
+            aria-label="Ouvrir le menu"
+          >
+            ☰
+          </button>
 
-        <nav className="sidebar-nav">
-          <button className="nav-item active">Tableau de bord</button>
-          <button className="nav-item">Patients</button>
-          <button className="nav-item">Vue duo</button>
-          <button className="nav-item">Cellule de crise</button>
-        </nav>
-      </aside>
-
-      <main className="dashboard-main">
-        <header className="dashboard-header">
-          <div>
-            <h1>Tableau de bord</h1>
+          <div className="brand-block">
+            <h1>CARABBAS</h1>
             <p>Pilotage des sorties hospitalières complexes</p>
           </div>
+        </div>
+
+        <div className="header-right">
+          <button
+            className="ghost-btn"
+            onClick={() => setRightRailOpen((prev) => !prev)}
+          >
+            Services en tension
+          </button>
 
           <button
             className="crisis-button"
@@ -294,8 +302,54 @@ export default function Dashboard() {
           >
             Déclencher une cellule de crise
           </button>
-        </header>
+        </div>
+      </header>
 
+      <aside className={`left-drawer ${leftMenuOpen ? "open" : ""}`}>
+        <div className="drawer-title">Navigation</div>
+        <nav className="drawer-nav">
+          <button className="nav-item active">Tableau de bord</button>
+          <button className="nav-item">Patients</button>
+          <button className="nav-item">Vue duo</button>
+          <button className="nav-item">Cellule de crise</button>
+        </nav>
+      </aside>
+
+      <aside className={`right-drawer ${rightRailOpen ? "open" : ""}`}>
+        <div className="section-title rail-header">Services en tension</div>
+
+        <div className="rail-list">
+          {servicesTensionData.map((item) => (
+            <div key={item.service} className="rail-item">
+              <div className="rail-item-top">
+                <span className="rail-service">{item.service}</span>
+                <span
+                  className={`rail-occupation ${getOccupationClass(
+                    item.occupation
+                  )}`}
+                >
+                  {item.occupation}%
+                </span>
+              </div>
+
+              <div className="rail-meta">Occupation</div>
+
+              <div className="rail-item-bottom">
+                <span>Anticipation</span>
+                <span
+                  className={`rail-anticipation ${getAnticipationClass(
+                    item.anticipation
+                  )}`}
+                >
+                  {item.anticipation}%
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      <main className="dashboard-main">
         <section className="kpi-row">
           <div className="kpi-card teal">
             <span className="kpi-label">Lits occupés / capacité</span>
@@ -326,80 +380,108 @@ export default function Dashboard() {
         </section>
 
         <section className="filters-panel">
-          <div className="service-filters">
-            {services.map((service) => (
-              <button
-                key={service}
-                className={`chip ${
-                  selectedService === service ? "selected" : ""
-                }`}
-                onClick={() => setSelectedService(service)}
-              >
-                {service}
-              </button>
-            ))}
+          <div className="filter-group">
+            <div className="filter-label">Services</div>
+            <div className="chip-row">
+              {services.map((service) => (
+                <button
+                  key={service}
+                  className={`chip ${
+                    selectedServices.includes(service) ? "selected" : ""
+                  }`}
+                  onClick={() =>
+                    setSelectedServices((prev) => toggleInArray(service, prev))
+                  }
+                >
+                  {service}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="secondary-filters">
-            <select
-              value={selectedMaturite}
-              onChange={(e) => setSelectedMaturite(e.target.value)}
-            >
-              {maturites.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
+          <div className="filter-group">
+            <div className="filter-label">Maturité sortie</div>
+            <div className="chip-row">
+              {maturites.map((item) => (
+                <button
+                  key={item}
+                  className={`chip ${
+                    selectedMaturites.includes(item) ? "selected" : ""
+                  }`}
+                  onClick={() =>
+                    setSelectedMaturites((prev) => toggleInArray(item, prev))
+                  }
+                >
+                  {item}
+                </button>
               ))}
-            </select>
+            </div>
+          </div>
 
-            <select
-              value={selectedFrein}
-              onChange={(e) => setSelectedFrein(e.target.value)}
-            >
-              {freins.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
+          <div className="filter-group">
+            <div className="filter-label">Frein principal</div>
+            <div className="chip-row">
+              {freins.map((item) => (
+                <button
+                  key={item}
+                  className={`chip ${
+                    selectedFreins.includes(item) ? "selected" : ""
+                  }`}
+                  onClick={() =>
+                    setSelectedFreins((prev) => toggleInArray(item, prev))
+                  }
+                >
+                  {item}
+                </button>
               ))}
-            </select>
+            </div>
+          </div>
 
+          <div className="filter-search">
             <input
               type="text"
-              placeholder="Nom / INS / IEP"
+              placeholder="Nom / INS / IEP / chambre / lit"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
         </section>
 
-        <section className="content-grid">
-          <div className="patients-card">
-            <div className="section-title">Patients prioritaires</div>
+        <section className="patients-card">
+          <div className="section-title">Patients prioritaires</div>
 
-            <div className="patients-table-wrapper">
-              <table className="patients-table">
-                <thead>
-                  <tr>
-                    <th>Priorité</th>
-                    <th>Identité patient</th>
-                    <th>Localisation</th>
-                    <th>SM</th>
-                    <th>Maturité sortie</th>
-                    <th>Frein principal</th>
-                  </tr>
-                </thead>
+          <div className="patients-table-wrapper">
+            <table className="patients-table">
+              <thead>
+                <tr>
+                  <th>Priorité</th>
+                  <th>Identité patient</th>
+                  <th>Localisation</th>
+                  <th>SM</th>
+                  <th>Maturité sortie</th>
+                  <th>Frein principal</th>
+                  <th>Jours évitables</th>
+                </tr>
+              </thead>
 
-                <tbody>
-                  {filteredPatients.map((patient) => (
+              <tbody>
+                {filteredPatients.map((patient) => {
+                  const avoidableDays = patient.smActive
+                    ? diffInDays(patient.smActivatedAt)
+                    : null;
+
+                  return (
                     <tr key={patient.id}>
                       <td>
-                        <span className="priority-badge">{patient.priorite}</span>
+                        <span className="priority-badge">
+                          {patient.priorite}
+                        </span>
                       </td>
 
                       <td>
                         <div className="identity-block">
                           <div className="identity-name">
-                            {patient.nom}, {patient.prenom}
+                            {patient.nom} {patient.prenom}
                           </div>
                           <div className="identity-line">
                             Né le {formatDate(patient.dateNaissance)} ·{" "}
@@ -429,7 +511,9 @@ export default function Dashboard() {
                           }`}
                           onClick={() => toggleSM(patient.id)}
                         >
-                          {getSmLabel(patient)}
+                          {patient.smActive
+                            ? `SM J+${diffInDays(patient.smActivatedAt)}`
+                            : "○ SM"}
                         </button>
                       </td>
 
@@ -444,56 +528,28 @@ export default function Dashboard() {
                           {patient.freinPrincipal}
                         </span>
                       </td>
-                    </tr>
-                  ))}
 
-                  {filteredPatients.length === 0 && (
-                    <tr>
-                      <td colSpan="6" className="empty-row">
-                        Aucun patient ne correspond aux filtres.
+                      <td>
+                        {avoidableDays === null ? (
+                          <span className="days-empty">—</span>
+                        ) : (
+                          <span className="days-badge">J+{avoidableDays}</span>
+                        )}
                       </td>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  );
+                })}
+
+                {filteredPatients.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="empty-row">
+                      Aucun patient ne correspond aux filtres.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-
-          <aside className="right-rail">
-            <div className="section-title">Services en tension</div>
-
-            <div className="rail-list">
-              {servicesTensionData.map((item) => (
-                <div key={item.service} className="rail-item">
-                  <div className="rail-item-top">
-                    <span className="rail-service">{item.service}</span>
-                    <span
-                      className={`rail-occupation ${getOccupationClass(
-                        item.occupation
-                      )}`}
-                    >
-                      {item.occupation}%
-                    </span>
-                  </div>
-
-                  <div className="rail-meta">
-                    <span>Occupation</span>
-                  </div>
-
-                  <div className="rail-item-bottom">
-                    <span>Anticipation</span>
-                    <span
-                      className={`rail-anticipation ${getAnticipationClass(
-                        item.anticipation
-                      )}`}
-                    >
-                      {item.anticipation}%
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </aside>
         </section>
       </main>
     </div>
