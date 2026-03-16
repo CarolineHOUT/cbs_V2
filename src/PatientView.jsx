@@ -60,6 +60,63 @@ const allPatients = [
     datePrevisionnelleSortie: "2026-03-20",
     prochaineAction: "Recueil des besoins",
   },
+  {
+    id: 4,
+    priorite: 4,
+    nom: "MOREL",
+    prenom: "Sébastien",
+    dateNaissance: "1969-02-12",
+    age: 56,
+    ins: "1 69 02 12 888 999",
+    iep: "54567890",
+    service: "Chirurgie",
+    chambre: "C07",
+    lit: "01",
+    sortMedActive: true,
+    sortMedActivatedAt: "2026-03-13T11:15:00",
+    maturiteSortie: "Solution prête",
+    freinPrincipal: "Administratif",
+    datePrevisionnelleSortie: "2026-03-18",
+    prochaineAction: "Finaliser validation",
+  },
+  {
+    id: 5,
+    priorite: 5,
+    nom: "DEAN",
+    prenom: "Jane",
+    dateNaissance: "1958-08-12",
+    age: 67,
+    ins: "1 58 08 12 222 111",
+    iep: "99887766",
+    service: "Oncologie",
+    chambre: "A05",
+    lit: "05",
+    sortMedActive: false,
+    sortMedActivatedAt: null,
+    maturiteSortie: "Organisation sortie",
+    freinPrincipal: "Place aval",
+    datePrevisionnelleSortie: "2026-03-21",
+    prochaineAction: "Relance place aval",
+  },
+  {
+    id: 6,
+    priorite: 6,
+    nom: "BERNARD",
+    prenom: "Luc",
+    dateNaissance: "1961-06-03",
+    age: 64,
+    ins: "1 61 06 03 111 222",
+    iep: "11223344",
+    service: "Neurologie",
+    chambre: "D03",
+    lit: "02",
+    sortMedActive: true,
+    sortMedActivatedAt: "2026-03-15T14:00:00",
+    maturiteSortie: "Organisation sortie",
+    freinPrincipal: "Famille",
+    datePrevisionnelleSortie: "2026-03-19",
+    prochaineAction: "Appeler la famille",
+  },
 ];
 
 function formatDate(dateString) {
@@ -103,8 +160,7 @@ function getRisk(patient, postIts) {
   ) {
     return {
       level: "Élevé",
-      reason:
-        "Sort Med actif sans solution prête, avec risque de dérive de sortie.",
+      reason: "Sortie non sécurisée avec risque de dérive.",
       className: "risk-high",
     };
   }
@@ -116,15 +172,14 @@ function getRisk(patient, postIts) {
   ) {
     return {
       level: "Modéré",
-      reason:
-        "Préparation de sortie incomplète ou coordination à consolider.",
+      reason: "Préparation incomplète ou coordination à renforcer.",
       className: "risk-medium",
     };
   }
 
   return {
     level: "Faible",
-    reason: "Sortie suffisamment préparée à ce stade.",
+    reason: "Sortie suffisamment structurée à ce stade.",
     className: "risk-low",
   };
 }
@@ -149,12 +204,11 @@ export default function PatientView() {
     allPatients.find((p) => String(p.id) === String(id)) || allPatients[0];
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [rightRailOpen, setRightRailOpen] = useState(true);
-  const [rightRailTab, setRightRailTab] = useState("postits");
+  const [coordinationOpen, setCoordinationOpen] = useState(false);
+  const [coordinationTab, setCoordinationTab] = useState("postits");
 
   const [patient, setPatient] = useState({
     ...basePatient,
-
     dpisynthese: {
       freinPrincipal: basePatient.freinPrincipal,
       blocage: "Attente retour structure aval / coordination partenaire",
@@ -162,7 +216,6 @@ export default function PatientView() {
       statutAdministratif: "À consolider",
       source: "DPI",
     },
-
     situationSortie: {
       besoinsIdentifies: "Retour en structure aval avec coordination",
       orientationSortie: "SMR",
@@ -171,7 +224,6 @@ export default function PatientView() {
       pointsVigilance: "Attente confirmation structure et famille",
       source: "Fiche patient / DPI",
     },
-
     duoActions: {
       passees: [
         {
@@ -210,17 +262,16 @@ export default function PatientView() {
         },
       ],
     },
-
     staff: {
       dernierStaff: "2026-03-17T09:30:00",
       aPresenter: true,
       decision:
         "Maintenir orientation SMR, relance structure aval et suivi administratif.",
       prochaineRevue: "2026-03-19T09:00:00",
-      note: "Patient à suivre quotidiennement tant que la solution de sortie n’est pas validée.",
+      note:
+        "Patient à suivre quotidiennement tant que la solution de sortie n’est pas validée.",
       source: "Staff",
     },
-
     comptesRendusStaff: [
       {
         id: 1,
@@ -231,7 +282,6 @@ export default function PatientView() {
         redacteur: "Dr Bernard",
       },
     ],
-
     personneConfiance: {
       nom: "DUPONT",
       prenom: "Marie",
@@ -239,7 +289,6 @@ export default function PatientView() {
       telephone: "06 12 34 56 78",
       email: "marie.dupont@example.fr",
     },
-
     personneAPrevenir: {
       nom: "DUPONT",
       prenom: "Claire",
@@ -247,7 +296,6 @@ export default function PatientView() {
       telephone: "06 87 65 43 21",
       email: "claire.dupont@example.fr",
     },
-
     celluleCrise: {
       concerne: false,
       active: false,
@@ -327,7 +375,7 @@ export default function PatientView() {
 
   useEffect(() => {
     if (unresolvedCount > 0) {
-      setRightRailTab("postits");
+      setCoordinationTab("postits");
     }
   }, [unresolvedCount]);
 
@@ -372,8 +420,8 @@ export default function PatientView() {
 
     setPostIts((prev) => [item, ...prev]);
     setNewPostIt({ type: "Action", message: "" });
-    setRightRailTab("postits");
-    setRightRailOpen(true);
+    setCoordinationTab("postits");
+    setCoordinationOpen(true);
   };
 
   const replyToPostIt = (postId) => {
@@ -431,16 +479,16 @@ export default function PatientView() {
       redacteur: "",
     });
 
-    setRightRailTab("staff");
-    setRightRailOpen(true);
+    setCoordinationTab("staff");
+    setCoordinationOpen(true);
   };
 
   return (
     <div className="patient-view-page">
-      <header className="pv-top-header">
+      <header className="pv-top-header compact">
         <div className="pv-header-left">
           <button
-            className="pv-icon-btn"
+            className="pv-icon-btn compact"
             onClick={() => setMobileNavOpen((prev) => !prev)}
             aria-label="Ouvrir le menu"
           >
@@ -449,19 +497,21 @@ export default function PatientView() {
 
           <div className="pv-brand-block">
             <h1>CARABBAS</h1>
-            <p>Fiche patient – pilotage des sorties hospitalières</p>
+            <p>Fiche patient</p>
           </div>
         </div>
 
         <div className="pv-header-right">
           <button
-            className="pv-ghost-btn pv-coordination-btn"
-            onClick={() => setRightRailOpen((prev) => !prev)}
+            className="pv-ghost-btn coordination-btn compact"
+            onClick={() => setCoordinationOpen((prev) => !prev)}
           >
-            <span>Coordination patient</span>
+            <span>Coordination</span>
             {unresolvedCount > 0 && (
               <span
-                className={`pv-badge-counter ${urgentCount > 0 ? "urgent" : ""}`}
+                className={`coordination-badge ${
+                  urgentCount > 0 ? "urgent" : ""
+                }`}
               >
                 {urgentCount > 0 ? "!" : unresolvedCount}
               </span>
@@ -469,10 +519,10 @@ export default function PatientView() {
           </button>
 
           <button
-            className="pv-crisis-button"
+            className="pv-crisis-button compact"
             onClick={() => alert("Ouvrir le formulaire cellule de crise")}
           >
-            Déclencher cellule de crise
+            Crise
           </button>
         </div>
       </header>
@@ -481,12 +531,12 @@ export default function PatientView() {
         <nav className="pv-left-sidebar-nav">
           <Link to="/dashboard" className="pv-sidebar-link">
             <span className="pv-sidebar-icon">🏠</span>
-            <span>Tableau de bord</span>
+            <span>Tableau</span>
           </Link>
 
           <button className="pv-sidebar-link active">
             <span className="pv-sidebar-icon">🧑</span>
-            <span>Fiche patient</span>
+            <span>Fiche</span>
           </button>
 
           <button className="pv-sidebar-link">
@@ -496,7 +546,7 @@ export default function PatientView() {
 
           <button className="pv-sidebar-link">
             <span className="pv-sidebar-icon">⚠️</span>
-            <span>Cellule de crise</span>
+            <span>Crise</span>
           </button>
         </nav>
       </aside>
@@ -509,357 +559,381 @@ export default function PatientView() {
         />
       )}
 
-      <aside className={`pv-right-rail ${rightRailOpen ? "open" : "closed"}`}>
-        <div className="pv-right-rail-header">
-          <div className="pv-right-rail-title">Coordination</div>
-        </div>
-
-        <div className="pv-right-tabs">
+      {coordinationOpen && (
+        <>
           <button
-            className={rightRailTab === "postits" ? "active" : ""}
-            onClick={() => setRightRailTab("postits")}
-          >
-            Post-it
-            {unresolvedCount > 0 && (
-              <span className="pv-tab-badge">{unresolvedCount}</span>
-            )}
-          </button>
+            className="pv-mobile-overlay strong"
+            onClick={() => setCoordinationOpen(false)}
+            aria-label="Fermer coordination"
+          />
+          <aside className="pv-coordination-panel">
+            <div className="pv-panel-header">
+              <span>Coordination</span>
+              <button onClick={() => setCoordinationOpen(false)}>Fermer</button>
+            </div>
 
-          <button
-            className={rightRailTab === "contacts" ? "active" : ""}
-            onClick={() => setRightRailTab("contacts")}
-          >
-            Contacts
-          </button>
+            <div className="pv-right-tabs compact">
+              <button
+                className={coordinationTab === "postits" ? "active" : ""}
+                onClick={() => setCoordinationTab("postits")}
+              >
+                Post-it
+                {unresolvedCount > 0 && (
+                  <span className="tab-badge">{unresolvedCount}</span>
+                )}
+              </button>
 
-          <button
-            className={rightRailTab === "staff" ? "active" : ""}
-            onClick={() => setRightRailTab("staff")}
-          >
-            Staff
-          </button>
+              <button
+                className={coordinationTab === "contacts" ? "active" : ""}
+                onClick={() => setCoordinationTab("contacts")}
+              >
+                Contacts
+              </button>
 
-          <button
-            className={rightRailTab === "historique" ? "active" : ""}
-            onClick={() => setRightRailTab("historique")}
-          >
-            Historique
-          </button>
+              <button
+                className={coordinationTab === "staff" ? "active" : ""}
+                onClick={() => setCoordinationTab("staff")}
+              >
+                Staff
+              </button>
 
-          <button
-            className={rightRailTab === "crise" ? "active" : ""}
-            onClick={() => setRightRailTab("crise")}
-          >
-            Crise
-          </button>
-        </div>
+              <button
+                className={coordinationTab === "historique" ? "active" : ""}
+                onClick={() => setCoordinationTab("historique")}
+              >
+                Historique
+              </button>
 
-        <div className="pv-right-content">
-          {rightRailTab === "postits" && (
-            <div className="pv-rail-section">
-              <h3>Post-it de coordination</h3>
+              <button
+                className={coordinationTab === "crise" ? "active" : ""}
+                onClick={() => setCoordinationTab("crise")}
+              >
+                Crise
+              </button>
+            </div>
 
-              <div className="pv-new-form">
-                <select
-                  value={newPostIt.type}
-                  onChange={(e) =>
-                    setNewPostIt((prev) => ({ ...prev, type: e.target.value }))
-                  }
-                >
-                  <option>Action</option>
-                  <option>Info</option>
-                  <option>Famille</option>
-                  <option>Urgent</option>
-                </select>
+            <div className="pv-panel-body">
+              {coordinationTab === "postits" && (
+                <div className="pv-rail-section">
+                  <h3>Post-it</h3>
 
-                <textarea
-                  placeholder="Saisir un message court"
-                  value={newPostIt.message}
-                  onChange={(e) =>
-                    setNewPostIt((prev) => ({ ...prev, message: e.target.value }))
-                  }
-                />
+                  <div className="pv-new-postit compact">
+                    <select
+                      value={newPostIt.type}
+                      onChange={(e) =>
+                        setNewPostIt((prev) => ({
+                          ...prev,
+                          type: e.target.value,
+                        }))
+                      }
+                    >
+                      <option>Action</option>
+                      <option>Info</option>
+                      <option>Famille</option>
+                      <option>Urgent</option>
+                    </select>
 
-                <button onClick={addPostIt}>Ajouter</button>
-              </div>
+                    <textarea
+                      placeholder="Message court"
+                      value={newPostIt.message}
+                      onChange={(e) =>
+                        setNewPostIt((prev) => ({
+                          ...prev,
+                          message: e.target.value,
+                        }))
+                      }
+                    />
 
-              <div className="pv-postit-list">
-                {postIts.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`pv-postit-card ${getPostItClass(item.type)}`}
-                  >
-                    <div className="pv-postit-header">
-                      <span className="pv-postit-type">{item.type}</span>
-                      <span className="pv-postit-status">{item.statut}</span>
-                    </div>
+                    <button onClick={addPostIt}>Ajouter</button>
+                  </div>
 
-                    <div className="pv-postit-message">{item.message}</div>
-                    <div className="pv-postit-meta">
-                      {item.auteur} · {formatDateTime(item.createdAt)}
-                    </div>
+                  <div className="pv-postit-list compact">
+                    {postIts.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`pv-postit-card ${getPostItClass(item.type)}`}
+                      >
+                        <div className="pv-postit-header">
+                          <span className="pv-postit-type">{item.type}</span>
+                          <span className="pv-postit-status">{item.statut}</span>
+                        </div>
 
-                    {item.reponse && (
-                      <div className="pv-postit-response">
-                        <strong>Réponse :</strong>
-                        <div>{item.reponse}</div>
+                        <div className="pv-postit-message">{item.message}</div>
+
                         <div className="pv-postit-meta">
-                          {item.repondant} · {formatDateTime(item.repliedAt)}
+                          {item.auteur} · {formatDateTime(item.createdAt)}
+                        </div>
+
+                        {item.reponse && (
+                          <div className="pv-postit-response">
+                            <strong>Réponse :</strong>
+                            <div>{item.reponse}</div>
+                            <div className="pv-postit-meta">
+                              {item.repondant} · {formatDateTime(item.repliedAt)}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="pv-postit-actions compact">
+                          {item.statut !== "Répondu" &&
+                            item.statut !== "Clos" && (
+                              <button onClick={() => replyToPostIt(item.id)}>
+                                Répondre
+                              </button>
+                            )}
+
+                          {item.statut !== "Clos" && (
+                            <button onClick={() => closePostIt(item.id)}>
+                              Clore
+                            </button>
+                          )}
                         </div>
                       </div>
-                    )}
+                    ))}
+                  </div>
+                </div>
+              )}
 
-                    <div className="pv-postit-actions">
-                      {item.statut !== "Répondu" && item.statut !== "Clos" && (
-                        <button onClick={() => replyToPostIt(item.id)}>
-                          Répondre
-                        </button>
-                      )}
+              {coordinationTab === "contacts" && (
+                <div className="pv-rail-section">
+                  <h3>Contacts</h3>
 
-                      {item.statut !== "Clos" && (
-                        <button onClick={() => closePostIt(item.id)}>Clore</button>
-                      )}
+                  <div className="pv-contact-card compact">
+                    <div className="pv-contact-title">Personne de confiance</div>
+                    <div>
+                      <strong>
+                        {patient.personneConfiance.nom}{" "}
+                        {patient.personneConfiance.prenom}
+                      </strong>
+                    </div>
+                    <div>{patient.personneConfiance.lien}</div>
+                    <div>{patient.personneConfiance.telephone}</div>
+                    <div>{patient.personneConfiance.email}</div>
+                  </div>
+
+                  <div className="pv-contact-card compact">
+                    <div className="pv-contact-title">Personne à prévenir</div>
+                    <div>
+                      <strong>
+                        {patient.personneAPrevenir.nom}{" "}
+                        {patient.personneAPrevenir.prenom}
+                      </strong>
+                    </div>
+                    <div>{patient.personneAPrevenir.lien}</div>
+                    <div>{patient.personneAPrevenir.telephone}</div>
+                    <div>{patient.personneAPrevenir.email}</div>
+                  </div>
+                </div>
+              )}
+
+              {coordinationTab === "staff" && (
+                <div className="pv-rail-section">
+                  <h3>Compte rendu staff</h3>
+
+                  <div className="pv-new-postit compact">
+                    <input
+                      type="text"
+                      placeholder="Titre"
+                      value={newStaffReport.titre}
+                      onChange={(e) =>
+                        setNewStaffReport((prev) => ({
+                          ...prev,
+                          titre: e.target.value,
+                        }))
+                      }
+                    />
+
+                    <textarea
+                      placeholder="Décision"
+                      value={newStaffReport.decision}
+                      onChange={(e) =>
+                        setNewStaffReport((prev) => ({
+                          ...prev,
+                          decision: e.target.value,
+                        }))
+                      }
+                    />
+
+                    <input
+                      type="text"
+                      placeholder="Rédacteur"
+                      value={newStaffReport.redacteur}
+                      onChange={(e) =>
+                        setNewStaffReport((prev) => ({
+                          ...prev,
+                          redacteur: e.target.value,
+                        }))
+                      }
+                    />
+
+                    <button onClick={addStaffReport}>Ajouter</button>
+                  </div>
+
+                  <div className="pv-history-list compact">
+                    {patient.comptesRendusStaff.map((report) => (
+                      <div key={report.id} className="pv-history-item compact">
+                        <div className="pv-history-date">
+                          {formatDateTime(report.date)}
+                        </div>
+                        <div className="pv-history-label">{report.titre}</div>
+                        <div className="pv-history-detail">{report.decision}</div>
+                        <div className="pv-postit-meta">
+                          Rédacteur : {report.redacteur}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {coordinationTab === "historique" && (
+                <div className="pv-rail-section">
+                  <h3>Historique</h3>
+                  <div className="pv-history-list compact">
+                    {historique.map((item) => (
+                      <div key={item.id} className="pv-history-item compact">
+                        <div className="pv-history-date">
+                          {formatDateTime(item.date)}
+                        </div>
+                        <div className="pv-history-label">{item.label}</div>
+                        <div className="pv-history-detail">{item.detail}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {coordinationTab === "crise" && (
+                <div className="pv-rail-section">
+                  <h3>Cellule de crise</h3>
+                  <div className="pv-info-card compact">
+                    <div>
+                      <strong>Concerné :</strong>{" "}
+                      {patient.celluleCrise.concerne ? "Oui" : "Non"}
+                    </div>
+                    <div>
+                      <strong>Active :</strong>{" "}
+                      {patient.celluleCrise.active ? "Oui" : "Non"}
+                    </div>
+                    <div>
+                      <strong>Motif :</strong> {patient.celluleCrise.motif || "—"}
+                    </div>
+                    <div>
+                      <strong>Décisions :</strong>{" "}
+                      {patient.celluleCrise.decisions || "—"}
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
-          )}
+          </aside>
+        </>
+      )}
 
-          {rightRailTab === "contacts" && (
-            <div className="pv-rail-section">
-              <h3>Personne de confiance</h3>
-              <div className="pv-contact-card">
-                <div>
-                  <strong>
-                    {patient.personneConfiance.nom} {patient.personneConfiance.prenom}
-                  </strong>
-                </div>
-                <div>{patient.personneConfiance.lien}</div>
-                <div>{patient.personneConfiance.telephone}</div>
-                <div>{patient.personneConfiance.email}</div>
-              </div>
-
-              <h3>Personne à prévenir</h3>
-              <div className="pv-contact-card">
-                <div>
-                  <strong>
-                    {patient.personneAPrevenir.nom} {patient.personneAPrevenir.prenom}
-                  </strong>
-                </div>
-                <div>{patient.personneAPrevenir.lien}</div>
-                <div>{patient.personneAPrevenir.telephone}</div>
-                <div>{patient.personneAPrevenir.email}</div>
-              </div>
-            </div>
-          )}
-
-          {rightRailTab === "staff" && (
-            <div className="pv-rail-section">
-              <h3>Compte rendu staff</h3>
-
-              <div className="pv-new-form">
-                <input
-                  type="text"
-                  placeholder="Titre du compte rendu"
-                  value={newStaffReport.titre}
-                  onChange={(e) =>
-                    setNewStaffReport((prev) => ({
-                      ...prev,
-                      titre: e.target.value,
-                    }))
-                  }
-                />
-
-                <textarea
-                  placeholder="Décision prise en staff"
-                  value={newStaffReport.decision}
-                  onChange={(e) =>
-                    setNewStaffReport((prev) => ({
-                      ...prev,
-                      decision: e.target.value,
-                    }))
-                  }
-                />
-
-                <input
-                  type="text"
-                  placeholder="Rédacteur / acteur responsable"
-                  value={newStaffReport.redacteur}
-                  onChange={(e) =>
-                    setNewStaffReport((prev) => ({
-                      ...prev,
-                      redacteur: e.target.value,
-                    }))
-                  }
-                />
-
-                <button onClick={addStaffReport}>Ajouter le compte rendu</button>
-              </div>
-
-              <div className="pv-history-list">
-                {patient.comptesRendusStaff.map((report) => (
-                  <div key={report.id} className="pv-history-item">
-                    <div className="pv-history-date">
-                      {formatDateTime(report.date)}
-                    </div>
-                    <div className="pv-history-label">{report.titre}</div>
-                    <div className="pv-history-detail">{report.decision}</div>
-                    <div className="pv-postit-meta">
-                      Rédacteur : {report.redacteur}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {rightRailTab === "historique" && (
-            <div className="pv-rail-section">
-              <h3>Historique</h3>
-              <div className="pv-history-list">
-                {historique.map((item) => (
-                  <div key={item.id} className="pv-history-item">
-                    <div className="pv-history-date">
-                      {formatDateTime(item.date)}
-                    </div>
-                    <div className="pv-history-label">{item.label}</div>
-                    <div className="pv-history-detail">{item.detail}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {rightRailTab === "crise" && (
-            <div className="pv-rail-section">
-              <h3>Cellule de crise</h3>
-              <div className="pv-info-card">
-                <div>
-                  <strong>Concerné :</strong>{" "}
-                  {patient.celluleCrise.concerne ? "Oui" : "Non"}
-                </div>
-                <div>
-                  <strong>Active :</strong>{" "}
-                  {patient.celluleCrise.active ? "Oui" : "Non"}
-                </div>
-                <div>
-                  <strong>Motif :</strong> {patient.celluleCrise.motif || "—"}
-                </div>
-                <div>
-                  <strong>Décisions :</strong>{" "}
-                  {patient.celluleCrise.decisions || "—"}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </aside>
-
-      <main className={`pv-main ${rightRailOpen ? "with-right-rail" : ""}`}>
-        <section className="pv-identity-banner">
+      <main className="pv-main compact">
+        <section className="pv-identity-banner compact">
           <div className="pv-identity-main">
-            <div className="pv-patient-name">
+            <div className="pv-patient-name compact">
               {patient.nom} {patient.prenom}
             </div>
-            <div className="pv-identity-line">
+            <div className="pv-identity-line compact">
               Né le {formatDate(patient.dateNaissance)} · {patient.age} ans
             </div>
-            <div className="pv-identity-line">
+            <div className="pv-identity-line compact">
               INS {patient.ins} · IEP {patient.iep}
             </div>
-            <div className="pv-identity-line">
+            <div className="pv-identity-line compact">
               Chambre {patient.chambre} · Lit {patient.lit}
             </div>
           </div>
 
           <div className="pv-location-main">
-            <div className="pv-location-service">{patient.service}</div>
-            <div className="pv-identity-line">Priorité {patient.priorite}</div>
+            <div className="pv-location-service compact">{patient.service}</div>
+            <div className="pv-identity-line compact">
+              Priorité {patient.priorite}
+            </div>
           </div>
         </section>
 
         {unresolvedCount > 0 && (
-          <section className="pv-alert-strip">
+          <section className="pv-alert-strip compact">
             <span className="pv-alert-icon">⚠</span>
             <span>
               {urgentCount > 0
-                ? `${urgentCount} post-it urgent(s) à traiter`
+                ? `${urgentCount} post-it urgent(s)`
                 : `${unresolvedCount} post-it en attente`}
             </span>
             <button
               className="pv-alert-link"
               onClick={() => {
-                setRightRailOpen(true);
-                setRightRailTab("postits");
+                setCoordinationOpen(true);
+                setCoordinationTab("postits");
               }}
             >
-              Ouvrir Coordination
+              Ouvrir
             </button>
           </section>
         )}
 
-        <section className="pv-summary-banner">
-          <div className="pv-summary-card">
+        <section className="pv-summary-banner compact">
+          <div className="pv-summary-card compact">
             <span className="pv-summary-label">Sort Med</span>
             <button
-              className={`pv-sortmed-toggle ${
+              className={`pv-sortmed-toggle compact ${
                 patient.sortMedActive ? "active" : ""
               }`}
               onClick={toggleSortMed}
             >
               {patient.sortMedActive
-                ? `Sort Med J+${diffInDays(patient.sortMedActivatedAt)}`
-                : "○ Sort Med"}
+                ? `J+${diffInDays(patient.sortMedActivatedAt)}`
+                : "—"}
             </button>
           </div>
 
-          <div className="pv-summary-card">
-            <span className="pv-summary-label">Frein principal</span>
+          <div className="pv-summary-card compact">
+            <span className="pv-summary-label">Frein</span>
             <strong>{patient.dpisynthese.freinPrincipal}</strong>
           </div>
 
-          <div className="pv-summary-card">
+          <div className="pv-summary-card compact">
             <span className="pv-summary-label">Blocage</span>
             <strong>{patient.dpisynthese.blocage}</strong>
           </div>
 
-          <div className="pv-summary-card">
-            <span className="pv-summary-label">Administratif patient</span>
+          <div className="pv-summary-card compact">
+            <span className="pv-summary-label">Administratif</span>
             <strong>{patient.dpisynthese.administratifPatient}</strong>
           </div>
 
-          <div className="pv-summary-card">
-            <span className="pv-summary-label">Maturité sortie</span>
+          <div className="pv-summary-card compact">
+            <span className="pv-summary-label">Maturité</span>
             <strong>{patient.maturiteSortie}</strong>
           </div>
 
-          <div className="pv-summary-card">
-            <span className="pv-summary-label">Jours évitables</span>
+          <div className="pv-summary-card compact">
+            <span className="pv-summary-label">J évitables</span>
             <strong>{joursEvitables === null ? "—" : `J+${joursEvitables}`}</strong>
           </div>
 
-          <div className="pv-summary-card">
-            <span className="pv-summary-label">Date prévisionnelle sortie</span>
+          <div className="pv-summary-card compact">
+            <span className="pv-summary-label">Sortie prévue</span>
             <strong>{formatDate(patient.datePrevisionnelleSortie)}</strong>
           </div>
 
-          <div className="pv-summary-card">
-            <span className="pv-summary-label">Prochaine action</span>
+          <div className="pv-summary-card compact">
+            <span className="pv-summary-label">Action</span>
             <strong>{patient.prochaineAction}</strong>
           </div>
         </section>
 
-        <section className={`pv-risk-banner ${risk.className}`}>
-          <div className="pv-risk-title">
-            Risque de dérive sortie : {risk.level}
-          </div>
+        <section className={`pv-risk-banner compact ${risk.className}`}>
+          <div className="pv-risk-title">Risque : {risk.level}</div>
           <div className="pv-risk-reason">{risk.reason}</div>
         </section>
 
-        <section className="pv-content-grid">
+        <section className="pv-content-grid compact">
           <div className="pv-main-column">
-            <section className="pv-block">
+            <section className="pv-block compact">
               <div className="pv-block-title">Synthèse opérationnelle</div>
               <div className="pv-synthesis-text">
                 {patient.sortMedActive
@@ -868,19 +942,19 @@ export default function PatientView() {
               </div>
             </section>
 
-            <section className="pv-block">
+            <section className="pv-block compact">
               <div className="pv-block-title">Situation de sortie</div>
               <div className="pv-source-tag">
                 Source : {patient.situationSortie.source}
               </div>
 
-              <div className="pv-block-grid">
+              <div className="pv-block-grid compact">
                 <div>
                   <span className="pv-field-label">Besoins identifiés</span>
                   <div>{patient.situationSortie.besoinsIdentifies}</div>
                 </div>
                 <div>
-                  <span className="pv-field-label">Orientation sortie</span>
+                  <span className="pv-field-label">Orientation</span>
                   <div>{patient.situationSortie.orientationSortie}</div>
                 </div>
                 <div>
@@ -898,11 +972,11 @@ export default function PatientView() {
               </div>
             </section>
 
-            <section className="pv-block">
+            <section className="pv-block compact">
               <div className="pv-block-title">Freins / blocages / administratif</div>
               <div className="pv-source-tag">Source : {patient.dpisynthese.source}</div>
 
-              <div className="pv-block-grid">
+              <div className="pv-block-grid compact">
                 <div>
                   <span className="pv-field-label">Frein principal</span>
                   <div>{patient.dpisynthese.freinPrincipal}</div>
@@ -912,7 +986,7 @@ export default function PatientView() {
                   <div>{patient.dpisynthese.blocage}</div>
                 </div>
                 <div>
-                  <span className="pv-field-label">Administratif patient</span>
+                  <span className="pv-field-label">Administratif</span>
                   <div>{patient.dpisynthese.administratifPatient}</div>
                 </div>
                 <div>
@@ -922,13 +996,15 @@ export default function PatientView() {
               </div>
             </section>
 
-            <section className="pv-block">
+            <section className="pv-block compact">
               <div className="pv-block-title">Actions vue duo</div>
-              <div className="pv-duo-sections">
+              <div className="pv-source-tag">Source : Vue duo</div>
+
+              <div className="pv-duo-sections compact">
                 <div className="pv-duo-column">
                   <div className="pv-subtitle">Passées</div>
                   {patient.duoActions.passees.map((action) => (
-                    <div key={action.id} className="pv-action-card">
+                    <div key={action.id} className="pv-action-card compact">
                       <div className="pv-action-title">{action.libelle}</div>
                       <div className="pv-action-meta">
                         Responsable : {action.responsable}
@@ -943,7 +1019,7 @@ export default function PatientView() {
                 <div className="pv-duo-column">
                   <div className="pv-subtitle">En cours</div>
                   {patient.duoActions.enCours.map((action) => (
-                    <div key={action.id} className="pv-action-card current">
+                    <div key={action.id} className="pv-action-card compact current">
                       <div className="pv-action-title">{action.libelle}</div>
                       <div className="pv-action-meta">
                         Responsable : {action.responsable}
@@ -958,7 +1034,7 @@ export default function PatientView() {
                 <div className="pv-duo-column">
                   <div className="pv-subtitle">À venir</div>
                   {patient.duoActions.aVenir.map((action) => (
-                    <div key={action.id} className="pv-action-card future">
+                    <div key={action.id} className="pv-action-card compact future">
                       <div className="pv-action-title">{action.libelle}</div>
                       <div className="pv-action-meta">
                         Responsable : {action.responsable}
@@ -972,11 +1048,11 @@ export default function PatientView() {
               </div>
             </section>
 
-            <section className="pv-block">
+            <section className="pv-block compact">
               <div className="pv-block-title">Staff</div>
               <div className="pv-source-tag">Source : {patient.staff.source}</div>
 
-              <div className="pv-block-grid">
+              <div className="pv-block-grid compact">
                 <div>
                   <span className="pv-field-label">Présenté en staff</span>
                   <div>{patient.staff.aPresenter ? "Oui" : "Non"}</div>
@@ -990,7 +1066,7 @@ export default function PatientView() {
                   <div>{formatDateTime(patient.staff.prochaineRevue)}</div>
                 </div>
                 <div className="pv-full-width">
-                  <span className="pv-field-label">Décision du staff</span>
+                  <span className="pv-field-label">Décision</span>
                   <div>{patient.staff.decision}</div>
                 </div>
                 <div className="pv-full-width">
@@ -1001,47 +1077,49 @@ export default function PatientView() {
             </section>
           </div>
 
-          <div className="pv-side-column">
-            <section className="pv-block">
+          <div className="pv-side-column desktop-side-column">
+            <section className="pv-block compact">
               <div className="pv-block-title">Contacts utiles</div>
-              <div className="pv-block-grid">
+              <div className="pv-block-grid compact">
                 <div className="pv-full-width">
                   <span className="pv-field-label">Personne de confiance</span>
                   <div>
-                    {patient.personneConfiance.nom} {patient.personneConfiance.prenom} ·{" "}
+                    {patient.personneConfiance.nom}{" "}
+                    {patient.personneConfiance.prenom} ·{" "}
                     {patient.personneConfiance.lien}
                   </div>
                 </div>
                 <div className="pv-full-width">
                   <span className="pv-field-label">Personne à prévenir</span>
                   <div>
-                    {patient.personneAPrevenir.nom} {patient.personneAPrevenir.prenom} ·{" "}
+                    {patient.personneAPrevenir.nom}{" "}
+                    {patient.personneAPrevenir.prenom} ·{" "}
                     {patient.personneAPrevenir.lien}
                   </div>
                 </div>
               </div>
             </section>
 
-            <section className="pv-block">
+            <section className="pv-block compact">
               <div className="pv-block-title">Navigation rapide</div>
-              <div className="pv-quick-actions">
-                <Link to="/dashboard" className="pv-quick-link">
-                  Retour tableau de bord
+              <div className="pv-quick-actions compact">
+                <Link to="/dashboard" className="pv-quick-link compact">
+                  Retour tableau
                 </Link>
                 <button
-                  className="pv-quick-link"
+                  className="pv-quick-link compact"
                   onClick={() => {
-                    setRightRailOpen(true);
-                    setRightRailTab("staff");
+                    setCoordinationOpen(true);
+                    setCoordinationTab("staff");
                   }}
                 >
-                  Ouvrir compte rendu staff
+                  Ouvrir staff
                 </button>
                 <button
-                  className="pv-quick-link"
+                  className="pv-quick-link compact"
                   onClick={() => {
-                    setRightRailOpen(true);
-                    setRightRailTab("contacts");
+                    setCoordinationOpen(true);
+                    setCoordinationTab("contacts");
                   }}
                 >
                   Ouvrir contacts
