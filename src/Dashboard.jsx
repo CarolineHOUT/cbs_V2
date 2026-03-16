@@ -24,6 +24,7 @@ const initialPatients = [
     synthese: "Sort Med actif, solution non prête, place aval en attente.",
     urgentPostItCount: 1,
     unresolvedPostItCount: 2,
+    prochaineRevue: "2026-03-19",
     prochaineAction: "Relance structure aval",
     responsableAction: "Claire Morel",
   },
@@ -48,6 +49,7 @@ const initialPatients = [
     synthese: "Sort Med actif, besoin de coordination sociale.",
     urgentPostItCount: 0,
     unresolvedPostItCount: 1,
+    prochaineRevue: "2026-03-18",
     prochaineAction: "Point assistante sociale",
     responsableAction: "Nora Simon",
   },
@@ -72,6 +74,7 @@ const initialPatients = [
     synthese: "Préparation de sortie à renforcer avant Sort Med.",
     urgentPostItCount: 0,
     unresolvedPostItCount: 0,
+    prochaineRevue: "2026-03-20",
     prochaineAction: "Recueil des besoins",
     responsableAction: "Camille Roux",
   },
@@ -96,6 +99,7 @@ const initialPatients = [
     synthese: "Solution prête, clôture administrative à finaliser.",
     urgentPostItCount: 0,
     unresolvedPostItCount: 1,
+    prochaineRevue: "2026-03-18",
     prochaineAction: "Finaliser validation",
     responsableAction: "Laura Petit",
   },
@@ -120,6 +124,7 @@ const initialPatients = [
     synthese: "Organisation en cours, attente retour structure aval.",
     urgentPostItCount: 1,
     unresolvedPostItCount: 1,
+    prochaineRevue: "2026-03-21",
     prochaineAction: "Relance place aval",
     responsableAction: "Claire Morel",
   },
@@ -144,6 +149,7 @@ const initialPatients = [
     synthese: "Sort Med actif, validation famille attendue.",
     urgentPostItCount: 0,
     unresolvedPostItCount: 1,
+    prochaineRevue: "2026-03-19",
     prochaineAction: "Appeler la famille",
     responsableAction: "Sophie Martin",
   },
@@ -155,14 +161,6 @@ const services = [
   "Oncologie",
   "Chirurgie",
   "Neurologie",
-];
-
-const quickFilters = [
-  { key: "sortMedOnly", label: "Sort Med actifs" },
-  { key: "withoutSolutionOnly", label: "Sans solution" },
-  { key: "avoidableDaysOnly", label: "Jours évitables > 0" },
-  { key: "urgentOnly", label: "Urgents" },
-  { key: "unansweredOnly", label: "Post-it non répondus" },
 ];
 
 const maturites = [
@@ -177,6 +175,14 @@ const freins = [
   "Coordination",
   "Famille",
   "Administratif",
+];
+
+const quickFilters = [
+  { key: "sortMedOnly", label: "Sort Med" },
+  { key: "withoutSolutionOnly", label: "Sans solution" },
+  { key: "avoidableDaysOnly", label: "J évitables" },
+  { key: "urgentOnly", label: "Urgents" },
+  { key: "unansweredOnly", label: "Post-it ouverts" },
 ];
 
 const capacityByService = {
@@ -233,7 +239,8 @@ function getPatientPriorityScore(patient) {
 export default function Dashboard() {
   const [patients, setPatients] = useState(initialPatients);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [rightRailOpen, setRightRailOpen] = useState(true);
+  const [filtersOpenMobile, setFiltersOpenMobile] = useState(false);
+  const [servicesPanelOpen, setServicesPanelOpen] = useState(false);
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
   const [expandedRows, setExpandedRows] = useState([]);
 
@@ -243,11 +250,8 @@ export default function Dashboard() {
   const [selectedQuickFilters, setSelectedQuickFilters] = useState([]);
   const [search, setSearch] = useState("");
 
-  const servicesTensionCount = patients.filter(
-    (p) => p.unresolvedPostItCount > 0 || p.urgentPostItCount > 0
-  ).length;
-
-  const urgentServicesCount = patients.filter((p) => p.urgentPostItCount > 0).length;
+  const tensionCount = patients.filter((p) => p.unresolvedPostItCount > 0).length;
+  const urgentTensionCount = patients.filter((p) => p.urgentPostItCount > 0).length;
 
   const toggleSortMed = (patientId) => {
     setPatients((prev) =>
@@ -408,7 +412,7 @@ export default function Dashboard() {
 
   const handleServiceQuickFilter = (service) => {
     setSelectedServices([service]);
-    setRightRailOpen(false);
+    setServicesPanelOpen(false);
   };
 
   const clearFilters = () => {
@@ -433,21 +437,30 @@ export default function Dashboard() {
 
           <div className="db-brand-block">
             <h1>CARABBAS</h1>
-            <p>Pilotage des sorties hospitalières complexes</p>
+            <p>Pilotage des sorties hospitalières</p>
           </div>
         </div>
 
         <div className="db-header-right">
           <button
-            className="db-ghost-btn db-services-btn"
-            onClick={() => setRightRailOpen((prev) => !prev)}
+            className="db-ghost-btn db-filter-btn mobile-only-btn"
+            onClick={() => setFiltersOpenMobile(true)}
+          >
+            Filtres
+          </button>
+
+          <button
+            className="db-ghost-btn db-tension-btn"
+            onClick={() => setServicesPanelOpen((prev) => !prev)}
           >
             <span>Services en tension</span>
-            {servicesTensionCount > 0 && (
+            {tensionCount > 0 && (
               <span
-                className={`db-badge-counter ${urgentServicesCount > 0 ? "urgent" : ""}`}
+                className={`db-tension-badge ${
+                  urgentTensionCount > 0 ? "urgent" : ""
+                }`}
               >
-                {urgentServicesCount > 0 ? "!" : servicesTensionCount}
+                {urgentTensionCount > 0 ? "!" : tensionCount}
               </span>
             )}
           </button>
@@ -456,7 +469,7 @@ export default function Dashboard() {
             className="db-crisis-button"
             onClick={() => alert("Ouvrir le formulaire cellule de crise")}
           >
-            Déclencher cellule de crise
+            Crise
           </button>
         </div>
       </header>
@@ -465,7 +478,7 @@ export default function Dashboard() {
         <nav className="db-left-sidebar-nav">
           <button className="db-sidebar-link active">
             <span className="db-sidebar-icon">🏠</span>
-            <span>Tableau de bord</span>
+            <span>Tableau</span>
           </button>
 
           <button className="db-sidebar-link">
@@ -480,7 +493,7 @@ export default function Dashboard() {
 
           <button className="db-sidebar-link">
             <span className="db-sidebar-icon">⚠️</span>
-            <span>Cellule de crise</span>
+            <span>Crise</span>
           </button>
         </nav>
       </aside>
@@ -493,137 +506,71 @@ export default function Dashboard() {
         />
       )}
 
-      <aside className={`db-right-rail ${rightRailOpen ? "open" : "closed"}`}>
-        <div className="db-section-title">Services en tension</div>
-
-        <div className="db-rail-list">
-          {servicesRailData.map((item) => (
-            <button
-              key={item.service}
-              className="db-rail-service-card"
-              onClick={() => handleServiceQuickFilter(item.service)}
-            >
-              <div className="db-rail-card-top">
-                <span className="db-rail-service-name">{item.service}</span>
-                <span
-                  className={`db-rail-service-occupation ${getOccupationClass(
-                    item.occupation
-                  )}`}
-                >
-                  {item.occupation}%
-                </span>
-              </div>
-
-              <div className="db-rail-card-bottom">
-                <span>{item.problemCount} patient(s) à traiter</span>
-                <span className="db-rail-link">Filtrer</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      </aside>
-
-      <main className={`db-main ${rightRailOpen ? "with-right-rail" : ""}`}>
-        <section className="db-kpi-row">
-          <div className="db-kpi-card teal">
-            <span className="db-kpi-label">Lits occupés / capacité</span>
-            <strong className="db-kpi-value">
-              {kpis.occupiedBeds} / {kpis.capacityBeds}
-            </strong>
-          </div>
-
-          <div className="db-kpi-card blue">
-            <span className="db-kpi-label">Sort Med</span>
-            <strong className="db-kpi-value">{kpis.sortMedCount}</strong>
-          </div>
-
-          <div className="db-kpi-card orange">
-            <span className="db-kpi-label">Patients sans solution</span>
-            <strong className="db-kpi-value">{kpis.withoutSolution}</strong>
-          </div>
-
-          <div className="db-kpi-card red">
-            <span className="db-kpi-label">Jours évitables</span>
-            <strong className="db-kpi-value">{kpis.avoidableDays}</strong>
-          </div>
-
-          <div className="db-kpi-card light">
-            <span className="db-kpi-label">Lits récupérables</span>
-            <strong className="db-kpi-value">{kpis.recoverableBeds}</strong>
-          </div>
-        </section>
-
-        <section className="db-filters-panel">
-          <div className="db-filters-header">
-            <div className="db-filters-title">Filtres</div>
-
-            <div className="db-filters-actions">
-              <button
-                className="db-toggle-advanced-btn"
-                onClick={() => setAdvancedFiltersOpen((prev) => !prev)}
-              >
-                {advancedFiltersOpen ? "▴ Filtres avancés" : "▾ Filtres avancés"}
-              </button>
-
-              <button className="db-reset-filters-btn" onClick={clearFilters}>
-                Réinitialiser
-              </button>
+      {filtersOpenMobile && (
+        <>
+          <button
+            className="db-mobile-overlay strong"
+            onClick={() => setFiltersOpenMobile(false)}
+            aria-label="Fermer les filtres"
+          />
+          <aside className="db-mobile-panel">
+            <div className="db-mobile-panel-header">
+              <span>Filtres</span>
+              <button onClick={() => setFiltersOpenMobile(false)}>Fermer</button>
             </div>
-          </div>
 
-          <div className="db-filter-group">
-            <div className="db-filter-label">Services</div>
-            <div className="db-chip-row">
-              {services.map((service) => (
-                <button
-                  key={service}
-                  className={`db-chip ${
-                    selectedServices.includes(service) ? "selected" : ""
-                  }`}
-                  onClick={() =>
-                    setSelectedServices((prev) => toggleInArray(service, prev))
-                  }
-                >
-                  {service}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="db-filter-group">
-            <div className="db-filter-label">Raccourcis pilotage</div>
-            <div className="db-chip-row">
-              {quickFilters.map((item) => (
-                <button
-                  key={item.key}
-                  className={`db-chip ${
-                    selectedQuickFilters.includes(item.key) ? "selected" : ""
-                  }`}
-                  onClick={() =>
-                    setSelectedQuickFilters((prev) =>
-                      toggleInArray(item.key, prev)
-                    )
-                  }
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="db-filter-search">
-            <input
-              type="text"
-              placeholder="Nom / INS / IEP / chambre / lit"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          {advancedFiltersOpen && (
-            <div className="db-advanced-filters">
+            <div className="db-mobile-panel-body">
               <div className="db-filter-group">
-                <div className="db-filter-label">Maturité sortie</div>
+                <div className="db-filter-label">Services</div>
+                <div className="db-chip-row">
+                  {services.map((service) => (
+                    <button
+                      key={service}
+                      className={`db-chip ${
+                        selectedServices.includes(service) ? "selected" : ""
+                      }`}
+                      onClick={() =>
+                        setSelectedServices((prev) => toggleInArray(service, prev))
+                      }
+                    >
+                      {service}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="db-filter-group">
+                <div className="db-filter-label">Raccourcis</div>
+                <div className="db-chip-row">
+                  {quickFilters.map((item) => (
+                    <button
+                      key={item.key}
+                      className={`db-chip ${
+                        selectedQuickFilters.includes(item.key) ? "selected" : ""
+                      }`}
+                      onClick={() =>
+                        setSelectedQuickFilters((prev) =>
+                          toggleInArray(item.key, prev)
+                        )
+                      }
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="db-filter-search">
+                <input
+                  type="text"
+                  placeholder="Nom / INS / IEP / chambre / lit"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="db-filter-group">
+                <div className="db-filter-label">Maturité</div>
                 <div className="db-chip-row">
                   {maturites.map((item) => (
                     <button
@@ -659,26 +606,218 @@ export default function Dashboard() {
                   ))}
                 </div>
               </div>
+
+              <div className="db-mobile-panel-actions">
+                <button className="db-reset-filters-btn" onClick={clearFilters}>
+                  Réinitialiser
+                </button>
+                <button
+                  className="db-apply-btn"
+                  onClick={() => setFiltersOpenMobile(false)}
+                >
+                  Appliquer
+                </button>
+              </div>
+            </div>
+          </aside>
+        </>
+      )}
+
+      {servicesPanelOpen && (
+        <>
+          <button
+            className="db-mobile-overlay strong"
+            onClick={() => setServicesPanelOpen(false)}
+            aria-label="Fermer le panneau services"
+          />
+          <aside className="db-services-panel">
+            <div className="db-mobile-panel-header">
+              <span>Services en tension</span>
+              <button onClick={() => setServicesPanelOpen(false)}>Fermer</button>
+            </div>
+
+            <div className="db-rail-list compact">
+              {servicesRailData.map((item) => (
+                <button
+                  key={item.service}
+                  className="db-rail-service-card"
+                  onClick={() => handleServiceQuickFilter(item.service)}
+                >
+                  <div className="db-rail-card-top">
+                    <span className="db-rail-service-name">{item.service}</span>
+                    <span
+                      className={`db-rail-service-occupation ${getOccupationClass(
+                        item.occupation
+                      )}`}
+                    >
+                      {item.occupation}%
+                    </span>
+                  </div>
+
+                  <div className="db-rail-card-bottom">
+                    <span>{item.problemCount} patient(s)</span>
+                    <span className="db-rail-link">Filtrer</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </aside>
+        </>
+      )}
+
+      <main className="db-main compact">
+        <section className="db-kpi-row compact">
+          <div className="db-kpi-card teal compact">
+            <span className="db-kpi-label">Lits occupés</span>
+            <strong className="db-kpi-value">
+              {kpis.occupiedBeds}/{kpis.capacityBeds}
+            </strong>
+          </div>
+
+          <div className="db-kpi-card blue compact">
+            <span className="db-kpi-label">Sort Med</span>
+            <strong className="db-kpi-value">{kpis.sortMedCount}</strong>
+          </div>
+
+          <div className="db-kpi-card orange compact">
+            <span className="db-kpi-label">Sans solution</span>
+            <strong className="db-kpi-value">{kpis.withoutSolution}</strong>
+          </div>
+
+          <div className="db-kpi-card red compact">
+            <span className="db-kpi-label">J évitables</span>
+            <strong className="db-kpi-value">{kpis.avoidableDays}</strong>
+          </div>
+
+          <div className="db-kpi-card light compact">
+            <span className="db-kpi-label">Lits récupérables</span>
+            <strong className="db-kpi-value">{kpis.recoverableBeds}</strong>
+          </div>
+        </section>
+
+        <section className="db-filters-panel desktop-filters">
+          <div className="db-filters-header">
+            <div className="db-filters-title">Filtres</div>
+
+            <div className="db-filters-actions">
+              <button
+                className="db-toggle-advanced-btn"
+                onClick={() => setAdvancedFiltersOpen((prev) => !prev)}
+              >
+                {advancedFiltersOpen ? "Masquer" : "Avancés"}
+              </button>
+
+              <button className="db-reset-filters-btn" onClick={clearFilters}>
+                Réinit.
+              </button>
+            </div>
+          </div>
+
+          <div className="db-filter-group">
+            <div className="db-chip-row">
+              {services.map((service) => (
+                <button
+                  key={service}
+                  className={`db-chip ${
+                    selectedServices.includes(service) ? "selected" : ""
+                  }`}
+                  onClick={() =>
+                    setSelectedServices((prev) => toggleInArray(service, prev))
+                  }
+                >
+                  {service}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="db-filter-group">
+            <div className="db-chip-row">
+              {quickFilters.map((item) => (
+                <button
+                  key={item.key}
+                  className={`db-chip ${
+                    selectedQuickFilters.includes(item.key) ? "selected" : ""
+                  }`}
+                  onClick={() =>
+                    setSelectedQuickFilters((prev) =>
+                      toggleInArray(item.key, prev)
+                    )
+                  }
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="db-filter-search">
+            <input
+              type="text"
+              placeholder="Nom / INS / IEP / chambre / lit"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {advancedFiltersOpen && (
+            <div className="db-advanced-filters">
+              <div className="db-filter-group">
+                <div className="db-chip-row">
+                  {maturites.map((item) => (
+                    <button
+                      key={item}
+                      className={`db-chip ${
+                        selectedMaturites.includes(item) ? "selected" : ""
+                      }`}
+                      onClick={() =>
+                        setSelectedMaturites((prev) => toggleInArray(item, prev))
+                      }
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="db-filter-group">
+                <div className="db-chip-row">
+                  {freins.map((item) => (
+                    <button
+                      key={item}
+                      className={`db-chip ${
+                        selectedFreins.includes(item) ? "selected" : ""
+                      }`}
+                      onClick={() =>
+                        setSelectedFreins((prev) => toggleInArray(item, prev))
+                      }
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </section>
 
-        <section className="db-patients-card db-desktop-table">
+        <section className="db-patients-card db-desktop-table compact">
           <div className="db-section-title">Patients prioritaires</div>
 
           <div className="db-patients-table-wrapper">
-            <table className="db-patients-table">
+            <table className="db-patients-table compact">
               <thead>
                 <tr>
-                  <th>Priorité</th>
-                  <th>Identité patient</th>
-                  <th>Localisation</th>
+                  <th>Prio</th>
+                  <th>Patient</th>
+                  <th>Service</th>
                   <th>Sort Med</th>
-                  <th>Frein principal</th>
+                  <th>Frein</th>
                   <th>Maturité</th>
-                  <th>Jours évitables</th>
-                  <th>Prochaine action</th>
-                  <th></th>
+                  <th>J évitables</th>
+                  <th>Action</th>
+                  <th>Résumé</th>
+                  <th>Fiche</th>
                 </tr>
               </thead>
 
@@ -691,62 +830,64 @@ export default function Dashboard() {
 
                   return (
                     <React.Fragment key={patient.id}>
-                      <tr className="db-patient-row">
+                      <tr className="db-patient-row compact">
                         <td>
-                          <span className="db-priority-badge">
+                          <span className="db-priority-badge small">
                             {patient.priorite}
                           </span>
                         </td>
 
                         <td>
-                          <div className="db-identity-block">
+                          <div className="db-identity-block compact">
                             <Link
                               to={`/patient/${patient.id}`}
-                              className="db-patient-link"
+                              className="db-patient-link compact"
                             >
                               {patient.nom} {patient.prenom}
                             </Link>
 
-                            <div className="db-identity-line">
+                            <div className="db-identity-line compact">
                               Né le {formatDate(patient.dateNaissance)} · {patient.age} ans
                             </div>
 
-                            <div className="db-identity-line">
+                            <div className="db-identity-line compact">
                               INS {patient.ins} · IEP {patient.iep}
                             </div>
                           </div>
                         </td>
 
                         <td>
-                          <div className="db-location-block">
-                            <div className="db-location-service">
+                          <div className="db-location-block compact">
+                            <div className="db-location-service compact">
                               {patient.service}
                             </div>
-                            <div className="db-location-line">
-                              Chambre {patient.chambre} · Lit {patient.lit}
+                            <div className="db-location-line compact">
+                              Ch {patient.chambre} · Lit {patient.lit}
                             </div>
                           </div>
                         </td>
 
                         <td>
                           <button
-                            className={`db-sort-med-toggle ${
+                            className={`db-sort-med-toggle compact ${
                               patient.sortMedActive ? "active" : ""
                             }`}
                             onClick={() => toggleSortMed(patient.id)}
                           >
                             {patient.sortMedActive
-                              ? `Sort Med J+${diffInDays(patient.sortMedActivatedAt)}`
-                              : "○ Sort Med"}
+                              ? `J+${diffInDays(patient.sortMedActivatedAt)}`
+                              : "—"}
                           </button>
                         </td>
 
                         <td>
-                          <span className="db-frein-badge">{patient.freinPrincipal}</span>
+                          <span className="db-frein-badge compact">
+                            {patient.freinPrincipal}
+                          </span>
                         </td>
 
                         <td>
-                          <span className="db-maturity-badge">
+                          <span className="db-maturity-badge compact">
                             {patient.maturiteSortie}
                           </span>
                         </td>
@@ -756,7 +897,7 @@ export default function Dashboard() {
                             <span className="db-days-empty">—</span>
                           ) : (
                             <span
-                              className={`db-days-badge ${getDaysClass(
+                              className={`db-days-badge compact ${getDaysClass(
                                 avoidableDays
                               )}`}
                             >
@@ -766,37 +907,37 @@ export default function Dashboard() {
                         </td>
 
                         <td>
-                          <div className="db-next-action-text">
+                          <div className="db-next-action-text compact">
                             {patient.prochaineAction}
                           </div>
-                          <div className="db-inline-meta">
+                          <div className="db-inline-meta compact">
                             {patient.responsableAction}
                           </div>
                         </td>
 
                         <td>
-                          <div className="db-row-actions">
-                            <button
-                              className="db-expand-btn"
-                              onClick={() => toggleExpandedRow(patient.id)}
-                            >
-                              {isExpanded ? "Fermer résumé" : "Voir résumé"}
-                            </button>
+                          <button
+                            className="db-expand-btn compact"
+                            onClick={() => toggleExpandedRow(patient.id)}
+                          >
+                            {isExpanded ? "Fermer" : "Résumé"}
+                          </button>
+                        </td>
 
-                            <Link
-                              to={`/patient/${patient.id}`}
-                              className="db-open-patient-btn"
-                            >
-                              Fiche patient
-                            </Link>
-                          </div>
+                        <td>
+                          <Link
+                            to={`/patient/${patient.id}`}
+                            className="db-open-patient-btn compact"
+                          >
+                            Fiche
+                          </Link>
                         </td>
                       </tr>
 
                       {isExpanded && (
                         <tr className="db-expanded-row">
-                          <td colSpan="9">
-                            <div className="db-expanded-content">
+                          <td colSpan="10">
+                            <div className="db-expanded-content compact">
                               <div className="db-expanded-block">
                                 <div className="db-expanded-label">Synthèse</div>
                                 <div>{patient.synthese}</div>
@@ -809,16 +950,23 @@ export default function Dashboard() {
 
                               <div className="db-expanded-block">
                                 <div className="db-expanded-label">
-                                  Administratif patient
+                                  Administratif
                                 </div>
                                 <div>{patient.administratifPatient}</div>
                               </div>
 
                               <div className="db-expanded-block">
-                                <div className="db-expanded-label">Coordination</div>
+                                <div className="db-expanded-label">Revue</div>
+                                <div>{formatDate(patient.prochaineRevue)}</div>
+                              </div>
+
+                              <div className="db-expanded-block">
+                                <div className="db-expanded-label">
+                                  Coordination
+                                </div>
                                 <div>
                                   {patient.urgentPostItCount} urgent(s) ·{" "}
-                                  {patient.unresolvedPostItCount} non répondu(s)
+                                  {patient.unresolvedPostItCount} ouvert(s)
                                 </div>
                               </div>
                             </div>
@@ -831,7 +979,7 @@ export default function Dashboard() {
 
                 {filteredPatients.length === 0 && (
                   <tr>
-                    <td colSpan="9" className="db-empty-row">
+                    <td colSpan="10" className="db-empty-row">
                       Aucun patient ne correspond aux filtres.
                     </td>
                   </tr>
@@ -844,7 +992,7 @@ export default function Dashboard() {
         <section className="db-mobile-cards">
           <div className="db-section-title">Patients prioritaires</div>
 
-          <div className="db-patient-cards-list">
+          <div className="db-patient-cards-list compact">
             {filteredPatients.map((patient) => {
               const avoidableDays = patient.sortMedActive
                 ? diffInDays(patient.sortMedActivatedAt)
@@ -852,53 +1000,68 @@ export default function Dashboard() {
               const isExpanded = expandedRows.includes(patient.id);
 
               return (
-                <article className="db-patient-card" key={patient.id}>
+                <article className="db-patient-card compact" key={patient.id}>
                   <div className="db-patient-card-top">
-                    <span className="db-priority-badge">{patient.priorite}</span>
-                    <button
-                      className="db-expand-btn"
-                      onClick={() => toggleExpandedRow(patient.id)}
-                    >
-                      {isExpanded ? "Fermer résumé" : "Voir résumé"}
-                    </button>
+                    <span className="db-priority-badge small">
+                      {patient.priorite}
+                    </span>
+                    <div className="db-card-actions compact">
+                      <button
+                        className="db-expand-btn compact"
+                        onClick={() => toggleExpandedRow(patient.id)}
+                      >
+                        {isExpanded ? "Fermer" : "Résumé"}
+                      </button>
+                      <Link
+                        to={`/patient/${patient.id}`}
+                        className="db-open-patient-btn compact"
+                      >
+                        Fiche
+                      </Link>
+                    </div>
                   </div>
 
-                  <div className="db-identity-block">
+                  <div className="db-identity-block compact">
                     <Link
                       to={`/patient/${patient.id}`}
-                      className="db-patient-link"
+                      className="db-patient-link compact"
                     >
                       {patient.nom} {patient.prenom}
                     </Link>
-                    <div className="db-identity-line">
+                    <div className="db-identity-line compact">
                       Né le {formatDate(patient.dateNaissance)} · {patient.age} ans
                     </div>
-                    <div className="db-identity-line">
+                    <div className="db-identity-line compact">
                       INS {patient.ins} · IEP {patient.iep}
                     </div>
-                    <div className="db-identity-line">
-                      Chambre {patient.chambre} · Lit {patient.lit}
+                    <div className="db-identity-line compact">
+                      Ch {patient.chambre} · Lit {patient.lit}
                     </div>
                   </div>
 
                   <div className="db-location-block db-mobile-space">
-                    <div className="db-location-service">{patient.service}</div>
+                    <div className="db-location-service compact">
+                      {patient.service}
+                    </div>
                   </div>
 
-                  <div className="db-patient-card-tags">
+                  <div className="db-patient-card-tags compact">
                     <button
-                      className={`db-sort-med-toggle ${
+                      className={`db-sort-med-toggle compact ${
                         patient.sortMedActive ? "active" : ""
                       }`}
                       onClick={() => toggleSortMed(patient.id)}
                     >
                       {patient.sortMedActive
-                        ? `Sort Med J+${diffInDays(patient.sortMedActivatedAt)}`
-                        : "○ Sort Med"}
+                        ? `SortMed J+${diffInDays(patient.sortMedActivatedAt)}`
+                        : "SortMed"}
                     </button>
 
-                    <span className="db-frein-badge">{patient.freinPrincipal}</span>
-                    <span className="db-maturity-badge">
+                    <span className="db-frein-badge compact">
+                      {patient.freinPrincipal}
+                    </span>
+
+                    <span className="db-maturity-badge compact">
                       {patient.maturiteSortie}
                     </span>
 
@@ -906,7 +1069,7 @@ export default function Dashboard() {
                       <span className="db-days-empty">—</span>
                     ) : (
                       <span
-                        className={`db-days-badge ${getDaysClass(
+                        className={`db-days-badge compact ${getDaysClass(
                           avoidableDays
                         )}`}
                       >
@@ -916,20 +1079,16 @@ export default function Dashboard() {
                   </div>
 
                   <div className="db-mobile-space">
-                    <div className="db-next-action-text">{patient.prochaineAction}</div>
-                    <div className="db-inline-meta">
+                    <div className="db-next-action-text compact">
+                      {patient.prochaineAction}
+                    </div>
+                    <div className="db-inline-meta compact">
                       Responsable : {patient.responsableAction}
                     </div>
                   </div>
 
-                  <div className="db-card-actions">
-                    <Link to={`/patient/${patient.id}`} className="db-open-patient-btn">
-                      Fiche patient
-                    </Link>
-                  </div>
-
                   {isExpanded && (
-                    <div className="db-mobile-expanded">
+                    <div className="db-mobile-expanded compact">
                       <div className="db-expanded-block">
                         <div className="db-expanded-label">Synthèse</div>
                         <div>{patient.synthese}</div>
@@ -941,10 +1100,16 @@ export default function Dashboard() {
                       </div>
 
                       <div className="db-expanded-block">
-                        <div className="db-expanded-label">
-                          Administratif patient
-                        </div>
+                        <div className="db-expanded-label">Administratif</div>
                         <div>{patient.administratifPatient}</div>
+                      </div>
+
+                      <div className="db-expanded-block">
+                        <div className="db-expanded-label">Coordination</div>
+                        <div>
+                          {patient.urgentPostItCount} urgent(s) ·{" "}
+                          {patient.unresolvedPostItCount} ouvert(s)
+                        </div>
                       </div>
                     </div>
                   )}
