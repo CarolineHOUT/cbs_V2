@@ -14,8 +14,8 @@ const initialPatients = [
     service: "Pneumologie",
     chambre: "A12",
     lit: "03",
-    smActive: true,
-    smActivatedAt: "2026-03-14T09:00:00",
+    sortMedActive: true,
+    sortMedActivatedAt: "2026-03-14T09:00:00",
     maturiteSortie: "Organisation sortie",
     freinPrincipal: "Place aval",
   },
@@ -31,8 +31,8 @@ const initialPatients = [
     service: "Pneumologie",
     chambre: "A04",
     lit: "01",
-    smActive: true,
-    smActivatedAt: "2026-03-16T08:30:00",
+    sortMedActive: true,
+    sortMedActivatedAt: "2026-03-16T08:30:00",
     maturiteSortie: "Besoins identifiés",
     freinPrincipal: "Social",
   },
@@ -48,8 +48,8 @@ const initialPatients = [
     service: "Médecine",
     chambre: "B10",
     lit: "02",
-    smActive: false,
-    smActivatedAt: null,
+    sortMedActive: false,
+    sortMedActivatedAt: null,
     maturiteSortie: "Besoins identifiés",
     freinPrincipal: "Coordination",
   },
@@ -65,8 +65,8 @@ const initialPatients = [
     service: "Chirurgie",
     chambre: "C07",
     lit: "01",
-    smActive: true,
-    smActivatedAt: "2026-03-13T11:15:00",
+    sortMedActive: true,
+    sortMedActivatedAt: "2026-03-13T11:15:00",
     maturiteSortie: "Solution prête",
     freinPrincipal: "Administratif",
   },
@@ -82,8 +82,8 @@ const initialPatients = [
     service: "Oncologie",
     chambre: "A05",
     lit: "05",
-    smActive: false,
-    smActivatedAt: null,
+    sortMedActive: false,
+    sortMedActivatedAt: null,
     maturiteSortie: "Organisation sortie",
     freinPrincipal: "Place aval",
   },
@@ -99,8 +99,8 @@ const initialPatients = [
     service: "Neurologie",
     chambre: "D03",
     lit: "02",
-    smActive: true,
-    smActivatedAt: "2026-03-15T14:00:00",
+    sortMedActive: true,
+    sortMedActivatedAt: "2026-03-15T14:00:00",
     maturiteSortie: "Organisation sortie",
     freinPrincipal: "Famille",
   },
@@ -128,12 +128,13 @@ const freins = [
   "Administratif",
 ];
 
-const servicesTensionData = [
-  { service: "Pneumologie", occupation: 92, anticipation: 33 },
-  { service: "Médecine", occupation: 78, anticipation: 67 },
-  { service: "Chirurgie", occupation: 61, anticipation: 82 },
-  { service: "Neurologie", occupation: 45, anticipation: 74 },
-];
+const serviceOccupancy = {
+  Pneumologie: 92,
+  Médecine: 78,
+  Oncologie: 58,
+  Chirurgie: 61,
+  Neurologie: 45,
+};
 
 function formatDate(dateString) {
   const d = new Date(dateString);
@@ -162,15 +163,9 @@ function getOccupationClass(value) {
   return "normal";
 }
 
-function getAnticipationClass(value) {
-  if (value < 40) return "danger";
-  if (value < 70) return "warning";
-  return "good";
-}
-
 export default function Dashboard() {
   const [patients, setPatients] = useState(initialPatients);
-  const [leftMenuOpen, setLeftMenuOpen] = useState(false);
+  const [leftMenuOpen, setLeftMenuOpen] = useState(true);
   const [rightRailOpen, setRightRailOpen] = useState(true);
 
   const [selectedServices, setSelectedServices] = useState([]);
@@ -178,23 +173,23 @@ export default function Dashboard() {
   const [selectedFreins, setSelectedFreins] = useState([]);
   const [search, setSearch] = useState("");
 
-  const toggleSM = (patientId) => {
+  const toggleSortMed = (patientId) => {
     setPatients((prev) =>
       prev.map((patient) => {
         if (patient.id !== patientId) return patient;
 
-        if (patient.smActive) {
+        if (patient.sortMedActive) {
           return {
             ...patient,
-            smActive: false,
-            smActivatedAt: null,
+            sortMedActive: false,
+            sortMedActivatedAt: null,
           };
         }
 
         return {
           ...patient,
-          smActive: true,
-          smActivatedAt: new Date().toISOString(),
+          sortMedActive: true,
+          sortMedActivatedAt: new Date().toISOString(),
         };
       })
     );
@@ -246,29 +241,62 @@ export default function Dashboard() {
     const occupiedBeds = 92;
     const capacityBeds = 100;
 
-    const smPatients = patients.filter((p) => p.smActive).length;
+    const sortMedCount = patients.filter((p) => p.sortMedActive).length;
 
     const withoutSolution = patients.filter(
-      (p) => p.smActive && p.maturiteSortie !== "Solution prête"
+      (p) => p.sortMedActive && p.maturiteSortie !== "Solution prête"
     ).length;
 
     const avoidableDays = patients
-      .filter((p) => p.smActive)
-      .reduce((sum, p) => sum + diffInDays(p.smActivatedAt), 0);
+      .filter((p) => p.sortMedActive)
+      .reduce((sum, p) => sum + diffInDays(p.sortMedActivatedAt), 0);
 
     const recoverableBeds = patients.filter(
-      (p) => p.smActive && p.maturiteSortie === "Solution prête"
+      (p) => p.sortMedActive && p.maturiteSortie === "Solution prête"
     ).length;
 
     return {
       occupiedBeds,
       capacityBeds,
-      smPatients,
+      sortMedCount,
       withoutSolution,
       avoidableDays,
       recoverableBeds,
     };
   }, [patients]);
+
+  const servicesRailData = useMemo(() => {
+    return services
+      .map((service) => {
+        const patientsInService = patients.filter((p) => p.service === service);
+
+        const problematicPatients = patientsInService.filter(
+          (p) =>
+            p.sortMedActive ||
+            p.freinPrincipal ||
+            p.maturiteSortie !== "Solution prête"
+        );
+
+        return {
+          service,
+          occupation: serviceOccupancy[service] || 0,
+          problemCount: problematicPatients.length,
+        };
+      })
+      .sort((a, b) => b.occupation - a.occupation);
+  }, [patients]);
+
+  const handleServiceQuickFilter = (service) => {
+    setSelectedServices([service]);
+    setRightRailOpen(false);
+  };
+
+  const clearFilters = () => {
+    setSelectedServices([]);
+    setSelectedMaturites([]);
+    setSelectedFreins([]);
+    setSearch("");
+  };
 
   return (
     <div className="dashboard-page">
@@ -305,26 +333,44 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <aside className={`left-drawer ${leftMenuOpen ? "open" : ""}`}>
-        <div className="drawer-title">Navigation</div>
-        <nav className="drawer-nav">
-          <button className="nav-item active">Tableau de bord</button>
-          <button className="nav-item">Patients</button>
-          <button className="nav-item">Vue duo</button>
-          <button className="nav-item">Cellule de crise</button>
+      <aside className={`left-sidebar ${leftMenuOpen ? "expanded" : "collapsed"}`}>
+        <nav className="left-sidebar-nav">
+          <button className="sidebar-link active">
+            <span className="sidebar-icon">🏠</span>
+            {leftMenuOpen && <span>Tableau de bord</span>}
+          </button>
+
+          <button className="sidebar-link">
+            <span className="sidebar-icon">🧑</span>
+            {leftMenuOpen && <span>Patients</span>}
+          </button>
+
+          <button className="sidebar-link">
+            <span className="sidebar-icon">🤝</span>
+            {leftMenuOpen && <span>Vue duo</span>}
+          </button>
+
+          <button className="sidebar-link">
+            <span className="sidebar-icon">⚠️</span>
+            {leftMenuOpen && <span>Cellule de crise</span>}
+          </button>
         </nav>
       </aside>
 
-      <aside className={`right-drawer ${rightRailOpen ? "open" : ""}`}>
-        <div className="section-title rail-header">Services en tension</div>
+      <aside className={`right-rail ${rightRailOpen ? "open" : "closed"}`}>
+        <div className="section-title">Services en tension</div>
 
         <div className="rail-list">
-          {servicesTensionData.map((item) => (
-            <div key={item.service} className="rail-item">
-              <div className="rail-item-top">
-                <span className="rail-service">{item.service}</span>
+          {servicesRailData.map((item) => (
+            <button
+              key={item.service}
+              className="rail-service-card"
+              onClick={() => handleServiceQuickFilter(item.service)}
+            >
+              <div className="rail-card-top">
+                <span className="rail-service-name">{item.service}</span>
                 <span
-                  className={`rail-occupation ${getOccupationClass(
+                  className={`rail-service-occupation ${getOccupationClass(
                     item.occupation
                   )}`}
                 >
@@ -332,24 +378,20 @@ export default function Dashboard() {
                 </span>
               </div>
 
-              <div className="rail-meta">Occupation</div>
-
-              <div className="rail-item-bottom">
-                <span>Anticipation</span>
-                <span
-                  className={`rail-anticipation ${getAnticipationClass(
-                    item.anticipation
-                  )}`}
-                >
-                  {item.anticipation}%
-                </span>
+              <div className="rail-card-bottom">
+                <span>{item.problemCount} patient(s) à traiter</span>
+                <span className="rail-link">Voir</span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </aside>
 
-      <main className="dashboard-main">
+      <main
+        className={`dashboard-main ${
+          leftMenuOpen ? "with-left-sidebar" : "with-left-sidebar-collapsed"
+        } ${rightRailOpen ? "with-right-rail" : "without-right-rail"}`}
+      >
         <section className="kpi-row">
           <div className="kpi-card teal">
             <span className="kpi-label">Lits occupés / capacité</span>
@@ -359,8 +401,8 @@ export default function Dashboard() {
           </div>
 
           <div className="kpi-card blue">
-            <span className="kpi-label">Sortants médicalement</span>
-            <strong className="kpi-value">{kpis.smPatients}</strong>
+            <span className="kpi-label">Sort Med</span>
+            <strong className="kpi-value">{kpis.sortMedCount}</strong>
           </div>
 
           <div className="kpi-card orange">
@@ -380,6 +422,13 @@ export default function Dashboard() {
         </section>
 
         <section className="filters-panel">
+          <div className="filters-header">
+            <div className="filters-title">Filtres</div>
+            <button className="reset-filters-btn" onClick={clearFilters}>
+              Réinitialiser
+            </button>
+          </div>
+
           <div className="filter-group">
             <div className="filter-label">Services</div>
             <div className="chip-row">
@@ -457,7 +506,7 @@ export default function Dashboard() {
                   <th>Priorité</th>
                   <th>Identité patient</th>
                   <th>Localisation</th>
-                  <th>SM</th>
+                  <th>Sort Med</th>
                   <th>Maturité sortie</th>
                   <th>Frein principal</th>
                   <th>Jours évitables</th>
@@ -466,8 +515,8 @@ export default function Dashboard() {
 
               <tbody>
                 {filteredPatients.map((patient) => {
-                  const avoidableDays = patient.smActive
-                    ? diffInDays(patient.smActivatedAt)
+                  const avoidableDays = patient.sortMedActive
+                    ? diffInDays(patient.sortMedActivatedAt)
                     : null;
 
                   return (
@@ -506,14 +555,16 @@ export default function Dashboard() {
 
                       <td>
                         <button
-                          className={`sm-toggle ${
-                            patient.smActive ? "active" : ""
+                          className={`sort-med-toggle ${
+                            patient.sortMedActive ? "active" : ""
                           }`}
-                          onClick={() => toggleSM(patient.id)}
+                          onClick={() => toggleSortMed(patient.id)}
                         >
-                          {patient.smActive
-                            ? `SM J+${diffInDays(patient.smActivatedAt)}`
-                            : "○ SM"}
+                          {patient.sortMedActive
+                            ? `Sort Med J+${diffInDays(
+                                patient.sortMedActivatedAt
+                              )}`
+                            : "○ Sort Med"}
                         </button>
                       </td>
 
