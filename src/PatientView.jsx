@@ -2,6 +2,63 @@ import React, { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import "./PatientView.css";
 
+const allPatients = [
+{
+id: 1,
+priorite: 1,
+nom: "DUPONT",
+prenom: "Jean",
+dateNaissance: "1946-03-12",
+age: 78,
+iep: "12345678",
+ins: "1 84 03 12 345 678",
+service: "Pneumologie",
+chambre: "A12",
+lit: "03",
+sortMedActive: true,
+sortMedActivatedAt: "2026-03-14T09:00:00",
+maturiteSortie: "Organisation sortie",
+freinPrincipal: "Place aval",
+datePrevisionnelleSortie: "2026-03-19",
+},
+{
+id: 2,
+priorite: 2,
+nom: "JOREL",
+prenom: "Henri",
+dateNaissance: "1944-11-16",
+age: 79,
+iep: "87654321",
+ins: "1 44 11 22 333 444",
+service: "Pneumologie",
+chambre: "A04",
+lit: "01",
+sortMedActive: true,
+sortMedActivatedAt: "2026-03-16T08:30:00",
+maturiteSortie: "Besoins identifiés",
+freinPrincipal: "Social",
+datePrevisionnelleSortie: "2026-03-18",
+},
+{
+id: 3,
+priorite: 3,
+nom: "PERON",
+prenom: "Jocelyn",
+dateNaissance: "1975-08-25",
+age: 50,
+iep: "23456789",
+ins: "1 75 08 25 987 654",
+service: "Médecine",
+chambre: "B10",
+lit: "02",
+sortMedActive: false,
+sortMedActivatedAt: null,
+maturiteSortie: "Besoins identifiés",
+freinPrincipal: "Coordination",
+datePrevisionnelleSortie: "2026-03-20",
+},
+];
+
 function formatDate(dateString) {
 if (!dateString) return "—";
 const d = new Date(dateString);
@@ -80,19 +137,104 @@ return "postit-info";
 
 export default function PatientView() {
 const { id } = useParams();
-const basePatient =
-patients.find((p) => String(p.id) === String(id)) || patients[0];
+
+const selectedPatient =
+allPatients.find((p) => String(p.id) === String(id)) || allPatients[0];
 
 const [leftMenuOpen, setLeftMenuOpen] = useState(true);
 const [rightRailOpen, setRightRailOpen] = useState(true);
 const [rightRailTab, setRightRailTab] = useState("contacts");
 
 const [patient, setPatient] = useState({
-...basePatient,
-...patientDetailsDefaults,
+...selectedPatient,
+situationSortie: {
+besoinsIdentifies: "Retour en structure aval avec coordination",
+orientationSortie: "SMR",
+solutionEnvisagee: "Place aval demandée",
+solutionValidee: "Non",
+pointsVigilance: "Attente confirmation structure et famille",
+},
+staff: {
+aPresenter: true,
+dernierStaff: "2026-03-17",
+decision: "Maintenir orientation SMR, relance structure aval",
+prochaineRevue: "2026-03-19",
+note: "Réévaluer si pas de réponse sous 24h",
+},
+coordination: {
+acteurs: "Service / Assistante sociale / Cadre",
+statut: "En cours",
+prochaineAction: "Relance structure aval",
+dateSuivi: "2026-03-18",
+note: "Famille informée, accord de principe",
+},
+personneConfiance: {
+nom: "DUPONT",
+prenom: "Marie",
+lien: "Épouse",
+telephone: "06 12 34 56 78",
+email: "marie.dupont@example.fr",
+},
+personneAPrevenir: {
+nom: "DUPONT",
+prenom: "Claire",
+lien: "Fille",
+telephone: "06 87 65 43 21",
+},
+celluleCrise: {
+concerne: false,
+active: false,
+motif: "",
+dateActivation: "",
+decisions: "",
+},
 });
-const [postIts, setPostIts] = useState(patientDetailsDefaults.postIts);
-const [historique] = useState(patientDetailsDefaults.historique);
+
+const [postIts, setPostIts] = useState([
+{
+id: 1,
+type: "Urgent",
+message: "Informer la famille avant 16h",
+auteur: "Claire M.",
+createdAt: "2026-03-18T14:05:00",
+statut: "À traiter",
+reponse: "",
+repondant: "",
+repliedAt: "",
+},
+{
+id: 2,
+type: "Famille",
+message: "Retour de la fille patient attendu ce jour",
+auteur: "Sophie L.",
+createdAt: "2026-03-18T10:20:00",
+statut: "Répondu",
+reponse: "Famille contactée à 11h10, accord confirmé",
+repondant: "Sophie L.",
+repliedAt: "2026-03-18T11:10:00",
+},
+]);
+
+const [historique] = useState([
+{
+id: 1,
+date: "2026-03-14T09:00:00",
+label: "Sort Med activé",
+detail: "Activation du statut Sort Med",
+},
+{
+id: 2,
+date: "2026-03-17T09:30:00",
+label: "Staff",
+detail: "Orientation SMR confirmée en staff",
+},
+{
+id: 3,
+date: "2026-03-18T08:45:00",
+label: "Frein principal",
+detail: "Place aval confirmée comme frein principal",
+},
+]);
 
 const [newPostIt, setNewPostIt] = useState({
 type: "Action",
@@ -469,7 +611,7 @@ onClick={toggleSortMed}
 
 <div className="pv-summary-card">
 <span className="pv-summary-label">Date prévisionnelle sortie</span>
-<strong>{formatDate(patient.datePrevisionnelleSortie || patient.prochaineRevue)}</strong>
+<strong>{formatDate(patient.datePrevisionnelleSortie)}</strong>
 </div>
 </section>
 
