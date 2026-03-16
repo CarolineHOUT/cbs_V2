@@ -1,778 +1,883 @@
-* {
-box-sizing: border-box;
-}
-
-body {
-margin: 0;
-background: #f5f7fb;
-color: #172b4d;
-font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-sans-serif;
-}
-
-.dashboard-page {
-min-height: 100vh;
-background: #f5f7fb;
-}
-
-/* HEADER */
-
-.top-header {
-position: sticky;
-top: 0;
-z-index: 50;
-height: 76px;
-display: flex;
-align-items: center;
-justify-content: space-between;
-gap: 16px;
-padding: 14px 20px;
-background: linear-gradient(90deg, #0f4cb8 0%, #2563eb 100%);
-color: white;
-box-shadow: 0 8px 24px rgba(16, 38, 84, 0.12);
-}
-
-.header-left,
-.header-right {
-display: flex;
-align-items: center;
-gap: 14px;
-}
-
-.brand-block h1 {
-margin: 0;
-font-size: 30px;
-line-height: 1;
-font-weight: 800;
-letter-spacing: 0.3px;
-}
-
-.brand-block p {
-margin: 4px 0 0;
-font-size: 13px;
-opacity: 0.92;
-}
-
-.icon-btn,
-.ghost-btn,
-.crisis-button {
-border: none;
-border-radius: 14px;
-cursor: pointer;
-font-weight: 700;
-}
-
-.icon-btn {
-width: 44px;
-height: 44px;
-background: rgba(255, 255, 255, 0.14);
-color: white;
-font-size: 20px;
-}
-
-.ghost-btn {
-padding: 12px 16px;
-background: rgba(255, 255, 255, 0.14);
-color: white;
-font-size: 14px;
-}
-
-.crisis-button {
-padding: 12px 16px;
-background: white;
-color: #0f4cb8;
-font-size: 14px;
-}
-
-/* LEFT SIDEBAR */
-
-.left-sidebar {
-position: fixed;
-top: 76px;
-left: 0;
-bottom: 0;
-background: white;
-border-right: 1px solid #e7edf5;
-box-shadow: 0 8px 24px rgba(16, 38, 84, 0.06);
-z-index: 30;
-transition: width 0.25s ease;
-overflow: hidden;
-}
-
-.left-sidebar.expanded {
-width: 220px;
-}
-
-.left-sidebar.collapsed {
-width: 72px;
-}
-
-.left-sidebar-nav {
-display: flex;
-flex-direction: column;
-gap: 10px;
-padding: 16px 12px;
-}
-
-.sidebar-link {
-display: flex;
-align-items: center;
-gap: 12px;
-height: 48px;
-padding: 0 12px;
-border: none;
-border-radius: 14px;
-background: transparent;
-color: #1f3558;
-font-size: 15px;
-font-weight: 700;
-text-align: left;
-cursor: pointer;
-white-space: nowrap;
-}
-
-.sidebar-link.active,
-.sidebar-link:hover {
-background: #eaf1ff;
-color: #0f4cb8;
-}
-
-.sidebar-icon {
-min-width: 24px;
-text-align: center;
-font-size: 18px;
-}
-
-/* RIGHT RAIL */
-
-.right-rail {
-position: fixed;
-top: 76px;
-right: 0;
-bottom: 0;
-width: 290px;
-background: white;
-border-left: 1px solid #e7edf5;
-box-shadow: 0 8px 24px rgba(16, 38, 84, 0.06);
-z-index: 25;
-transition: transform 0.25s ease;
-}
-
-.right-rail.open {
-transform: translateX(0);
-}
-
-.right-rail.closed {
-transform: translateX(100%);
-}
-
-.rail-list {
-padding: 12px 14px 18px;
-display: flex;
-flex-direction: column;
-gap: 10px;
-}
-
-.rail-service-card {
-width: 100%;
-border: 1px solid #e5ebf4;
-background: #fbfcfe;
-border-radius: 14px;
-padding: 14px;
-text-align: left;
-cursor: pointer;
-}
-
-.rail-service-card:hover {
-border-color: #bfd1f5;
-background: #f5f8ff;
-}
-
-.rail-card-top,
-.rail-card-bottom {
-display: flex;
-align-items: center;
-justify-content: space-between;
-gap: 12px;
-}
-
-.rail-card-bottom {
-margin-top: 8px;
-color: #66758a;
-font-size: 13px;
-}
-
-.rail-link {
-color: #0f4cb8;
-font-weight: 700;
-}
-
-.rail-service-name {
-font-weight: 800;
-font-size: 15px;
-}
-
-.rail-service-occupation {
-font-size: 16px;
-font-weight: 800;
-}
-
-.danger {
-color: #d92d20;
-}
-
-.warning {
-color: #d97706;
-}
-
-.normal {
-color: #2b6cb0;
-}
-
-/* MAIN */
-
-.dashboard-main {
-padding: 22px 24px 32px;
-transition: margin-left 0.25s ease, margin-right 0.25s ease;
-}
-
-.dashboard-main.with-left-sidebar {
-margin-left: 220px;
-}
-
-.dashboard-main.with-left-sidebar-collapsed {
-margin-left: 72px;
-}
-
-.dashboard-main.with-right-rail {
-margin-right: 290px;
-}
-
-.dashboard-main.without-right-rail {
-margin-right: 0;
-}
-
-/* KPI */
-
-.kpi-row {
-display: grid;
-grid-template-columns: repeat(5, minmax(0, 1fr));
-gap: 14px;
-margin-bottom: 16px;
-}
-
-.kpi-card {
-border-radius: 18px;
-padding: 18px;
-min-height: 102px;
-display: flex;
-flex-direction: column;
-justify-content: space-between;
-box-shadow: 0 8px 24px rgba(16, 38, 84, 0.08);
-}
-
-.kpi-card.teal {
-background: #0f9d94;
-color: white;
-}
-
-.kpi-card.blue {
-background: #2563eb;
-color: white;
-}
-
-.kpi-card.orange {
-background: #f59e0b;
-color: white;
-}
-
-.kpi-card.red {
-background: #ef4444;
-color: white;
-}
-
-.kpi-card.light {
-background: white;
-color: #172b4d;
-border: 1px solid #dbe3ef;
-}
-
-.kpi-label {
-font-size: 14px;
-font-weight: 700;
-}
-
-.kpi-value {
-font-size: 34px;
-line-height: 1;
-font-weight: 800;
-}
-
-/* FILTERS */
-
-.filters-panel {
-background: white;
-border-radius: 18px;
-padding: 16px;
-margin-bottom: 16px;
-box-shadow: 0 8px 24px rgba(16, 38, 84, 0.08);
-}
-
-.filters-header {
-display: flex;
-align-items: center;
-justify-content: space-between;
-margin-bottom: 12px;
-}
-
-.filters-title {
-font-size: 18px;
-font-weight: 800;
-}
-
-.reset-filters-btn {
-border: 1px solid #d5ddeb;
-background: white;
-color: #1f3558;
-padding: 8px 12px;
-border-radius: 10px;
-font-size: 13px;
-font-weight: 700;
-cursor: pointer;
-}
-
-.filter-group + .filter-group {
-margin-top: 14px;
-}
-
-.filter-label {
-font-size: 14px;
-font-weight: 800;
-color: #485a73;
-margin-bottom: 8px;
-}
-
-.chip-row {
-display: flex;
-flex-wrap: wrap;
-gap: 8px;
-}
-
-.chip {
-border: 1px solid #d5ddeb;
-background: white;
-color: #1f3558;
-padding: 9px 13px;
-border-radius: 999px;
-font-size: 13px;
-font-weight: 700;
-cursor: pointer;
-}
-
-.chip.selected {
-background: #0f4cb8;
-color: white;
-border-color: #0f4cb8;
-}
-
-.filter-search {
-margin-top: 14px;
-}
-
-.filter-search input {
-width: 100%;
-border: 1px solid #d5ddeb;
-border-radius: 12px;
-padding: 12px 14px;
-font-size: 14px;
-background: white;
-}
-
-/* TABLE / CARDS */
-
-.patients-card,
-.mobile-cards {
-background: white;
-border-radius: 18px;
-box-shadow: 0 8px 24px rgba(16, 38, 84, 0.08);
-}
-
-.section-title {
-padding: 16px 18px;
-border-bottom: 1px solid #e7edf5;
-font-size: 20px;
-font-weight: 800;
-}
-
-.patients-table-wrapper {
-overflow-x: auto;
-}
-
-.patients-table {
-width: 100%;
-border-collapse: collapse;
-}
-
-.patients-table th,
-.patients-table td {
-padding: 12px 10px;
-text-align: left;
-vertical-align: top;
-border-bottom: 1px solid #edf2f8;
-}
-
-.patients-table th {
-font-size: 13px;
-font-weight: 800;
-color: #495a74;
-background: #fbfcfe;
-white-space: nowrap;
-}
-
-.patient-row:hover {
-background: #fcfdff;
-}
-
-.priority-badge {
-width: 32px;
-height: 32px;
-display: inline-flex;
-align-items: center;
-justify-content: center;
-border-radius: 999px;
-background: #ef4444;
-color: white;
-font-weight: 800;
-font-size: 14px;
-}
-
-.identity-block,
-.location-block {
-display: flex;
-flex-direction: column;
-gap: 3px;
-}
-
-.patient-link {
-font-weight: 800;
-font-size: 15px;
-color: #0f4cb8;
-text-decoration: none;
-}
-
-.patient-link:hover {
-text-decoration: underline;
-}
-
-.identity-line,
-.location-line {
-color: #5f6b7a;
-font-size: 13px;
-line-height: 1.3;
-}
-
-.location-service {
-font-weight: 800;
-font-size: 15px;
-}
-
-.sort-med-toggle {
-border: 1px solid #cfd9e8;
-background: #f8fafc;
-color: #1f3558;
-border-radius: 10px;
-padding: 8px 10px;
-font-size: 13px;
-font-weight: 800;
-cursor: pointer;
-min-width: 112px;
-}
-
-.sort-med-toggle.active {
-background: #e7f5ea;
-border-color: #87c995;
-color: #14532d;
-}
-
-.maturity-badge,
-.frein-badge,
-.days-badge,
-.alert-pill {
-display: inline-block;
-border-radius: 999px;
-padding: 8px 10px;
-font-size: 13px;
-font-weight: 700;
-white-space: nowrap;
-}
-
-.maturity-badge {
-background: #eef4ff;
-color: #22447e;
-}
-
-.frein-badge {
-background: #fff0d6;
-color: #7a4d00;
-}
-
-.days-badge {
-min-width: 54px;
-text-align: center;
-}
-
-.days-badge.neutral {
-background: #eef2f7;
-color: #475569;
-}
-
-.days-badge.warning {
-background: #fff4e5;
-color: #b45309;
-}
-
-.days-badge.critical {
-background: #fff1f2;
-color: #be123c;
-}
-
-.days-empty {
-color: #8a94a5;
-font-weight: 700;
-}
-
-.expand-btn {
-border: 1px solid #d5ddeb;
-background: white;
-color: #1f3558;
-padding: 8px 10px;
-border-radius: 10px;
-font-size: 12px;
-font-weight: 700;
-cursor: pointer;
-}
-
-.expanded-row td {
-background: #fbfcfe;
-}
-
-.expanded-content {
-display: grid;
-grid-template-columns: repeat(4, minmax(0, 1fr));
-gap: 14px;
-padding: 4px 0;
-}
-
-.expanded-block {
-display: grid;
-gap: 6px;
-}
-
-.expanded-label {
-font-size: 12px;
-font-weight: 800;
-color: #5b6c85;
-}
-
-.expanded-actions {
-display: flex;
-align-items: flex-end;
-}
-
-.open-patient-btn {
-display: inline-flex;
-align-items: center;
-justify-content: center;
-border-radius: 12px;
-padding: 10px 12px;
-background: #0f4cb8;
-color: white;
-text-decoration: none;
-font-size: 13px;
-font-weight: 700;
-}
-
-.empty-row,
-.empty-mobile {
-text-align: center;
-color: #6b7788;
-padding: 24px !important;
-}
-
-.mobile-cards {
-display: none;
-}
-
-.patient-cards-list {
-padding: 14px;
-display: grid;
-gap: 12px;
-}
-
-.patient-card {
-border: 1px solid #e7edf5;
-border-radius: 16px;
-padding: 14px;
-background: #fbfcfe;
-}
-
-.patient-card-top {
-display: flex;
-align-items: center;
-justify-content: space-between;
-margin-bottom: 10px;
-}
-
-.mobile-space {
-margin-top: 8px;
-}
-
-.patient-card-tags {
-display: flex;
-flex-wrap: wrap;
-gap: 8px;
-margin-top: 12px;
-}
-
-.patient-alerts {
-display: flex;
-flex-wrap: wrap;
-gap: 8px;
-margin-top: 12px;
-}
-
-.alert-pill {
-background: #eef2f7;
-color: #334155;
-}
-
-.alert-pill.urgent {
-background: #fff1f2;
-color: #be123c;
-}
-
-.mobile-expanded {
-margin-top: 12px;
-padding-top: 12px;
-border-top: 1px solid #e7edf5;
-display: grid;
-gap: 10px;
-}
-
-.mobile-days {
-padding-left: 4px;
-padding-right: 4px;
-}
-
-/* RESPONSIVE */
-
-@media (max-width: 1400px) {
-.kpi-row {
-grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.expanded-content {
-grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-}
-
-@media (max-width: 1100px) {
-.right-rail {
-width: 260px;
-}
-
-.dashboard-main.with-right-rail {
-margin-right: 260px;
-}
-}
-
-@media (max-width: 900px) {
-.top-header {
-flex-direction: column;
-align-items: stretch;
-height: auto;
-}
-
-.header-left,
-.header-right {
-justify-content: space-between;
-}
-
-.left-sidebar {
-top: 98px;
-}
-
-.right-rail {
-top: 98px;
-width: 92%;
-}
-
-.dashboard-main {
-padding: 18px;
-}
-
-.dashboard-main.with-left-sidebar,
-.dashboard-main.with-left-sidebar-collapsed {
-margin-left: 0;
-}
-
-.dashboard-main.with-right-rail,
-.dashboard-main.without-right-rail {
-margin-right: 0;
-}
-
-.left-sidebar.expanded {
-width: 240px;
-transform: translateX(0);
-}
-
-.left-sidebar.collapsed {
-width: 240px;
-transform: translateX(-105%);
-}
-
-.kpi-row {
-grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.desktop-table {
-display: none;
-}
-
-.mobile-cards {
-display: block;
-}
-}
-
-@media (max-width: 640px) {
-.brand-block h1 {
-font-size: 24px;
-}
-
-.brand-block p {
-font-size: 12px;
-}
-
-.kpi-row {
-grid-template-columns: 1fr;
-}
-
-.sort-med-toggle {
-min-width: 96px;
-font-size: 12px;
-}
-
-.section-title {
-font-size: 18px;
-}
-
-.chip-row {
-overflow-x: auto;
-flex-wrap: nowrap;
-padding-bottom: 4px;
-}
-
-.chip-row::-webkit-scrollbar {
-height: 6px;
-}
+import React, { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import "./Dashboard.css";
+
+const initialPatients = [
+{
+id: 1,
+priorite: 1,
+nom: "DUPONT",
+prenom: "Jean",
+dateNaissance: "1946-03-12",
+age: 78,
+iep: "12345678",
+ins: "1 84 03 12 345 678",
+service: "Pneumologie",
+chambre: "A12",
+lit: "03",
+sortMedActive: true,
+sortMedActivatedAt: "2026-03-14T09:00:00",
+maturiteSortie: "Organisation sortie",
+freinPrincipal: "Place aval",
+synthese: "Sort Med actif, solution non prête, place aval en attente.",
+urgentPostItCount: 1,
+unresolvedPostItCount: 2,
+prochaineRevue: "2026-03-19",
+},
+{
+id: 2,
+priorite: 2,
+nom: "JOREL",
+prenom: "Henri",
+dateNaissance: "1944-11-16",
+age: 79,
+iep: "87654321",
+ins: "1 44 11 22 333 444",
+service: "Pneumologie",
+chambre: "A04",
+lit: "01",
+sortMedActive: true,
+sortMedActivatedAt: "2026-03-16T08:30:00",
+maturiteSortie: "Besoins identifiés",
+freinPrincipal: "Social",
+synthese: "Sort Med actif, besoin de coordination sociale.",
+urgentPostItCount: 0,
+unresolvedPostItCount: 1,
+prochaineRevue: "2026-03-18",
+},
+{
+id: 3,
+priorite: 3,
+nom: "PERON",
+prenom: "Jocelyn",
+dateNaissance: "1975-08-25",
+age: 50,
+iep: "23456789",
+ins: "1 75 08 25 987 654",
+service: "Médecine",
+chambre: "B10",
+lit: "02",
+sortMedActive: false,
+sortMedActivatedAt: null,
+maturiteSortie: "Besoins identifiés",
+freinPrincipal: "Coordination",
+synthese: "Préparation de sortie à renforcer avant Sort Med.",
+urgentPostItCount: 0,
+unresolvedPostItCount: 0,
+prochaineRevue: "2026-03-20",
+},
+{
+id: 4,
+priorite: 4,
+nom: "MOREL",
+prenom: "Sébastien",
+dateNaissance: "1969-02-12",
+age: 56,
+iep: "54567890",
+ins: "1 69 02 12 888 999",
+service: "Chirurgie",
+chambre: "C07",
+lit: "01",
+sortMedActive: true,
+sortMedActivatedAt: "2026-03-13T11:15:00",
+maturiteSortie: "Solution prête",
+freinPrincipal: "Administratif",
+synthese: "Solution prête, clôture administrative à finaliser.",
+urgentPostItCount: 0,
+unresolvedPostItCount: 1,
+prochaineRevue: "2026-03-18",
+},
+{
+id: 5,
+priorite: 5,
+nom: "DEAN",
+prenom: "Jane",
+dateNaissance: "1958-08-12",
+age: 67,
+iep: "99887766",
+ins: "1 58 08 12 222 111",
+service: "Oncologie",
+chambre: "A05",
+lit: "05",
+sortMedActive: false,
+sortMedActivatedAt: null,
+maturiteSortie: "Organisation sortie",
+freinPrincipal: "Place aval",
+synthese: "Organisation en cours, attente retour structure aval.",
+urgentPostItCount: 1,
+unresolvedPostItCount: 1,
+prochaineRevue: "2026-03-21",
+},
+{
+id: 6,
+priorite: 6,
+nom: "BERNARD",
+prenom: "Luc",
+dateNaissance: "1961-06-03",
+age: 64,
+iep: "11223344",
+ins: "1 61 06 03 111 222",
+service: "Neurologie",
+chambre: "D03",
+lit: "02",
+sortMedActive: true,
+sortMedActivatedAt: "2026-03-15T14:00:00",
+maturiteSortie: "Organisation sortie",
+freinPrincipal: "Famille",
+synthese: "Sort Med actif, validation famille attendue.",
+urgentPostItCount: 0,
+unresolvedPostItCount: 1,
+prochaineRevue: "2026-03-19",
+},
+];
+
+const services = [
+"Pneumologie",
+"Médecine",
+"Oncologie",
+"Chirurgie",
+"Neurologie",
+];
+
+const maturites = [
+"Besoins identifiés",
+"Organisation sortie",
+"Solution prête",
+];
+
+const freins = [
+"Social",
+"Place aval",
+"Coordination",
+"Famille",
+"Administratif",
+];
+
+const quickFilters = [
+{ key: "sortMedOnly", label: "Sort Med actifs" },
+{ key: "withoutSolutionOnly", label: "Sans solution" },
+{ key: "avoidableDaysOnly", label: "Jours évitables > 0" },
+{ key: "urgentOnly", label: "Urgents" },
+{ key: "unansweredOnly", label: "Post-it non répondus" },
+];
+
+const serviceOccupancy = {
+Pneumologie: 92,
+Médecine: 78,
+Oncologie: 58,
+Chirurgie: 61,
+Neurologie: 45,
+};
+
+function formatDate(dateString) {
+const d = new Date(dateString);
+if (Number.isNaN(d.getTime())) return dateString;
+return d.toLocaleDateString("fr-FR");
+}
+
+function diffInDays(fromDate) {
+if (!fromDate) return 0;
+const start = new Date(fromDate);
+const now = new Date();
+const ms = now.getTime() - start.getTime();
+return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
+}
+
+function toggleInArray(value, list) {
+return list.includes(value)
+? list.filter((item) => item !== value)
+: [...list, value];
+}
+
+function getOccupationClass(value) {
+if (value >= 90) return "danger";
+if (value >= 75) return "warning";
+return "normal";
+}
+
+function getDaysClass(days) {
+if (days >= 3) return "critical";
+if (days >= 1) return "warning";
+return "neutral";
+}
+
+function getPatientPriorityScore(patient) {
+let score = 0;
+if (patient.sortMedActive) score += 50;
+if (patient.maturiteSortie !== "Solution prête") score += 20;
+if (patient.freinPrincipal) score += 10;
+score += diffInDays(patient.sortMedActivatedAt) * 5;
+score += patient.urgentPostItCount * 8;
+score += patient.unresolvedPostItCount * 3;
+return score;
+}
+
+export default function Dashboard() {
+const [patients, setPatients] = useState(initialPatients);
+const [leftMenuOpen, setLeftMenuOpen] = useState(true);
+const [rightRailOpen, setRightRailOpen] = useState(true);
+
+const [selectedServices, setSelectedServices] = useState([]);
+const [selectedMaturites, setSelectedMaturites] = useState([]);
+const [selectedFreins, setSelectedFreins] = useState([]);
+const [selectedQuickFilters, setSelectedQuickFilters] = useState([]);
+const [search, setSearch] = useState("");
+const [expandedRows, setExpandedRows] = useState([]);
+
+const toggleSortMed = (patientId) => {
+setPatients((prev) =>
+prev.map((patient) => {
+if (patient.id !== patientId) return patient;
+if (patient.sortMedActive) {
+return { ...patient, sortMedActive: false, sortMedActivatedAt: null };
+}
+return {
+...patient,
+sortMedActive: true,
+sortMedActivatedAt: new Date().toISOString(),
+};
+})
+);
+};
+
+const toggleExpandedRow = (id) => {
+setExpandedRows((prev) =>
+prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+);
+};
+
+const filteredPatients = useMemo(() => {
+const query = search.trim().toLowerCase();
+
+return patients
+.filter((patient) => {
+const matchesService =
+selectedServices.length === 0 ||
+selectedServices.includes(patient.service);
+
+const matchesMaturite =
+selectedMaturites.length === 0 ||
+selectedMaturites.includes(patient.maturiteSortie);
+
+const matchesFrein =
+selectedFreins.length === 0 ||
+selectedFreins.includes(patient.freinPrincipal);
+
+const matchesSearch =
+!query ||
+[
+patient.nom,
+patient.prenom,
+patient.iep,
+patient.ins,
+patient.service,
+patient.chambre,
+patient.lit,
+]
+.join(" ")
+.toLowerCase()
+.includes(query);
+
+const matchesSortMed =
+!selectedQuickFilters.includes("sortMedOnly") || patient.sortMedActive;
+
+const matchesWithoutSolution =
+!selectedQuickFilters.includes("withoutSolutionOnly") ||
+(patient.sortMedActive && patient.maturiteSortie !== "Solution prête");
+
+const matchesAvoidableDays =
+!selectedQuickFilters.includes("avoidableDaysOnly") ||
+(patient.sortMedActive && diffInDays(patient.sortMedActivatedAt) > 0);
+
+const matchesUrgent =
+!selectedQuickFilters.includes("urgentOnly") ||
+patient.urgentPostItCount > 0;
+
+const matchesUnanswered =
+!selectedQuickFilters.includes("unansweredOnly") ||
+patient.unresolvedPostItCount > 0;
+
+return (
+matchesService &&
+matchesMaturite &&
+matchesFrein &&
+matchesSearch &&
+matchesSortMed &&
+matchesWithoutSolution &&
+matchesAvoidableDays &&
+matchesUrgent &&
+matchesUnanswered
+);
+})
+.sort((a, b) => getPatientPriorityScore(b) - getPatientPriorityScore(a));
+}, [
+patients,
+selectedServices,
+selectedMaturites,
+selectedFreins,
+selectedQuickFilters,
+search,
+]);
+
+const kpis = useMemo(() => {
+const occupiedBeds = 92;
+const capacityBeds = 100;
+
+const sortMedCount = filteredPatients.filter((p) => p.sortMedActive).length;
+const withoutSolution = filteredPatients.filter(
+(p) => p.sortMedActive && p.maturiteSortie !== "Solution prête"
+).length;
+const avoidableDays = filteredPatients
+.filter((p) => p.sortMedActive)
+.reduce((sum, p) => sum + diffInDays(p.sortMedActivatedAt), 0);
+const recoverableBeds = filteredPatients.filter(
+(p) => p.sortMedActive && p.maturiteSortie === "Solution prête"
+).length;
+
+return {
+occupiedBeds,
+capacityBeds,
+sortMedCount,
+withoutSolution,
+avoidableDays,
+recoverableBeds,
+};
+}, [filteredPatients]);
+
+const servicesRailData = useMemo(() => {
+return services
+.map((service) => {
+const patientsInService = patients.filter((p) => p.service === service);
+const problematicPatients = patientsInService.filter(
+(p) =>
+p.sortMedActive ||
+p.maturiteSortie !== "Solution prête" ||
+p.urgentPostItCount > 0 ||
+p.unresolvedPostItCount > 0
+);
+
+return {
+service,
+occupation: serviceOccupancy[service] || 0,
+problemCount: problematicPatients.length,
+};
+})
+.sort((a, b) => b.occupation - a.occupation);
+}, [patients]);
+
+const handleServiceQuickFilter = (service) => {
+setSelectedServices([service]);
+setRightRailOpen(false);
+};
+
+const clearFilters = () => {
+setSelectedServices([]);
+setSelectedMaturites([]);
+setSelectedFreins([]);
+setSelectedQuickFilters([]);
+setSearch("");
+};
+
+return (
+<div className="dashboard-page">
+<header className="top-header">
+<div className="header-left">
+<button
+className="icon-btn"
+onClick={() => setLeftMenuOpen((prev) => !prev)}
+aria-label="Ouvrir le menu"
+>
+☰
+</button>
+
+<div className="brand-block">
+<h1>CARABBAS</h1>
+<p>Pilotage des sorties hospitalières complexes</p>
+</div>
+</div>
+
+<div className="header-right">
+<button
+className="ghost-btn"
+onClick={() => setRightRailOpen((prev) => !prev)}
+>
+Services en tension
+</button>
+
+<button
+className="crisis-button"
+onClick={() => alert("Ouvrir le formulaire cellule de crise")}
+>
+Déclencher une cellule de crise
+</button>
+</div>
+</header>
+
+<aside className={`left-sidebar ${leftMenuOpen ? "expanded" : "collapsed"}`}>
+<nav className="left-sidebar-nav">
+<button className="sidebar-link active">
+<span className="sidebar-icon">🏠</span>
+{leftMenuOpen && <span>Tableau de bord</span>}
+</button>
+<button className="sidebar-link">
+<span className="sidebar-icon">🧑</span>
+{leftMenuOpen && <span>Patients</span>}
+</button>
+<button className="sidebar-link">
+<span className="sidebar-icon">🤝</span>
+{leftMenuOpen && <span>Vue duo</span>}
+</button>
+<button className="sidebar-link">
+<span className="sidebar-icon">⚠️</span>
+{leftMenuOpen && <span>Cellule de crise</span>}
+</button>
+</nav>
+</aside>
+
+<aside className={`right-rail ${rightRailOpen ? "open" : "closed"}`}>
+<div className="section-title">Services en tension</div>
+
+<div className="rail-list">
+{servicesRailData.map((item) => (
+<button
+key={item.service}
+className="rail-service-card"
+onClick={() => handleServiceQuickFilter(item.service)}
+>
+<div className="rail-card-top">
+<span className="rail-service-name">{item.service}</span>
+<span
+className={`rail-service-occupation ${getOccupationClass(
+item.occupation
+)}`}
+>
+{item.occupation}%
+</span>
+</div>
+
+<div className="rail-card-bottom">
+<span>{item.problemCount} patient(s) à traiter</span>
+<span className="rail-link">Voir</span>
+</div>
+</button>
+))}
+</div>
+</aside>
+
+<main
+className={`dashboard-main ${
+leftMenuOpen ? "with-left-sidebar" : "with-left-sidebar-collapsed"
+} ${rightRailOpen ? "with-right-rail" : "without-right-rail"}`}
+>
+<section className="kpi-row">
+<div className="kpi-card teal">
+<span className="kpi-label">Lits occupés / capacité</span>
+<strong className="kpi-value">
+{kpis.occupiedBeds} / {kpis.capacityBeds}
+</strong>
+</div>
+
+<div className="kpi-card blue">
+<span className="kpi-label">Sort Med</span>
+<strong className="kpi-value">{kpis.sortMedCount}</strong>
+</div>
+
+<div className="kpi-card orange">
+<span className="kpi-label">Patients sans solution</span>
+<strong className="kpi-value">{kpis.withoutSolution}</strong>
+</div>
+
+<div className="kpi-card red">
+<span className="kpi-label">Jours évitables</span>
+<strong className="kpi-value">{kpis.avoidableDays}</strong>
+</div>
+
+<div className="kpi-card light">
+<span className="kpi-label">Lits récupérables</span>
+<strong className="kpi-value">{kpis.recoverableBeds}</strong>
+</div>
+</section>
+
+<section className="filters-panel">
+<div className="filters-header">
+<div className="filters-title">Filtres</div>
+<button className="reset-filters-btn" onClick={clearFilters}>
+Réinitialiser
+</button>
+</div>
+
+<div className="filter-group">
+<div className="filter-label">Services</div>
+<div className="chip-row">
+{services.map((service) => (
+<button
+key={service}
+className={`chip ${
+selectedServices.includes(service) ? "selected" : ""
+}`}
+onClick={() =>
+setSelectedServices((prev) => toggleInArray(service, prev))
+}
+>
+{service}
+</button>
+))}
+</div>
+</div>
+
+<div className="filter-group">
+<div className="filter-label">Maturité sortie</div>
+<div className="chip-row">
+{maturites.map((item) => (
+<button
+key={item}
+className={`chip ${
+selectedMaturites.includes(item) ? "selected" : ""
+}`}
+onClick={() =>
+setSelectedMaturites((prev) => toggleInArray(item, prev))
+}
+>
+{item}
+</button>
+))}
+</div>
+</div>
+
+<div className="filter-group">
+<div className="filter-label">Frein principal</div>
+<div className="chip-row">
+{freins.map((item) => (
+<button
+key={item}
+className={`chip ${
+selectedFreins.includes(item) ? "selected" : ""
+}`}
+onClick={() =>
+setSelectedFreins((prev) => toggleInArray(item, prev))
+}
+>
+{item}
+</button>
+))}
+</div>
+</div>
+
+<div className="filter-group">
+<div className="filter-label">Raccourcis pilotage</div>
+<div className="chip-row">
+{quickFilters.map((item) => (
+<button
+key={item.key}
+className={`chip ${
+selectedQuickFilters.includes(item.key) ? "selected" : ""
+}`}
+onClick={() =>
+setSelectedQuickFilters((prev) =>
+toggleInArray(item.key, prev)
+)
+}
+>
+{item.label}
+</button>
+))}
+</div>
+</div>
+
+<div className="filter-search">
+<input
+type="text"
+placeholder="Nom / INS / IEP / chambre / lit"
+value={search}
+onChange={(e) => setSearch(e.target.value)}
+/>
+</div>
+</section>
+
+<section className="patients-card desktop-table">
+<div className="section-title">Patients prioritaires</div>
+
+<div className="patients-table-wrapper">
+<table className="patients-table">
+<thead>
+<tr>
+<th>Priorité</th>
+<th>Identité patient</th>
+<th>Localisation</th>
+<th>Sort Med</th>
+<th>Maturité sortie</th>
+<th>Frein principal</th>
+<th>Jours évitables</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+{filteredPatients.map((patient) => {
+const avoidableDays = patient.sortMedActive
+? diffInDays(patient.sortMedActivatedAt)
+: null;
+const isExpanded = expandedRows.includes(patient.id);
+
+return (
+<React.Fragment key={patient.id}>
+<tr className="patient-row">
+<td>
+<span className="priority-badge">{patient.priorite}</span>
+</td>
+
+<td>
+<div className="identity-block">
+<Link
+to={`/patient/${patient.id}`}
+className="patient-link"
+>
+{patient.nom} {patient.prenom}
+</Link>
+
+<div className="identity-line">
+Né le {formatDate(patient.dateNaissance)} ·{" "}
+{patient.age} ans
+</div>
+
+<div className="identity-line">
+IEP {patient.iep} · INS {patient.ins}
+</div>
+</div>
+</td>
+
+<td>
+<div className="location-block">
+<div className="location-service">{patient.service}</div>
+<div className="location-line">
+Ch. {patient.chambre} · Lit {patient.lit}
+</div>
+</div>
+</td>
+
+<td>
+<button
+className={`sort-med-toggle ${
+patient.sortMedActive ? "active" : ""
+}`}
+onClick={() => toggleSortMed(patient.id)}
+>
+{patient.sortMedActive
+? `Sort Med J+${diffInDays(
+patient.sortMedActivatedAt
+)}`
+: "○ Sort Med"}
+</button>
+</td>
+
+<td>
+<span className="maturity-badge">
+{patient.maturiteSortie}
+</span>
+</td>
+
+<td>
+<span className="frein-badge">
+{patient.freinPrincipal}
+</span>
+</td>
+
+<td>
+{avoidableDays === null ? (
+<span className="days-empty">—</span>
+) : (
+<span
+className={`days-badge ${getDaysClass(
+avoidableDays
+)}`}
+>
+J+{avoidableDays}
+</span>
+)}
+</td>
+
+<td>
+<button
+className="expand-btn"
+onClick={() => toggleExpandedRow(patient.id)}
+>
+{isExpanded ? "Réduire" : "Détail"}
+</button>
+</td>
+</tr>
+
+{isExpanded && (
+<tr className="expanded-row">
+<td colSpan="8">
+<div className="expanded-content">
+<div className="expanded-block">
+<div className="expanded-label">Synthèse</div>
+<div>{patient.synthese}</div>
+</div>
+
+<div className="expanded-block">
+<div className="expanded-label">
+Prochaine revue
+</div>
+<div>{formatDate(patient.prochaineRevue)}</div>
+</div>
+
+<div className="expanded-block">
+<div className="expanded-label">Post-it</div>
+<div>
+{patient.urgentPostItCount} urgent(s) ·{" "}
+{patient.unresolvedPostItCount} non répondu(s)
+</div>
+</div>
+
+<div className="expanded-actions">
+<Link
+to={`/patient/${patient.id}`}
+className="open-patient-btn"
+>
+Ouvrir la fiche patient
+</Link>
+</div>
+</div>
+</td>
+</tr>
+)}
+</React.Fragment>
+);
+})}
+
+{filteredPatients.length === 0 && (
+<tr>
+<td colSpan="8" className="empty-row">
+Aucun patient ne correspond aux filtres.
+</td>
+</tr>
+)}
+</tbody>
+</table>
+</div>
+</section>
+
+<section className="mobile-cards">
+<div className="section-title">Patients prioritaires</div>
+
+<div className="patient-cards-list">
+{filteredPatients.map((patient) => {
+const avoidableDays = patient.sortMedActive
+? diffInDays(patient.sortMedActivatedAt)
+: null;
+const isExpanded = expandedRows.includes(patient.id);
+
+return (
+<article className="patient-card" key={patient.id}>
+<div className="patient-card-top">
+<span className="priority-badge">{patient.priorite}</span>
+<button
+className="expand-btn"
+onClick={() => toggleExpandedRow(patient.id)}
+>
+{isExpanded ? "Réduire" : "Détail"}
+</button>
+</div>
+
+<div className="identity-block">
+<Link to={`/patient/${patient.id}`} className="patient-link">
+{patient.nom} {patient.prenom}
+</Link>
+<div className="identity-line">
+Né le {formatDate(patient.dateNaissance)} · {patient.age} ans
+</div>
+<div className="identity-line">
+IEP {patient.iep} · INS {patient.ins}
+</div>
+</div>
+
+<div className="location-block mobile-space">
+<div className="location-service">{patient.service}</div>
+<div className="location-line">
+Ch. {patient.chambre} · Lit {patient.lit}
+</div>
+</div>
+
+<div className="patient-card-tags">
+<button
+className={`sort-med-toggle ${
+patient.sortMedActive ? "active" : ""
+}`}
+onClick={() => toggleSortMed(patient.id)}
+>
+{patient.sortMedActive
+? `Sort Med J+${diffInDays(patient.sortMedActivatedAt)}`
+: "○ Sort Med"}
+</button>
+
+<span className="maturity-badge">
+{patient.maturiteSortie}
+</span>
+
+<span className="frein-badge">{patient.freinPrincipal}</span>
+
+{avoidableDays === null ? (
+<span className="days-empty mobile-days">—</span>
+) : (
+<span
+className={`days-badge ${getDaysClass(
+avoidableDays
+)}`}
+>
+J+{avoidableDays}
+</span>
+)}
+</div>
+
+{(patient.urgentPostItCount > 0 ||
+patient.unresolvedPostItCount > 0) && (
+<div className="patient-alerts">
+{patient.urgentPostItCount > 0 && (
+<span className="alert-pill urgent">
+{patient.urgentPostItCount} note urgente
+</span>
+)}
+{patient.unresolvedPostItCount > 0 && (
+<span className="alert-pill">
+{patient.unresolvedPostItCount} non répondu
+</span>
+)}
+</div>
+)}
+
+{isExpanded && (
+<div className="mobile-expanded">
+<div className="expanded-block">
+<div className="expanded-label">Synthèse</div>
+<div>{patient.synthese}</div>
+</div>
+
+<div className="expanded-block">
+<div className="expanded-label">Prochaine revue</div>
+<div>{formatDate(patient.prochaineRevue)}</div>
+</div>
+
+<Link
+to={`/patient/${patient.id}`}
+className="open-patient-btn"
+>
+Ouvrir la fiche patient
+</Link>
+</div>
+)}
+</article>
+);
+})}
+
+{filteredPatients.length === 0 && (
+<div className="empty-mobile">
+Aucun patient ne correspond aux filtres.
+</div>
+)}
+</div>
+</section>
+</main>
+</div>
+);
 }
