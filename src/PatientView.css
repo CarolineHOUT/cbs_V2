@@ -8,34 +8,34 @@
   position: sticky;
   top: 0;
   z-index: 60;
-  height: 72px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 18px;
+  gap: 10px;
+  padding: 8px 14px;
   background: linear-gradient(90deg, #153e9f, #1d4ed8);
   color: white;
-  box-shadow: 0 8px 24px rgba(14, 42, 112, 0.18);
+  box-shadow: 0 6px 18px rgba(14, 42, 112, 0.16);
 }
 
 .pv-header-left,
 .pv-header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .pv-brand-block h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 24px;
   line-height: 1;
   font-weight: 800;
 }
 
 .pv-brand-block p {
-  margin: 4px 0 0;
-  font-size: 13px;
+  margin: 2px 0 0;
+  font-size: 11px;
   opacity: 0.9;
 }
 
@@ -48,84 +48,92 @@
 }
 
 .pv-icon-btn {
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.14);
   color: white;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .pv-ghost-btn {
-  min-height: 40px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 0 10px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
   color: white;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .pv-crisis-button {
-  min-height: 42px;
-  padding: 0 16px;
+  min-height: 32px;
+  padding: 0 10px;
   border-radius: 999px;
-  background: white;
-  color: #153e9f;
+  background: rgba(255, 255, 255, 0.96);
+  color: #b42318;
+  font-size: 12px;
   font-weight: 800;
 }
 
-.pv-badge-counter {
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
+.coordination-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coordination-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   background: white;
   color: #153e9f;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
 }
 
-.pv-badge-counter.urgent {
+.coordination-badge.urgent {
   background: #ffdbdf;
   color: #b42318;
 }
 
 .pv-left-sidebar {
   position: fixed;
-  top: 72px;
+  top: 60px;
   left: 0;
   bottom: 0;
-  width: 88px;
+  width: 78px;
   z-index: 30;
   background: white;
   border-right: 1px solid #e7edf5;
-  box-shadow: 0 8px 24px rgba(15, 35, 95, 0.06);
+  box-shadow: 0 8px 24px rgba(15, 35, 95, 0.05);
 }
 
 .pv-left-sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px 10px;
+  padding: 12px 8px;
 }
 
 .pv-sidebar-link {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  min-height: 72px;
-  padding: 10px 8px;
-  border-radius: 14px;
+  gap: 4px;
+  min-height: 64px;
+  padding: 8px 6px;
+  border-radius: 12px;
   background: transparent;
   color: #172b4d;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-align: center;
 }
@@ -141,7 +149,7 @@
 }
 
 .pv-sidebar-icon {
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1;
 }
 
@@ -149,36 +157,58 @@
   display: none;
 }
 
-.pv-right-rail {
+.pv-mobile-overlay.strong {
+  display: block;
   position: fixed;
-  top: 72px;
-  right: 0;
-  bottom: 0;
-  width: 340px;
-  z-index: 35;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  border: none;
+  z-index: 80;
+}
+
+.pv-coordination-panel {
+  position: fixed;
+  top: 64px;
+  right: 10px;
+  left: 10px;
+  bottom: 10px;
+  z-index: 90;
   background: white;
-  border-left: 1px solid #e7edf5;
-  box-shadow: 0 8px 24px rgba(15, 35, 95, 0.06);
-  transition: transform 0.25s ease;
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(15, 35, 95, 0.16);
   overflow: auto;
 }
 
-.pv-right-rail.open {
-  transform: translateX(0);
-}
-
-.pv-right-rail.closed {
-  transform: translateX(100%);
-}
-
-.pv-right-rail-header {
-  padding: 14px 16px;
+.pv-panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: white;
+  padding: 12px 14px;
   border-bottom: 1px solid #e7edf5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 800;
 }
 
-.pv-right-rail-title {
-  font-size: 18px;
-  font-weight: 800;
+.pv-panel-header button {
+  border: none;
+  background: #eef4ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pv-main {
+  padding: 12px;
+  margin-left: 78px;
+}
+
+.pv-right-content {
+  padding: 12px 14px 14px;
 }
 
 .pv-right-tabs {
@@ -187,12 +217,13 @@
   border-bottom: 1px solid #e7edf5;
 }
 
+.pv-right-tabs.compact button,
 .pv-right-tabs button {
-  min-height: 48px;
+  min-height: 42px;
   border: none;
   background: white;
   color: #5f6b7a;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -202,49 +233,19 @@
   color: #1d4ed8;
 }
 
-.pv-tab-badge {
-  margin-left: 6px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+.tab-badge {
+  margin-left: 5px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   background: #b42318;
   color: white;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
-}
-
-.pv-right-content {
-  padding: 14px;
-}
-
-.pv-rail-section h3 {
-  margin: 0 0 12px;
-  font-size: 17px;
-}
-
-.pv-contact-card,
-.pv-info-card {
-  display: grid;
-  gap: 6px;
-  margin-bottom: 12px;
-  padding: 12px;
-  border: 1px solid #e7edf5;
-  border-radius: 14px;
-  background: #f8fbff;
-}
-
-.pv-main {
-  padding: 18px;
-  margin-left: 88px;
-  transition: margin-right 0.25s ease;
-}
-
-.pv-main.with-right-rail {
-  margin-right: 340px;
 }
 
 .pv-identity-banner,
@@ -253,16 +254,20 @@
 .pv-block,
 .pv-alert-strip {
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(15, 35, 95, 0.06);
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(15, 35, 95, 0.05);
 }
 
 .pv-identity-banner {
   display: flex;
   justify-content: space-between;
-  gap: 18px;
-  padding: 16px;
-  margin-bottom: 14px;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.pv-identity-banner.compact {
+  padding: 10px 12px;
 }
 
 .pv-patient-name {
@@ -271,10 +276,19 @@
   margin-bottom: 6px;
 }
 
+.pv-patient-name.compact {
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+
 .pv-identity-line {
   color: #5f6b7a;
   font-size: 14px;
   line-height: 1.35;
+}
+
+.pv-identity-line.compact {
+  font-size: 12px;
 }
 
 .pv-location-service {
@@ -283,77 +297,114 @@
   text-align: right;
 }
 
+.pv-location-service.compact {
+  font-size: 16px;
+}
+
 .pv-alert-strip {
-  margin-bottom: 14px;
-  padding: 12px 14px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   background: #fff8e9;
   border: 1px solid #f8dfae;
+  font-size: 12px;
+}
+
+.pv-alert-strip.compact {
+  padding: 8px 10px;
 }
 
 .pv-alert-link {
   border: none;
   background: transparent;
   color: #1d4ed8;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
+  padding: 0;
 }
 
 .pv-summary-banner {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  padding: 14px;
-  margin-bottom: 14px;
+  gap: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.pv-summary-banner.compact {
+  padding: 8px;
 }
 
 .pv-summary-card {
-  min-height: 92px;
+  min-height: 74px;
   border: 1px solid #e7edf5;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #f8fbff;
-  padding: 12px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
+.pv-summary-card.compact {
+  min-height: 66px;
+  padding: 8px;
+}
+
 .pv-summary-label {
   color: #5f6b7a;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.pv-summary-card strong {
+  font-size: 12px;
+}
+
+.pv-sortmed-toggle {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid #cfe0d7;
+  border-radius: 999px;
+  background: #f4fbf6;
+  color: #1d5132;
   font-size: 12px;
   font-weight: 800;
 }
 
-.pv-sortmed-toggle {
-  min-height: 34px;
-  border: 1px solid #cfe0d7;
-  background: #f4fbf6;
-  color: #1d5132;
-  border-radius: 999px;
-  padding: 0 12px;
-  font-size: 13px;
-  font-weight: 800;
+.pv-sortmed-toggle.compact {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
 }
 
 .pv-sortmed-toggle.active {
   background: #eaf7ee;
-  border-color: #abd5b6;
   color: #15803d;
+  border-color: #abd5b6;
 }
 
 .pv-risk-banner {
-  margin-bottom: 14px;
-  padding: 14px 16px;
-  border-left: 6px solid transparent;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-left: 5px solid transparent;
+}
+
+.pv-risk-banner.compact {
+  padding: 8px 10px;
 }
 
 .pv-risk-title {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 800;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+.pv-risk-reason {
+  font-size: 12px;
 }
 
 .risk-high {
@@ -376,22 +427,26 @@
 
 .pv-content-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.9fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1.7fr) minmax(250px, 0.9fr);
+  gap: 10px;
 }
 
 .pv-main-column,
 .pv-side-column {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .pv-block {
-  padding: 16px;
+  padding: 12px;
+}
+
+.pv-block.compact {
+  padding: 10px;
 }
 
 .pv-block-title {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 800;
   margin-bottom: 8px;
 }
@@ -399,20 +454,24 @@
 .pv-source-tag {
   display: inline-flex;
   align-items: center;
-  min-height: 26px;
-  padding: 0 10px;
+  min-height: 22px;
+  padding: 0 8px;
   border-radius: 999px;
   background: #eef4ff;
   color: #214b9c;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .pv-block-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px 18px;
+  gap: 10px 14px;
+}
+
+.pv-block-grid.compact {
+  gap: 8px 12px;
 }
 
 .pv-full-width {
@@ -421,40 +480,53 @@
 
 .pv-field-label {
   display: block;
-  margin-bottom: 4px;
-  font-size: 12px;
+  margin-bottom: 3px;
+  font-size: 11px;
   color: #5f6b7a;
   font-weight: 800;
 }
 
 .pv-synthesis-text {
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.pv-synthesis-text.compact {
+  font-size: 13px;
 }
 
 .pv-duo-sections {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
+}
+
+.pv-duo-sections.compact {
+  gap: 8px;
 }
 
 .pv-duo-column {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .pv-subtitle {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
+  color: #172b4d;
 }
 
 .pv-action-card {
   border: 1px solid #e7edf5;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #f8fbff;
-  padding: 12px;
+  padding: 10px;
   display: grid;
-  gap: 6px;
+  gap: 4px;
+}
+
+.pv-action-card.compact {
+  padding: 8px;
 }
 
 .pv-action-card.current {
@@ -464,47 +536,53 @@
 
 .pv-action-card.future {
   background: #f5f8ff;
+  border-color: #dbe5f0;
 }
 
 .pv-action-title {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
 }
 
-.pv-action-meta,
-.pv-postit-meta {
-  font-size: 12px;
+.pv-action-meta {
+  font-size: 11px;
   color: #5f6b7a;
 }
 
-.pv-new-form {
+.pv-new-postit {
   display: grid;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
-.pv-new-form input,
-.pv-new-form select,
-.pv-new-form textarea {
+.pv-new-postit.compact {
+  gap: 6px;
+}
+
+.pv-new-postit input,
+.pv-new-postit select,
+.pv-new-postit textarea {
   width: 100%;
   border: 1px solid #dbe5f0;
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 9px 10px;
   background: white;
   color: #172b4d;
+  font-size: 12px;
 }
 
-.pv-new-form textarea {
-  min-height: 90px;
+.pv-new-postit textarea {
+  min-height: 80px;
   resize: vertical;
 }
 
-.pv-new-form button {
-  min-height: 40px;
+.pv-new-postit button {
+  min-height: 32px;
   border: none;
-  border-radius: 10px;
+  border-radius: 9px;
   background: #1d4ed8;
   color: white;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -513,13 +591,13 @@
 .pv-history-list,
 .pv-quick-actions {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .pv-postit-card {
   border: 1px solid #e7edf5;
-  border-radius: 14px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 10px;
   background: white;
 }
 
@@ -527,42 +605,47 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .pv-postit-type,
 .pv-postit-status {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
 }
 
 .pv-postit-message {
-  font-size: 14px;
-  line-height: 1.45;
-  margin-bottom: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.pv-postit-meta {
+  font-size: 11px;
+  color: #5f6b7a;
 }
 
 .pv-postit-response {
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: 6px;
+  padding-top: 6px;
   border-top: 1px solid #e7edf5;
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
 .pv-postit-actions {
-  margin-top: 8px;
+  margin-top: 6px;
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .pv-postit-actions button {
-  min-height: 34px;
-  padding: 0 10px;
+  min-height: 28px;
+  padding: 0 9px;
   border-radius: 999px;
   border: 1px solid #dbe5f0;
   background: white;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
 }
 
@@ -582,41 +665,49 @@
   border-left: 4px solid #64748b;
 }
 
+.pv-contact-card,
+.pv-info-card,
 .pv-history-item {
   border: 1px solid #e7edf5;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #f8fbff;
-  padding: 12px;
+  padding: 10px;
 }
 
 .pv-history-date {
-  font-size: 12px;
+  font-size: 11px;
   color: #5f6b7a;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .pv-history-label {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .pv-history-detail {
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.4;
 }
 
 .pv-quick-link {
-  min-height: 40px;
+  min-height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #eef4ff;
   color: #1d4ed8;
+  font-size: 12px;
   font-weight: 800;
   text-align: center;
-  padding: 0 12px;
+  padding: 0 10px;
+}
+
+.pv-quick-link.compact {
+  min-height: 30px;
+  font-size: 11px;
 }
 
 @media (max-width: 1400px) {
@@ -630,14 +721,6 @@
 }
 
 @media (max-width: 1100px) {
-  .pv-right-rail {
-    width: 300px;
-  }
-
-  .pv-main.with-right-rail {
-    margin-right: 300px;
-  }
-
   .pv-content-grid {
     grid-template-columns: 1fr;
   }
@@ -648,7 +731,7 @@
     height: auto;
     flex-direction: column;
     align-items: stretch;
-    padding: 12px;
+    padding: 10px 12px;
   }
 
   .pv-header-left,
@@ -658,19 +741,19 @@
   }
 
   .pv-brand-block h1 {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .pv-brand-block p {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .pv-left-sidebar {
-    width: 250px;
-    top: 94px;
+    width: 230px;
+    top: 88px;
     transform: translateX(-105%);
     transition: transform 0.25s ease;
-    z-index: 55;
+    z-index: 85;
   }
 
   .pv-left-sidebar.mobile-open {
@@ -680,31 +763,23 @@
   .pv-sidebar-link {
     flex-direction: row;
     justify-content: flex-start;
-    min-height: 48px;
+    min-height: 44px;
     text-align: left;
+    font-size: 12px;
   }
 
   .pv-mobile-overlay {
     display: block;
     position: fixed;
-    inset: 94px 0 0 0;
+    inset: 88px 0 0 0;
     background: rgba(15, 23, 42, 0.35);
     border: none;
-    z-index: 50;
-  }
-
-  .pv-right-rail {
-    top: 94px;
-    width: 92%;
+    z-index: 80;
   }
 
   .pv-main {
     margin-left: 0;
-    padding: 12px;
-  }
-
-  .pv-main.with-right-rail {
-    margin-right: 0;
+    padding: 10px;
   }
 
   .pv-identity-banner {
@@ -729,14 +804,15 @@
     grid-template-columns: 1fr;
   }
 
-  .pv-patient-name {
-    font-size: 26px;
+  .pv-patient-name.compact {
+    font-size: 22px;
   }
 
   .pv-ghost-btn,
   .pv-crisis-button {
-    width: 100%;
-    justify-content: center;
+    min-height: 30px;
+    font-size: 11px;
+    padding: 0 8px;
   }
 
   .pv-right-tabs {
