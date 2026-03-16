@@ -1,12 +1,20 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import App from "./App.jsx";
-
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
-);
+{
+"name": "carabbas",
+"private": true,
+"version": "0.0.0",
+"type": "module",
+"scripts": {
+"dev": "vite",
+"build": "vite build",
+"preview": "vite preview"
+},
+"dependencies": {
+"react": "^18.2.0",
+"react-dom": "^18.2.0",
+"react-router-dom": "^6.23.0"
+},
+"devDependencies": {
+"vite": "^5.0.0",
+"@vitejs/plugin-react": "^4.0.0"
+}
+}
