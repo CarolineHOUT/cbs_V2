@@ -1,4 +1,6 @@
+
 import React, { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import "./Dashboard.css";
 
 const initialPatients = [
@@ -529,13 +531,18 @@ export default function Dashboard() {
 
                       <td>
                         <div className="identity-block">
-                          <div className="identity-name">
+                          <Link
+                            to={`/patient/${patient.id}`}
+                            className="patient-link"
+                          >
                             {patient.nom} {patient.prenom}
-                          </div>
+                          </Link>
+
                           <div className="identity-line">
                             Né le {formatDate(patient.dateNaissance)} ·{" "}
                             {patient.age} ans
                           </div>
+
                           <div className="identity-line">
                             IEP {patient.iep} · INS {patient.ins}
                           </div>
