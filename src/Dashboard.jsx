@@ -161,6 +161,14 @@ const quickFilters = [
 { key: "unansweredOnly", label: "Post-it non répondus" },
 ];
 
+const serviceCapacity = {
+Pneumologie: 30,
+Médecine: 40,
+Oncologie: 20,
+Chirurgie: 35,
+Neurologie: 25,
+};
+
 const serviceOccupancy = {
 Pneumologie: 92,
 Médecine: 78,
@@ -216,6 +224,7 @@ export default function Dashboard() {
 const [patients, setPatients] = useState(initialPatients);
 const [leftMenuOpen, setLeftMenuOpen] = useState(true);
 const [rightRailOpen, setRightRailOpen] = useState(true);
+const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
 
 const [selectedServices, setSelectedServices] = useState([]);
 const [selectedMaturites, setSelectedMaturites] = useState([]);
@@ -228,9 +237,15 @@ const toggleSortMed = (patientId) => {
 setPatients((prev) =>
 prev.map((patient) => {
 if (patient.id !== patientId) return patient;
+
 if (patient.sortMedActive) {
-return { ...patient, sortMedActive: false, sortMedActivatedAt: null };
+return {
+...patient,
+sortMedActive: false,
+sortMedActivatedAt: null,
+};
 }
+
 return {
 ...patient,
 sortMedActive: true,
@@ -322,19 +337,13 @@ search,
 const kpis = useMemo(() => {
 const occupiedBeds = filteredPatients.length;
 
-const capacityByService = {
-Pneumologie: 30,
-Médecine: 40,
-Oncologie: 20,
-Chirurgie: 35,
-Neurologie: 25,
-};
-
 const selectedPool =
-selectedServices.length > 0 ? selectedServices : Object.keys(capacityByService);
+selectedServices.length > 0
+? selectedServices
+: Object.keys(serviceCapacity);
 
 const capacityBeds = selectedPool.reduce(
-(sum, service) => sum + (capacityByService[service] || 0),
+(sum, service) => sum + (serviceCapacity[service] || 0),
 0
 );
 
@@ -366,6 +375,7 @@ const servicesRailData = useMemo(() => {
 return services
 .map((service) => {
 const patientsInService = patients.filter((p) => p.service === service);
+
 const problematicPatients = patientsInService.filter(
 (p) =>
 p.sortMedActive ||
@@ -437,14 +447,17 @@ Déclencher une cellule de crise
 <span className="sidebar-icon">🏠</span>
 {leftMenuOpen && <span>Tableau de bord</span>}
 </button>
+
 <button className="sidebar-link">
 <span className="sidebar-icon">🧑</span>
 {leftMenuOpen && <span>Patients</span>}
 </button>
+
 <button className="sidebar-link">
 <span className="sidebar-icon">🤝</span>
 {leftMenuOpen && <span>Vue duo</span>}
 </button>
+
 <button className="sidebar-link">
 <span className="sidebar-icon">⚠️</span>
 {leftMenuOpen && <span>Cellule de crise</span>}
@@ -519,9 +532,21 @@ leftMenuOpen ? "with-left-sidebar" : "with-left-sidebar-collapsed"
 <section className="filters-panel">
 <div className="filters-header">
 <div className="filters-title">Filtres</div>
+
+<div className="filters-actions">
+<button
+className="toggle-advanced-btn"
+onClick={() => setAdvancedFiltersOpen((prev) => !prev)}
+>
+{advancedFiltersOpen
+? "Masquer filtres avancés"
+: "Afficher filtres avancés"}
+</button>
+
 <button className="reset-filters-btn" onClick={clearFilters}>
 Réinitialiser
 </button>
+</div>
 </div>
 
 <div className="filter-group">
@@ -543,6 +568,38 @@ setSelectedServices((prev) => toggleInArray(service, prev))
 </div>
 </div>
 
+<div className="filter-group">
+<div className="filter-label">Raccourcis pilotage</div>
+<div className="chip-row">
+{quickFilters.map((item) => (
+<button
+key={item.key}
+className={`chip ${
+selectedQuickFilters.includes(item.key) ? "selected" : ""
+}`}
+onClick={() =>
+setSelectedQuickFilters((prev) =>
+toggleInArray(item.key, prev)
+)
+}
+>
+{item.label}
+</button>
+))}
+</div>
+</div>
+
+<div className="filter-search">
+<input
+type="text"
+placeholder="Nom / INS / IEP / chambre / lit"
+value={search}
+onChange={(e) => setSearch(e.target.value)}
+/>
+</div>
+
+{advancedFiltersOpen && (
+<div className="advanced-filters">
 <div className="filter-group">
 <div className="filter-label">Maturité sortie</div>
 <div className="chip-row">
@@ -580,36 +637,8 @@ setSelectedFreins((prev) => toggleInArray(item, prev))
 ))}
 </div>
 </div>
-
-<div className="filter-group">
-<div className="filter-label">Raccourcis pilotage</div>
-<div className="chip-row">
-{quickFilters.map((item) => (
-<button
-key={item.key}
-className={`chip ${
-selectedQuickFilters.includes(item.key) ? "selected" : ""
-}`}
-onClick={() =>
-setSelectedQuickFilters((prev) =>
-toggleInArray(item.key, prev)
-)
-}
->
-{item.label}
-</button>
-))}
 </div>
-</div>
-
-<div className="filter-search">
-<input
-type="text"
-placeholder="Nom / INS / IEP / chambre / lit"
-value={search}
-onChange={(e) => setSearch(e.target.value)}
-/>
-</div>
+)}
 </section>
 
 <section className="patients-card desktop-table">
@@ -641,7 +670,9 @@ return (
 <React.Fragment key={patient.id}>
 <tr className="patient-row">
 <td>
-<span className="priority-badge">{patient.priorite}</span>
+<span className="priority-badge">
+{patient.priorite}
+</span>
 </td>
 
 <td>
@@ -666,7 +697,9 @@ IEP {patient.iep} · INS {patient.ins}
 
 <td>
 <div className="location-block">
-<div className="location-service">{patient.service}</div>
+<div className="location-service">
+{patient.service}
+</div>
 <div className="location-line">
 Ch. {patient.chambre} · Lit {patient.lit}
 </div>
