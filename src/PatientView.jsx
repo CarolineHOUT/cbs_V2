@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import "./PatientView.css";
-import { patientDetailsDefaults, patients } from "./data/mockPatients";
 
 function formatDate(dateString) {
 if (!dateString) return "—";
