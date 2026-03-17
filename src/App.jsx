@@ -5,14 +5,14 @@ import PatientView from "./PatientView";
 import PatientsView from "./PatientsView";
 
 export default function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/patients" element={<PatientsView />} />
-        <Route path="/patient/:id" element={<PatientView />} />
-      </Routes>
-    </BrowserRouter>
-  );
+return (
+<BrowserRouter>
+<Routes>
+<Route path="/" element={<Navigate to="/dashboard" replace />} />
+<Route path="/dashboard" element={<Dashboard />} />
+<Route path="/patients" element={<PatientsView />} />
+<Route path="/patient/:id" element={<PatientView />} />
+</Routes>
+</BrowserRouter>
+);
 }
