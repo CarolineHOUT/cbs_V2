@@ -10,13 +10,14 @@
   --bg: #f4f7fb;
   --surface: #ffffff;
   --surface-soft: #f8fbff;
-  --line: #e6edf5;
-  --line-strong: #d8e1ec;
+  --line: #e5ecf5;
+  --line-strong: #d6e0ec;
 
   --text: #172b4d;
-  --muted: #64748b;
+  --text-soft: #5f6b7a;
 
   --blue: #1d4ed8;
+  --blue-deep: #143b96;
   --blue-soft: #eef4ff;
   --blue-border: #d8e6ff;
 
@@ -37,8 +38,11 @@
   --green-border: #d3e8d9;
 
   --shadow-sm: 0 8px 18px rgba(15, 35, 95, 0.04);
-  --shadow-md: 0 12px 24px rgba(15, 35, 95, 0.06);
-  --radius: 16px;
+  --shadow-md: 0 12px 26px rgba(15, 35, 95, 0.06);
+
+  --radius-lg: 18px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
 }
 
 * {
@@ -67,4 +71,8 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button {
+  cursor: pointer;
 }
