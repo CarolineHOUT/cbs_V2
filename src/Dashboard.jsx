@@ -3,1128 +3,1009 @@ import { Link } from "react-router-dom";
 import "./Dashboard.css";
 
 const initialPatients = [
-  {
-    id: 1,
-    priorite: 1,
-    nom: "DUPONT",
-    prenom: "Jean",
-    dateNaissance: "1946-03-12",
-    age: 78,
-    ins: "1 84 03 12 345 678",
-    iep: "12345678",
-    service: "Pneumologie",
-    chambre: "A12",
-    lit: "03",
-    sortMedActive: true,
-    sortMedActivatedAt: "2026-03-14T09:00:00",
-    maturiteSortie: "Organisation sortie",
-    freinPrincipal: "Place aval",
-    blocage: "Attente retour structure aval",
-    administratifPatient: "Dossier incomplet",
-    synthese: "Sort Med actif, solution non prête, place aval en attente.",
-    urgentPostItCount: 1,
-    unresolvedPostItCount: 2,
-    prochaineRevue: "2026-03-19",
-    prochaineAction: "Relance structure aval",
-    responsableAction: "Claire Morel",
-  },
-  {
-    id: 2,
-    priorite: 2,
-    nom: "JOREL",
-    prenom: "Henri",
-    dateNaissance: "1944-11-16",
-    age: 79,
-    ins: "1 44 11 22 333 444",
-    iep: "87654321",
-    service: "Pneumologie",
-    chambre: "A04",
-    lit: "01",
-    sortMedActive: true,
-    sortMedActivatedAt: "2026-03-16T08:30:00",
-    maturiteSortie: "Besoins identifiés",
-    freinPrincipal: "Social",
-    blocage: "Évaluation sociale en attente",
-    administratifPatient: "Mutuelle à confirmer",
-    synthese: "Sort Med actif, besoin de coordination sociale.",
-    urgentPostItCount: 0,
-    unresolvedPostItCount: 1,
-    prochaineRevue: "2026-03-18",
-    prochaineAction: "Point assistante sociale",
-    responsableAction: "Nora Simon",
-  },
-  {
-    id: 3,
-    priorite: 3,
-    nom: "PERON",
-    prenom: "Jocelyn",
-    dateNaissance: "1975-08-25",
-    age: 50,
-    ins: "1 75 08 25 987 654",
-    iep: "23456789",
-    service: "Médecine",
-    chambre: "B10",
-    lit: "02",
-    sortMedActive: false,
-    sortMedActivatedAt: null,
-    maturiteSortie: "Besoins identifiés",
-    freinPrincipal: "Coordination",
-    blocage: "Actions non réparties",
-    administratifPatient: "RAS",
-    synthese: "Préparation de sortie à renforcer avant Sort Med.",
-    urgentPostItCount: 0,
-    unresolvedPostItCount: 0,
-    prochaineRevue: "2026-03-20",
-    prochaineAction: "Recueil des besoins",
-    responsableAction: "Camille Roux",
-  },
-  {
-    id: 4,
-    priorite: 4,
-    nom: "MOREL",
-    prenom: "Sébastien",
-    dateNaissance: "1969-02-12",
-    age: 56,
-    ins: "1 69 02 12 888 999",
-    iep: "54567890",
-    service: "Chirurgie",
-    chambre: "C07",
-    lit: "01",
-    sortMedActive: true,
-    sortMedActivatedAt: "2026-03-13T11:15:00",
-    maturiteSortie: "Solution prête",
-    freinPrincipal: "Administratif",
-    blocage: "Validation finale",
-    administratifPatient: "Attente clôture",
-    synthese: "Solution prête, clôture administrative à finaliser.",
-    urgentPostItCount: 0,
-    unresolvedPostItCount: 1,
-    prochaineRevue: "2026-03-18",
-    prochaineAction: "Finaliser validation",
-    responsableAction: "Laura Petit",
-  },
-  {
-    id: 5,
-    priorite: 5,
-    nom: "DEAN",
-    prenom: "Jane",
-    dateNaissance: "1958-08-12",
-    age: 67,
-    ins: "1 58 08 12 222 111",
-    iep: "99887766",
-    service: "Oncologie",
-    chambre: "A05",
-    lit: "05",
-    sortMedActive: false,
-    sortMedActivatedAt: null,
-    maturiteSortie: "Organisation sortie",
-    freinPrincipal: "Place aval",
-    blocage: "Pas de place identifiée",
-    administratifPatient: "RAS",
-    synthese: "Organisation en cours, attente retour structure aval.",
-    urgentPostItCount: 1,
-    unresolvedPostItCount: 1,
-    prochaineRevue: "2026-03-21",
-    prochaineAction: "Relance place aval",
-    responsableAction: "Claire Morel",
-  },
-  {
-    id: 6,
-    priorite: 6,
-    nom: "BERNARD",
-    prenom: "Luc",
-    dateNaissance: "1961-06-03",
-    age: 64,
-    ins: "1 61 06 03 111 222",
-    iep: "11223344",
-    service: "Neurologie",
-    chambre: "D03",
-    lit: "02",
-    sortMedActive: true,
-    sortMedActivatedAt: "2026-03-15T14:00:00",
-    maturiteSortie: "Organisation sortie",
-    freinPrincipal: "Famille",
-    blocage: "Accord entourage en attente",
-    administratifPatient: "RAS",
-    synthese: "Sort Med actif, validation famille attendue.",
-    urgentPostItCount: 0,
-    unresolvedPostItCount: 1,
-    prochaineRevue: "2026-03-19",
-    prochaineAction: "Appeler la famille",
-    responsableAction: "Sophie Martin",
-  },
+{
+id: 1,
+priorite: 1,
+nom: "DUPONT",
+prenom: "Jean",
+dateNaissance: "1946-03-12",
+age: 78,
+ins: "1 84 03 12 345 678",
+iep: "12345678",
+service: "Pneumologie",
+chambre: "A12",
+lit: "03",
+sortMedActive: true,
+sortMedActivatedAt: "2026-03-14T09:00:00",
+maturiteSortie: "Organisation sortie",
+freinPrincipal: "Place aval",
+synthese: "Sort Med actif, solution non prête, place aval en attente.",
+urgentPostItCount: 1,
+unresolvedPostItCount: 2,
+prochaineRevue: "2026-03-19",
+prochaineAction: "Relance structure aval",
+responsableAction: "Claire Morel",
+},
+{
+id: 2,
+priorite: 2,
+nom: "JOREL",
+prenom: "Henri",
+dateNaissance: "1944-11-16",
+age: 79,
+ins: "1 44 11 22 333 444",
+iep: "87654321",
+service: "Pneumologie",
+chambre: "A04",
+lit: "01",
+sortMedActive: true,
+sortMedActivatedAt: "2026-03-16T08:30:00",
+maturiteSortie: "Besoins identifiés",
+freinPrincipal: "Social",
+synthese: "Sort Med actif, besoin de coordination sociale.",
+urgentPostItCount: 0,
+unresolvedPostItCount: 1,
+prochaineRevue: "2026-03-18",
+prochaineAction: "Point assistante sociale",
+responsableAction: "Nora Simon",
+},
+{
+id: 3,
+priorite: 3,
+nom: "PERON",
+prenom: "Jocelyn",
+dateNaissance: "1975-08-25",
+age: 50,
+ins: "1 75 08 25 987 654",
+iep: "23456789",
+service: "Médecine polyvalente",
+chambre: "B10",
+lit: "02",
+sortMedActive: false,
+sortMedActivatedAt: null,
+maturiteSortie: "Besoins identifiés",
+freinPrincipal: "Coordination",
+synthese: "Préparation de sortie à renforcer avant Sort Med.",
+urgentPostItCount: 0,
+unresolvedPostItCount: 0,
+prochaineRevue: "2026-03-20",
+prochaineAction: "Recueil des besoins",
+responsableAction: "Camille Roux",
+},
+{
+id: 4,
+priorite: 4,
+nom: "MOREL",
+prenom: "Sébastien",
+dateNaissance: "1969-02-12",
+age: 56,
+ins: "1 69 02 12 888 999",
+iep: "54567890",
+service: "Chirurgie",
+chambre: "C07",
+lit: "01",
+sortMedActive: true,
+sortMedActivatedAt: "2026-03-13T11:15:00",
+maturiteSortie: "Solution prête",
+freinPrincipal: "Administratif",
+synthese: "Solution prête, clôture administrative à finaliser.",
+urgentPostItCount: 0,
+unresolvedPostItCount: 1,
+prochaineRevue: "2026-03-18",
+prochaineAction: "Finaliser validation",
+responsableAction: "Laura Petit",
+},
+{
+id: 5,
+priorite: 5,
+nom: "DEAN",
+prenom: "Jane",
+dateNaissance: "1958-08-12",
+age: 67,
+ins: "1 58 08 12 222 111",
+iep: "99887766",
+service: "Oncologie",
+chambre: "A05",
+lit: "05",
+sortMedActive: false,
+sortMedActivatedAt: null,
+maturiteSortie: "Organisation sortie",
+freinPrincipal: "Place aval",
+synthese: "Organisation en cours, attente retour structure aval.",
+urgentPostItCount: 1,
+unresolvedPostItCount: 1,
+prochaineRevue: "2026-03-21",
+prochaineAction: "Relance place aval",
+responsableAction: "Claire Morel",
+},
+{
+id: 6,
+priorite: 6,
+nom: "BERNARD",
+prenom: "Luc",
+dateNaissance: "1961-06-03",
+age: 64,
+ins: "1 61 06 03 111 222",
+iep: "11223344",
+service: "Neurologie",
+chambre: "D03",
+lit: "02",
+sortMedActive: true,
+sortMedActivatedAt: "2026-03-15T14:00:00",
+maturiteSortie: "Organisation sortie",
+freinPrincipal: "Famille",
+synthese: "Sort Med actif, validation famille attendue.",
+urgentPostItCount: 0,
+unresolvedPostItCount: 1,
+prochaineRevue: "2026-03-19",
+prochaineAction: "Appeler la famille",
+responsableAction: "Sophie Martin",
+},
+{
+id: 7,
+priorite: 4,
+nom: "MARTIN",
+prenom: "Paul",
+dateNaissance: "1954-04-18",
+age: 71,
+ins: "1 54 04 18 321 654",
+iep: "44556677",
+service: "Cardiologie",
+chambre: "C12",
+lit: "01",
+sortMedActive: true,
+sortMedActivatedAt: "2026-03-15T10:00:00",
+maturiteSortie: "Organisation sortie",
+freinPrincipal: "Place aval",
+synthese: "Sort Med actif, besoin d’aval avant départ.",
+urgentPostItCount: 0,
+unresolvedPostItCount: 2,
+prochaineRevue: "2026-03-18",
+prochaineAction: "Relance SSR cardio",
+responsableAction: "Julie Arnaud",
+},
+{
+id: 8,
+priorite: 5,
+nom: "ROUSSEAU",
+prenom: "Nina",
+dateNaissance: "1963-09-09",
+age: 62,
+ins: "1 63 09 09 123 222",
+iep: "77889900",
+service: "Néphrologie",
+chambre: "N04",
+lit: "02",
+sortMedActive: false,
+sortMedActivatedAt: null,
+maturiteSortie: "Besoins identifiés",
+freinPrincipal: "Administratif",
+synthese: "Dossier à consolider avant activation Sort Med.",
+urgentPostItCount: 0,
+unresolvedPostItCount: 1,
+prochaineRevue: "2026-03-20",
+prochaineAction: "Compléter dossier administratif",
+responsableAction: "Nadia Leroy",
+},
+{
+id: 9,
+priorite: 3,
+nom: "GARCIA",
+prenom: "Louis",
+dateNaissance: "1950-01-25",
+age: 76,
+ins: "1 50 01 25 444 333",
+iep: "66554433",
+service: "Gastro",
+chambre: "G11",
+lit: "01",
+sortMedActive: true,
+sortMedActivatedAt: "2026-03-16T09:45:00",
+maturiteSortie: "Besoins identifiés",
+freinPrincipal: "Coordination",
+synthese: "Sort Med actif, plusieurs intervenants à synchroniser.",
+urgentPostItCount: 1,
+unresolvedPostItCount: 2,
+prochaineRevue: "2026-03-18",
+prochaineAction: "Organiser point équipe mobile",
+responsableAction: "Camille Roux",
+},
 ];
 
 const services = [
-  "Pneumologie",
-  "Médecine",
-  "Oncologie",
-  "Chirurgie",
-  "Neurologie",
+"Pneumologie",
+"Médecine polyvalente",
+"Oncologie",
+"Chirurgie",
+"Neurologie",
+"Cardiologie",
+"Néphrologie",
+"Gastro",
 ];
 
 const maturites = [
-  "Besoins identifiés",
-  "Organisation sortie",
-  "Solution prête",
+"Besoins identifiés",
+"Organisation sortie",
+"Solution prête",
 ];
 
 const freins = [
-  "Social",
-  "Place aval",
-  "Coordination",
-  "Famille",
-  "Administratif",
+"Social",
+"Place aval",
+"Coordination",
+"Famille",
+"Administratif",
 ];
 
 const quickFilters = [
-  { key: "sortMedOnly", label: "Sort Med" },
-  { key: "withoutSolutionOnly", label: "Sans solution" },
-  { key: "avoidableDaysOnly", label: "J évitables" },
-  { key: "urgentOnly", label: "Urgents" },
-  { key: "unansweredOnly", label: "Post-it ouverts" },
+{ key: "sortMedOnly", label: "Sort Med actifs" },
+{ key: "withoutSolutionOnly", label: "Sans solution" },
+{ key: "avoidableDaysOnly", label: "Jours évitables > 0" },
+{ key: "urgentOnly", label: "Urgents" },
+{ key: "unansweredOnly", label: "Post-it non répondus" },
 ];
 
 const capacityByService = {
-  Pneumologie: 30,
-  Médecine: 40,
-  Oncologie: 20,
-  Chirurgie: 35,
-  Neurologie: 25,
+Pneumologie: 30,
+"Médecine polyvalente": 36,
+Oncologie: 20,
+Chirurgie: 35,
+Neurologie: 25,
+Cardiologie: 24,
+Néphrologie: 18,
+Gastro: 22,
 };
 
 function formatDate(dateString) {
-  const d = new Date(dateString);
-  if (Number.isNaN(d.getTime())) return dateString;
-  return d.toLocaleDateString("fr-FR");
+const d = new Date(dateString);
+if (Number.isNaN(d.getTime())) return dateString;
+return d.toLocaleDateString("fr-FR");
 }
 
 function diffInDays(fromDate) {
-  if (!fromDate) return 0;
-  const start = new Date(fromDate);
-  const now = new Date();
-  const ms = now.getTime() - start.getTime();
-  return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
+if (!fromDate) return 0;
+const start = new Date(fromDate);
+const now = new Date();
+const ms = now.getTime() - start.getTime();
+return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
 }
 
 function toggleInArray(value, list) {
-  return list.includes(value)
-    ? list.filter((item) => item !== value)
-    : [...list, value];
+return list.includes(value)
+? list.filter((item) => item !== value)
+: [...list, value];
 }
 
 function getDaysClass(days) {
-  if (days >= 3) return "critical";
-  if (days >= 1) return "warning";
-  return "neutral";
+if (days >= 3) return "critical";
+if (days >= 1) return "warning";
+return "neutral";
 }
 
 function getOccupationClass(value) {
-  if (value >= 90) return "danger";
-  if (value >= 75) return "warning";
-  return "normal";
+if (value >= 90) return "danger";
+if (value >= 75) return "warning";
+return "normal";
 }
 
 function getPatientPriorityScore(patient) {
-  let score = 0;
-  if (patient.sortMedActive) score += 50;
-  if (patient.maturiteSortie !== "Solution prête") score += 20;
-  if (patient.freinPrincipal) score += 10;
-  score += diffInDays(patient.sortMedActivatedAt) * 5;
-  score += patient.urgentPostItCount * 8;
-  score += patient.unresolvedPostItCount * 3;
-  return score;
+let score = 0;
+if (patient.sortMedActive) score += 50;
+if (patient.maturiteSortie !== "Solution prête") score += 20;
+if (patient.freinPrincipal) score += 10;
+score += diffInDays(patient.sortMedActivatedAt) * 5;
+score += patient.urgentPostItCount * 8;
+score += patient.unresolvedPostItCount * 3;
+return score;
 }
 
 export default function Dashboard() {
-  const [patients, setPatients] = useState(initialPatients);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [filtersOpenMobile, setFiltersOpenMobile] = useState(false);
-  const [servicesPanelOpen, setServicesPanelOpen] = useState(false);
-  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
-  const [expandedRows, setExpandedRows] = useState([]);
+const [patients, setPatients] = useState(initialPatients);
+const [leftMenuOpen, setLeftMenuOpen] = useState(true);
+const [rightRailOpen, setRightRailOpen] = useState(true);
+const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
 
-  const [selectedServices, setSelectedServices] = useState([]);
-  const [selectedMaturites, setSelectedMaturites] = useState([]);
-  const [selectedFreins, setSelectedFreins] = useState([]);
-  const [selectedQuickFilters, setSelectedQuickFilters] = useState([]);
-  const [search, setSearch] = useState("");
+const [selectedServices, setSelectedServices] = useState([]);
+const [selectedMaturites, setSelectedMaturites] = useState([]);
+const [selectedFreins, setSelectedFreins] = useState([]);
+const [selectedQuickFilters, setSelectedQuickFilters] = useState([]);
+const [search, setSearch] = useState("");
+const [expandedRows, setExpandedRows] = useState([]);
 
-  const tensionCount = patients.filter((p) => p.unresolvedPostItCount > 0).length;
-  const urgentTensionCount = patients.filter((p) => p.urgentPostItCount > 0).length;
+const coordinationCount = patients.filter(
+(p) => p.unresolvedPostItCount > 0
+).length;
 
-  const toggleSortMed = (patientId) => {
-    setPatients((prev) =>
-      prev.map((patient) => {
-        if (patient.id !== patientId) return patient;
-        if (patient.sortMedActive) {
-          return { ...patient, sortMedActive: false, sortMedActivatedAt: null };
-        }
-        return {
-          ...patient,
-          sortMedActive: true,
-          sortMedActivatedAt: new Date().toISOString(),
-        };
-      })
-    );
-  };
+const urgentCoordinationCount = patients.filter(
+(p) => p.urgentPostItCount > 0
+).length;
 
-  const toggleExpandedRow = (id) => {
-    setExpandedRows((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
+const toggleSortMed = (patientId) => {
+setPatients((prev) =>
+prev.map((patient) => {
+if (patient.id !== patientId) return patient;
+if (patient.sortMedActive) {
+return { ...patient, sortMedActive: false, sortMedActivatedAt: null };
+}
+return {
+...patient,
+sortMedActive: true,
+sortMedActivatedAt: new Date().toISOString(),
+};
+})
+);
+};
 
-  const filteredPatients = useMemo(() => {
-    const query = search.trim().toLowerCase();
+const toggleExpandedRow = (id) => {
+setExpandedRows((prev) =>
+prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+);
+};
 
-    return patients
-      .filter((patient) => {
-        const matchesService =
-          selectedServices.length === 0 ||
-          selectedServices.includes(patient.service);
+const filteredPatients = useMemo(() => {
+const query = search.trim().toLowerCase();
 
-        const matchesMaturite =
-          selectedMaturites.length === 0 ||
-          selectedMaturites.includes(patient.maturiteSortie);
+return patients
+.filter((patient) => {
+const matchesService =
+selectedServices.length === 0 ||
+selectedServices.includes(patient.service);
 
-        const matchesFrein =
-          selectedFreins.length === 0 ||
-          selectedFreins.includes(patient.freinPrincipal);
+const matchesMaturite =
+selectedMaturites.length === 0 ||
+selectedMaturites.includes(patient.maturiteSortie);
 
-        const matchesSearch =
-          !query ||
-          [
-            patient.nom,
-            patient.prenom,
-            patient.iep,
-            patient.ins,
-            patient.service,
-            patient.chambre,
-            patient.lit,
-          ]
-            .join(" ")
-            .toLowerCase()
-            .includes(query);
+const matchesFrein =
+selectedFreins.length === 0 ||
+selectedFreins.includes(patient.freinPrincipal);
 
-        const matchesSortMed =
-          !selectedQuickFilters.includes("sortMedOnly") || patient.sortMedActive;
+const matchesSearch =
+!query ||
+[
+patient.nom,
+patient.prenom,
+patient.iep,
+patient.ins,
+patient.service,
+patient.chambre,
+patient.lit,
+]
+.join(" ")
+.toLowerCase()
+.includes(query);
 
-        const matchesWithoutSolution =
-          !selectedQuickFilters.includes("withoutSolutionOnly") ||
-          (patient.sortMedActive && patient.maturiteSortie !== "Solution prête");
+const matchesSortMed =
+!selectedQuickFilters.includes("sortMedOnly") || patient.sortMedActive;
 
-        const matchesAvoidableDays =
-          !selectedQuickFilters.includes("avoidableDaysOnly") ||
-          (patient.sortMedActive && diffInDays(patient.sortMedActivatedAt) > 0);
+const matchesWithoutSolution =
+!selectedQuickFilters.includes("withoutSolutionOnly") ||
+(patient.sortMedActive && patient.maturiteSortie !== "Solution prête");
 
-        const matchesUrgent =
-          !selectedQuickFilters.includes("urgentOnly") ||
-          patient.urgentPostItCount > 0;
+const matchesAvoidableDays =
+!selectedQuickFilters.includes("avoidableDaysOnly") ||
+(patient.sortMedActive && diffInDays(patient.sortMedActivatedAt) > 0);
 
-        const matchesUnanswered =
-          !selectedQuickFilters.includes("unansweredOnly") ||
-          patient.unresolvedPostItCount > 0;
+const matchesUrgent =
+!selectedQuickFilters.includes("urgentOnly") ||
+patient.urgentPostItCount > 0;
 
-        return (
-          matchesService &&
-          matchesMaturite &&
-          matchesFrein &&
-          matchesSearch &&
-          matchesSortMed &&
-          matchesWithoutSolution &&
-          matchesAvoidableDays &&
-          matchesUrgent &&
-          matchesUnanswered
-        );
-      })
-      .sort((a, b) => getPatientPriorityScore(b) - getPatientPriorityScore(a));
-  }, [
-    patients,
-    selectedServices,
-    selectedMaturites,
-    selectedFreins,
-    selectedQuickFilters,
-    search,
-  ]);
+const matchesUnanswered =
+!selectedQuickFilters.includes("unansweredOnly") ||
+patient.unresolvedPostItCount > 0;
 
-  const kpis = useMemo(() => {
-    const occupiedBeds = filteredPatients.length;
+return (
+matchesService &&
+matchesMaturite &&
+matchesFrein &&
+matchesSearch &&
+matchesSortMed &&
+matchesWithoutSolution &&
+matchesAvoidableDays &&
+matchesUrgent &&
+matchesUnanswered
+);
+})
+.sort((a, b) => getPatientPriorityScore(b) - getPatientPriorityScore(a));
+}, [
+patients,
+selectedServices,
+selectedMaturites,
+selectedFreins,
+selectedQuickFilters,
+search,
+]);
 
-    const selectedPool =
-      selectedServices.length > 0 ? selectedServices : Object.keys(capacityByService);
+const kpis = useMemo(() => {
+const occupiedBeds = filteredPatients.length;
 
-    const capacityBeds = selectedPool.reduce(
-      (sum, service) => sum + (capacityByService[service] || 0),
-      0
-    );
+const selectedPool =
+selectedServices.length > 0
+? selectedServices
+: Object.keys(capacityByService);
 
-    const sortMedCount = filteredPatients.filter((p) => p.sortMedActive).length;
+const capacityBeds = selectedPool.reduce(
+(sum, service) => sum + (capacityByService[service] || 0),
+0
+);
 
-    const withoutSolution = filteredPatients.filter(
-      (p) => p.sortMedActive && p.maturiteSortie !== "Solution prête"
-    ).length;
+const sortMedCount = filteredPatients.filter((p) => p.sortMedActive).length;
 
-    const avoidableDays = filteredPatients
-      .filter((p) => p.sortMedActive)
-      .reduce((sum, p) => sum + diffInDays(p.sortMedActivatedAt), 0);
+const withoutSolution = filteredPatients.filter(
+(p) => p.sortMedActive && p.maturiteSortie !== "Solution prête"
+).length;
 
-    const recoverableBeds = filteredPatients.filter(
-      (p) => p.sortMedActive && p.maturiteSortie === "Solution prête"
-    ).length;
+const avoidableDays = filteredPatients
+.filter((p) => p.sortMedActive)
+.reduce((sum, p) => sum + diffInDays(p.sortMedActivatedAt), 0);
 
-    return {
-      occupiedBeds,
-      capacityBeds,
-      sortMedCount,
-      withoutSolution,
-      avoidableDays,
-      recoverableBeds,
-    };
-  }, [filteredPatients, selectedServices]);
+const recoverableBeds = filteredPatients.filter(
+(p) => p.sortMedActive && p.maturiteSortie === "Solution prête"
+).length;
 
-  const servicesRailData = useMemo(() => {
-    return services
-      .map((service) => {
-        const patientsInService = patients.filter((p) => p.service === service);
+return {
+occupiedBeds,
+capacityBeds,
+sortMedCount,
+withoutSolution,
+avoidableDays,
+recoverableBeds,
+};
+}, [filteredPatients, selectedServices]);
 
-        const problematicPatients = patientsInService.filter(
-          (p) =>
-            p.sortMedActive ||
-            p.maturiteSortie !== "Solution prête" ||
-            p.urgentPostItCount > 0 ||
-            p.unresolvedPostItCount > 0
-        );
+const servicesRailData = useMemo(() => {
+return services
+.map((service) => {
+const patientsInService = patients.filter((p) => p.service === service);
 
-        const capacity = capacityByService[service] || 0;
-        const occupation = capacity
-          ? Math.round((patientsInService.length / capacity) * 100)
-          : 0;
+const problematicPatients = patientsInService.filter(
+(p) =>
+p.sortMedActive ||
+p.maturiteSortie !== "Solution prête" ||
+p.urgentPostItCount > 0 ||
+p.unresolvedPostItCount > 0
+);
 
-        return {
-          service,
-          occupation,
-          problemCount: problematicPatients.length,
-        };
-      })
-      .sort((a, b) => b.occupation - a.occupation);
-  }, [patients]);
+const capacity = capacityByService[service] || 0;
+const occupation = capacity
+? Math.round((patientsInService.length / capacity) * 100)
+: 0;
 
-  const handleServiceQuickFilter = (service) => {
-    setSelectedServices([service]);
-    setServicesPanelOpen(false);
-  };
+return {
+service,
+occupation,
+problemCount: problematicPatients.length,
+};
+})
+.sort((a, b) => b.occupation - a.occupation);
+}, [patients]);
 
-  const clearFilters = () => {
-    setSelectedServices([]);
-    setSelectedMaturites([]);
-    setSelectedFreins([]);
-    setSelectedQuickFilters([]);
-    setSearch("");
-  };
+const handleServiceQuickFilter = (service) => {
+setSelectedServices([service]);
+setRightRailOpen(false);
+};
 
-  return (
-    <div className="dashboard-page">
-      <header className="db-top-header">
-        <div className="db-header-left">
-          <button
-            className="db-icon-btn"
-            onClick={() => setMobileNavOpen((prev) => !prev)}
-            aria-label="Ouvrir le menu"
-          >
-            ☰
-          </button>
+const clearFilters = () => {
+setSelectedServices([]);
+setSelectedMaturites([]);
+setSelectedFreins([]);
+setSelectedQuickFilters([]);
+setSearch("");
+};
 
-          <div className="db-brand-block">
-            <h1>CARABBAS</h1>
-            <p>Pilotage des sorties hospitalières</p>
-          </div>
-        </div>
+return (
+<div className="dashboard-page">
+<header className="top-header">
+<div className="header-left">
+<button
+className="icon-btn"
+onClick={() => setLeftMenuOpen((prev) => !prev)}
+aria-label="Ouvrir le menu"
+>
+☰
+</button>
 
-        <div className="db-header-right">
-          <button
-            className="db-ghost-btn db-filter-btn mobile-only-btn"
-            onClick={() => setFiltersOpenMobile(true)}
-          >
-            Filtres
-          </button>
+<div className="brand-block">
+<h1>CARABBAS</h1>
+<p>Pilotage des sorties hospitalières complexes</p>
+</div>
+</div>
 
-          <button
-            className="db-ghost-btn db-tension-btn"
-            onClick={() => setServicesPanelOpen((prev) => !prev)}
-          >
-            <span>Services en tension</span>
-            {tensionCount > 0 && (
-              <span
-                className={`db-tension-badge ${
-                  urgentTensionCount > 0 ? "urgent" : ""
-                }`}
-              >
-                {urgentTensionCount > 0 ? "!" : tensionCount}
-              </span>
-            )}
-          </button>
+<div className="header-right">
+<button
+className="ghost-btn coordination-btn"
+onClick={() => setRightRailOpen((prev) => !prev)}
+>
+<span>Coordination</span>
 
-          <button
-            className="db-crisis-button"
-            onClick={() => alert("Ouvrir le formulaire cellule de crise")}
-          >
-            Crise
-          </button>
-        </div>
-      </header>
+{coordinationCount > 0 && (
+<span
+className={`coordination-badge ${
+urgentCoordinationCount > 0 ? "urgent" : ""
+}`}
+>
+{urgentCoordinationCount > 0 ? "!" : coordinationCount}
+</span>
+)}
+</button>
 
-      <aside className={`db-left-sidebar ${mobileNavOpen ? "mobile-open" : ""}`}>
-        <nav className="db-left-sidebar-nav">
-          <button className="db-sidebar-link active">
-            <span className="db-sidebar-icon">🏠</span>
-            <span>Tableau</span>
-          </button>
+<button
+className="crisis-button"
+onClick={() => alert("Ouvrir le formulaire cellule de crise")}
+>
+Déclencher une cellule de crise
+</button>
+</div>
+</header>
 
-          <Link to="/patients" className="pv-sidebar-link">
-  <span className="pv-sidebar-icon">🧑</span>
-  <span>Patients</span>
+<aside className={`left-sidebar ${leftMenuOpen ? "expanded" : "collapsed"}`}>
+<nav className="left-sidebar-nav">
+<button className="sidebar-link active">
+<span className="sidebar-icon">🏠</span>
+{leftMenuOpen && <span>Tableau de bord</span>}
+</button>
+
+<button className="sidebar-link">
+<span className="sidebar-icon">🤝</span>
+{leftMenuOpen && <span>Vue duo</span>}
+</button>
+
+<button className="sidebar-link">
+<span className="sidebar-icon">⚠️</span>
+{leftMenuOpen && <span>Cellule de crise</span>}
+</button>
+</nav>
+</aside>
+
+<aside className={`right-rail ${rightRailOpen ? "open" : "closed"}`}>
+<div className="section-title">Services en tension</div>
+
+<div className="rail-list">
+{servicesRailData.map((item) => (
+<button
+key={item.service}
+className="rail-service-card"
+onClick={() => handleServiceQuickFilter(item.service)}
+>
+<div className="rail-card-top">
+<span className="rail-service-name">{item.service}</span>
+<span
+className={`rail-service-occupation ${getOccupationClass(
+item.occupation
+)}`}
+>
+{item.occupation}%
+</span>
+</div>
+
+<div className="rail-card-bottom">
+<span>{item.problemCount} patient(s) à traiter</span>
+<span className="rail-link">Voir</span>
+</div>
+</button>
+))}
+</div>
+</aside>
+
+<main
+className={`dashboard-main ${
+leftMenuOpen ? "with-left-sidebar" : "with-left-sidebar-collapsed"
+} ${rightRailOpen ? "with-right-rail" : "without-right-rail"}`}
+>
+<section className="kpi-row">
+<div className="kpi-card teal">
+<span className="kpi-label">Lits occupés / capacité</span>
+<strong className="kpi-value">
+{kpis.occupiedBeds} / {kpis.capacityBeds}
+</strong>
+</div>
+
+<div className="kpi-card blue">
+<span className="kpi-label">Sort Med</span>
+<strong className="kpi-value">{kpis.sortMedCount}</strong>
+</div>
+
+<div className="kpi-card orange">
+<span className="kpi-label">Patients sans solution</span>
+<strong className="kpi-value">{kpis.withoutSolution}</strong>
+</div>
+
+<div className="kpi-card red">
+<span className="kpi-label">Jours évitables</span>
+<strong className="kpi-value">{kpis.avoidableDays}</strong>
+</div>
+
+<div className="kpi-card light">
+<span className="kpi-label">Lits récupérables</span>
+<strong className="kpi-value">{kpis.recoverableBeds}</strong>
+</div>
+</section>
+
+<section className="filters-panel">
+<div className="filters-header">
+<div className="filters-title">Filtres</div>
+
+<div className="filters-actions">
+<button
+className="toggle-advanced-btn"
+onClick={() => setAdvancedFiltersOpen((prev) => !prev)}
+>
+{advancedFiltersOpen ? "▴ Filtres avancés" : "▾ Filtres avancés"}
+</button>
+
+<button className="reset-filters-btn" onClick={clearFilters}>
+Réinitialiser
+</button>
+</div>
+</div>
+
+<div className="filter-group">
+<div className="filter-label">Services</div>
+<div className="chip-row">
+{services.map((service) => (
+<button
+key={service}
+className={`chip ${
+selectedServices.includes(service) ? "selected" : ""
+}`}
+onClick={() =>
+setSelectedServices((prev) => toggleInArray(service, prev))
+}
+>
+{service}
+</button>
+))}
+</div>
+</div>
+
+<div className="filter-group">
+<div className="filter-label">Raccourcis pilotage</div>
+<div className="chip-row">
+{quickFilters.map((item) => (
+<button
+key={item.key}
+className={`chip ${
+selectedQuickFilters.includes(item.key) ? "selected" : ""
+}`}
+onClick={() =>
+setSelectedQuickFilters((prev) =>
+toggleInArray(item.key, prev)
+)
+}
+>
+{item.label}
+</button>
+))}
+</div>
+</div>
+
+<div className="filter-search">
+<input
+type="text"
+placeholder="Nom / INS / IEP / chambre / lit"
+value={search}
+onChange={(e) => setSearch(e.target.value)}
+/>
+</div>
+
+{advancedFiltersOpen && (
+<div className="advanced-filters">
+<div className="filter-group">
+<div className="filter-label">Maturité sortie</div>
+<div className="chip-row">
+{maturites.map((item) => (
+<button
+key={item}
+className={`chip ${
+selectedMaturites.includes(item) ? "selected" : ""
+}`}
+onClick={() =>
+setSelectedMaturites((prev) => toggleInArray(item, prev))
+}
+>
+{item}
+</button>
+))}
+</div>
+</div>
+
+<div className="filter-group">
+<div className="filter-label">Frein principal</div>
+<div className="chip-row">
+{freins.map((item) => (
+<button
+key={item}
+className={`chip ${
+selectedFreins.includes(item) ? "selected" : ""
+}`}
+onClick={() =>
+setSelectedFreins((prev) => toggleInArray(item, prev))
+}
+>
+{item}
+</button>
+))}
+</div>
+</div>
+</div>
+)}
+</section>
+
+<section className="patients-card desktop-table">
+<div className="section-title">Patients prioritaires</div>
+
+<div className="patients-table-wrapper">
+<table className="patients-table">
+<thead>
+<tr>
+<th>Priorité</th>
+<th>Identité patient</th>
+<th>Localisation</th>
+<th>Sort Med</th>
+<th>Maturité sortie</th>
+<th>Frein principal</th>
+<th>Jours évitables</th>
+<th>Prochaine action</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody>
+{filteredPatients.map((patient) => {
+const avoidableDays = patient.sortMedActive
+? diffInDays(patient.sortMedActivatedAt)
+: null;
+const isExpanded = expandedRows.includes(patient.id);
+
+return (
+<React.Fragment key={patient.id}>
+<tr className="patient-row">
+<td>
+<span className="priority-badge">{patient.priorite}</span>
+</td>
+
+<td>
+<div className="identity-block">
+<Link
+to={`/patient/${patient.id}`}
+className="patient-link"
+>
+{patient.nom} {patient.prenom}
 </Link>
 
-          <button className="db-sidebar-link">
-            <span className="db-sidebar-icon">🤝</span>
-            <span>Vue duo</span>
-          </button>
+<div className="identity-line">
+Né le {formatDate(patient.dateNaissance)} · {patient.age} ans
+</div>
 
-          <button className="db-sidebar-link">
-            <span className="db-sidebar-icon">⚠️</span>
-            <span>Crise</span>
-          </button>
-        </nav>
-      </aside>
+<div className="identity-line">
+INS {patient.ins} · IEP {patient.iep}
+</div>
+</div>
+</td>
 
-      {mobileNavOpen && (
-        <button
-          className="db-mobile-overlay"
-          onClick={() => setMobileNavOpen(false)}
-          aria-label="Fermer le menu"
-        />
-      )}
+<td>
+<div className="location-block">
+<div className="location-service">{patient.service}</div>
+<div className="location-line">
+Chambre {patient.chambre} · Lit {patient.lit}
+</div>
+</div>
+</td>
 
-      {filtersOpenMobile && (
-        <>
-          <button
-            className="db-mobile-overlay strong"
-            onClick={() => setFiltersOpenMobile(false)}
-            aria-label="Fermer les filtres"
-          />
-          <aside className="db-mobile-panel">
-            <div className="db-mobile-panel-header">
-              <span>Filtres</span>
-              <button onClick={() => setFiltersOpenMobile(false)}>Fermer</button>
-            </div>
+<td>
+<button
+className={`sort-med-toggle ${
+patient.sortMedActive ? "active" : ""
+}`}
+onClick={() => toggleSortMed(patient.id)}
+>
+{patient.sortMedActive
+? `Sort Med J+${diffInDays(
+patient.sortMedActivatedAt
+)}`
+: "○ Sort Med"}
+</button>
+</td>
 
-            <div className="db-mobile-panel-body">
-              <div className="db-filter-group">
-                <div className="db-filter-label">Services</div>
-                <div className="db-chip-row">
-                  {services.map((service) => (
-                    <button
-                      key={service}
-                      className={`db-chip ${
-                        selectedServices.includes(service) ? "selected" : ""
-                      }`}
-                      onClick={() =>
-                        setSelectedServices((prev) => toggleInArray(service, prev))
-                      }
-                    >
-                      {service}
-                    </button>
-                  ))}
-                </div>
-              </div>
+<td>
+<span className="maturity-badge">
+{patient.maturiteSortie}
+</span>
+</td>
 
-              <div className="db-filter-group">
-                <div className="db-filter-label">Raccourcis</div>
-                <div className="db-chip-row">
-                  {quickFilters.map((item) => (
-                    <button
-                      key={item.key}
-                      className={`db-chip ${
-                        selectedQuickFilters.includes(item.key) ? "selected" : ""
-                      }`}
-                      onClick={() =>
-                        setSelectedQuickFilters((prev) =>
-                          toggleInArray(item.key, prev)
-                        )
-                      }
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+<td>
+<span className="frein-badge">
+{patient.freinPrincipal}
+</span>
+</td>
 
-              <div className="db-filter-search">
-                <input
-                  type="text"
-                  placeholder="Nom / INS / IEP / chambre / lit"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
+<td>
+{avoidableDays === null ? (
+<span className="days-empty">—</span>
+) : (
+<span
+className={`days-badge ${getDaysClass(
+avoidableDays
+)}`}
+>
+J+{avoidableDays}
+</span>
+)}
+</td>
 
-              <div className="db-filter-group">
-                <div className="db-filter-label">Maturité</div>
-                <div className="db-chip-row">
-                  {maturites.map((item) => (
-                    <button
-                      key={item}
-                      className={`db-chip ${
-                        selectedMaturites.includes(item) ? "selected" : ""
-                      }`}
-                      onClick={() =>
-                        setSelectedMaturites((prev) => toggleInArray(item, prev))
-                      }
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </div>
+<td>
+<div className="next-action-text">
+{patient.prochaineAction}
+</div>
+<div className="identity-line">
+{patient.responsableAction}
+</div>
+</td>
 
-              <div className="db-filter-group">
-                <div className="db-filter-label">Frein principal</div>
-                <div className="db-chip-row">
-                  {freins.map((item) => (
-                    <button
-                      key={item}
-                      className={`db-chip ${
-                        selectedFreins.includes(item) ? "selected" : ""
-                      }`}
-                      onClick={() =>
-                        setSelectedFreins((prev) => toggleInArray(item, prev))
-                      }
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </div>
+<td>
+<button
+className="expand-btn"
+onClick={() => toggleExpandedRow(patient.id)}
+>
+{isExpanded ? "Réduire" : "Détail"}
+</button>
+</td>
+</tr>
 
-              <div className="db-mobile-panel-actions">
-                <button className="db-reset-filters-btn" onClick={clearFilters}>
-                  Réinitialiser
-                </button>
-                <button
-                  className="db-apply-btn"
-                  onClick={() => setFiltersOpenMobile(false)}
-                >
-                  Appliquer
-                </button>
-              </div>
-            </div>
-          </aside>
-        </>
-      )}
+{isExpanded && (
+<tr className="expanded-row">
+<td colSpan="9">
+<div className="expanded-content">
+<div className="expanded-block">
+<div className="expanded-label">Synthèse</div>
+<div>{patient.synthese}</div>
+</div>
 
-      {servicesPanelOpen && (
-        <>
-          <button
-            className="db-mobile-overlay strong"
-            onClick={() => setServicesPanelOpen(false)}
-            aria-label="Fermer le panneau services"
-          />
-          <aside className="db-services-panel">
-            <div className="db-mobile-panel-header">
-              <span>Services en tension</span>
-              <button onClick={() => setServicesPanelOpen(false)}>Fermer</button>
-            </div>
+<div className="expanded-block">
+<div className="expanded-label">
+Prochaine revue
+</div>
+<div>{formatDate(patient.prochaineRevue)}</div>
+</div>
 
-            <div className="db-rail-list compact">
-              {servicesRailData.map((item) => (
-                <button
-                  key={item.service}
-                  className="db-rail-service-card"
-                  onClick={() => handleServiceQuickFilter(item.service)}
-                >
-                  <div className="db-rail-card-top">
-                    <span className="db-rail-service-name">{item.service}</span>
-                    <span
-                      className={`db-rail-service-occupation ${getOccupationClass(
-                        item.occupation
-                      )}`}
-                    >
-                      {item.occupation}%
-                    </span>
-                  </div>
+<div className="expanded-block">
+<div className="expanded-label">Coordination</div>
+<div>
+{patient.urgentPostItCount} urgent(s) ·{" "}
+{patient.unresolvedPostItCount} non répondu(s)
+</div>
+</div>
 
-                  <div className="db-rail-card-bottom">
-                    <span>{item.problemCount} patient(s)</span>
-                    <span className="db-rail-link">Filtrer</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </aside>
-        </>
-      )}
+<div className="expanded-actions">
+<Link
+to={`/patient/${patient.id}`}
+className="open-patient-btn"
+>
+Ouvrir la fiche patient
+</Link>
+</div>
+</div>
+</td>
+</tr>
+)}
+</React.Fragment>
+);
+})}
 
-      <main className="db-main compact">
-        <section className="db-kpi-row compact">
-          <div className="db-kpi-card teal compact">
-            <span className="db-kpi-label">Lits occupés</span>
-            <strong className="db-kpi-value">
-              {kpis.occupiedBeds}/{kpis.capacityBeds}
-            </strong>
-          </div>
+{filteredPatients.length === 0 && (
+<tr>
+<td colSpan="9" className="empty-row">
+Aucun patient ne correspond aux filtres.
+</td>
+</tr>
+)}
+</tbody>
+</table>
+</div>
+</section>
 
-          <div className="db-kpi-card blue compact">
-            <span className="db-kpi-label">Sort Med</span>
-            <strong className="db-kpi-value">{kpis.sortMedCount}</strong>
-          </div>
+<section className="mobile-cards">
+<div className="section-title">Patients prioritaires</div>
 
-          <div className="db-kpi-card orange compact">
-            <span className="db-kpi-label">Sans solution</span>
-            <strong className="db-kpi-value">{kpis.withoutSolution}</strong>
-          </div>
+<div className="patient-cards-list">
+{filteredPatients.map((patient) => {
+const avoidableDays = patient.sortMedActive
+? diffInDays(patient.sortMedActivatedAt)
+: null;
+const isExpanded = expandedRows.includes(patient.id);
 
-          <div className="db-kpi-card red compact">
-            <span className="db-kpi-label">J évitables</span>
-            <strong className="db-kpi-value">{kpis.avoidableDays}</strong>
-          </div>
+return (
+<article className="patient-card" key={patient.id}>
+<div className="patient-card-top">
+<span className="priority-badge">{patient.priorite}</span>
+<button
+className="expand-btn"
+onClick={() => toggleExpandedRow(patient.id)}
+>
+{isExpanded ? "Réduire" : "Détail"}
+</button>
+</div>
 
-          <div className="db-kpi-card light compact">
-            <span className="db-kpi-label">Lits récupérables</span>
-            <strong className="db-kpi-value">{kpis.recoverableBeds}</strong>
-          </div>
-        </section>
+<div className="identity-block">
+<Link to={`/patient/${patient.id}`} className="patient-link">
+{patient.nom} {patient.prenom}
+</Link>
+<div className="identity-line">
+Né le {formatDate(patient.dateNaissance)} · {patient.age} ans
+</div>
+<div className="identity-line">
+INS {patient.ins} · IEP {patient.iep}
+</div>
+<div className="identity-line">
+Chambre {patient.chambre} · Lit {patient.lit}
+</div>
+</div>
 
-        <section className="db-filters-panel desktop-filters">
-          <div className="db-filters-header">
-            <div className="db-filters-title">Filtres</div>
+<div className="location-block mobile-space">
+<div className="location-service">{patient.service}</div>
+</div>
 
-            <div className="db-filters-actions">
-              <button
-                className="db-toggle-advanced-btn"
-                onClick={() => setAdvancedFiltersOpen((prev) => !prev)}
-              >
-                {advancedFiltersOpen ? "Masquer" : "Avancés"}
-              </button>
+<div className="patient-card-tags">
+<button
+className={`sort-med-toggle ${
+patient.sortMedActive ? "active" : ""
+}`}
+onClick={() => toggleSortMed(patient.id)}
+>
+{patient.sortMedActive
+? `Sort Med J+${diffInDays(patient.sortMedActivatedAt)}`
+: "○ Sort Med"}
+</button>
 
-              <button className="db-reset-filters-btn" onClick={clearFilters}>
-                Réinit.
-              </button>
-            </div>
-          </div>
+<span className="maturity-badge">
+{patient.maturiteSortie}
+</span>
 
-          <div className="db-filter-group">
-            <div className="db-chip-row">
-              {services.map((service) => (
-                <button
-                  key={service}
-                  className={`db-chip ${
-                    selectedServices.includes(service) ? "selected" : ""
-                  }`}
-                  onClick={() =>
-                    setSelectedServices((prev) => toggleInArray(service, prev))
-                  }
-                >
-                  {service}
-                </button>
-              ))}
-            </div>
-          </div>
+<span className="frein-badge">{patient.freinPrincipal}</span>
 
-          <div className="db-filter-group">
-            <div className="db-chip-row">
-              {quickFilters.map((item) => (
-                <button
-                  key={item.key}
-                  className={`db-chip ${
-                    selectedQuickFilters.includes(item.key) ? "selected" : ""
-                  }`}
-                  onClick={() =>
-                    setSelectedQuickFilters((prev) =>
-                      toggleInArray(item.key, prev)
-                    )
-                  }
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
+{avoidableDays === null ? (
+<span className="days-empty mobile-days">—</span>
+) : (
+<span
+className={`days-badge ${getDaysClass(
+avoidableDays
+)}`}
+>
+J+{avoidableDays}
+</span>
+)}
+</div>
 
-          <div className="db-filter-search">
-            <input
-              type="text"
-              placeholder="Nom / INS / IEP / chambre / lit"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+<div className="next-action-text mobile-space">
+{patient.prochaineAction}
+</div>
+<div className="identity-line">{patient.responsableAction}</div>
 
-          {advancedFiltersOpen && (
-            <div className="db-advanced-filters">
-              <div className="db-filter-group">
-                <div className="db-chip-row">
-                  {maturites.map((item) => (
-                    <button
-                      key={item}
-                      className={`db-chip ${
-                        selectedMaturites.includes(item) ? "selected" : ""
-                      }`}
-                      onClick={() =>
-                        setSelectedMaturites((prev) => toggleInArray(item, prev))
-                      }
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </div>
+{isExpanded && (
+<div className="mobile-expanded">
+<div className="expanded-block">
+<div className="expanded-label">Synthèse</div>
+<div>{patient.synthese}</div>
+</div>
 
-              <div className="db-filter-group">
-                <div className="db-chip-row">
-                  {freins.map((item) => (
-                    <button
-                      key={item}
-                      className={`db-chip ${
-                        selectedFreins.includes(item) ? "selected" : ""
-                      }`}
-                      onClick={() =>
-                        setSelectedFreins((prev) => toggleInArray(item, prev))
-                      }
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
+<div className="expanded-block">
+<div className="expanded-label">Prochaine revue</div>
+<div>{formatDate(patient.prochaineRevue)}</div>
+</div>
 
-        <section className="db-patients-card db-desktop-table compact">
-          <div className="db-section-title">Patients prioritaires</div>
-
-          <div className="db-patients-table-wrapper">
-            <table className="db-patients-table compact">
-              <thead>
-                <tr>
-                  <th>Prio</th>
-                  <th>Patient</th>
-                  <th>Service</th>
-                  <th>Sort Med</th>
-                  <th>Frein</th>
-                  <th>Maturité</th>
-                  <th>J évitables</th>
-                  <th>Action</th>
-                  <th>Résumé</th>
-                  <th>Fiche</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredPatients.map((patient) => {
-                  const avoidableDays = patient.sortMedActive
-                    ? diffInDays(patient.sortMedActivatedAt)
-                    : null;
-                  const isExpanded = expandedRows.includes(patient.id);
-
-                  return (
-                    <React.Fragment key={patient.id}>
-                      <tr className="db-patient-row compact">
-                        <td>
-                          <span className="db-priority-badge small">
-                            {patient.priorite}
-                          </span>
-                        </td>
-
-                        <td>
-                          <div className="db-identity-block compact">
-                            <Link
-                              to={`/patient/${patient.id}`}
-                              className="db-patient-link compact"
-                            >
-                              {patient.nom} {patient.prenom}
-                            </Link>
-
-                            <div className="db-identity-line compact">
-                              Né le {formatDate(patient.dateNaissance)} · {patient.age} ans
-                            </div>
-
-                            <div className="db-identity-line compact">
-                              INS {patient.ins} · IEP {patient.iep}
-                            </div>
-                          </div>
-                        </td>
-
-                        <td>
-                          <div className="db-location-block compact">
-                            <div className="db-location-service compact">
-                              {patient.service}
-                            </div>
-                            <div className="db-location-line compact">
-                              Ch {patient.chambre} · Lit {patient.lit}
-                            </div>
-                          </div>
-                        </td>
-
-                        <td>
-                          <button
-                            className={`db-sort-med-toggle compact ${
-                              patient.sortMedActive ? "active" : ""
-                            }`}
-                            onClick={() => toggleSortMed(patient.id)}
-                          >
-                            {patient.sortMedActive
-                              ? `J+${diffInDays(patient.sortMedActivatedAt)}`
-                              : "—"}
-                          </button>
-                        </td>
-
-                        <td>
-                          <span className="db-frein-badge compact">
-                            {patient.freinPrincipal}
-                          </span>
-                        </td>
-
-                        <td>
-                          <span className="db-maturity-badge compact">
-                            {patient.maturiteSortie}
-                          </span>
-                        </td>
-
-                        <td>
-                          {avoidableDays === null ? (
-                            <span className="db-days-empty">—</span>
-                          ) : (
-                            <span
-                              className={`db-days-badge compact ${getDaysClass(
-                                avoidableDays
-                              )}`}
-                            >
-                              J+{avoidableDays}
-                            </span>
-                          )}
-                        </td>
-
-                        <td>
-                          <div className="db-next-action-text compact">
-                            {patient.prochaineAction}
-                          </div>
-                          <div className="db-inline-meta compact">
-                            {patient.responsableAction}
-                          </div>
-                        </td>
-
-                        <td>
-                          <button
-                            className="db-expand-btn compact"
-                            onClick={() => toggleExpandedRow(patient.id)}
-                          >
-                            {isExpanded ? "Fermer" : "Résumé"}
-                          </button>
-                        </td>
-
-                        <td>
-                          <Link
-                            to={`/patient/${patient.id}`}
-                            className="db-open-patient-btn compact"
-                          >
-                            Fiche
-                          </Link>
-                        </td>
-                      </tr>
-
-                      {isExpanded && (
-                        <tr className="db-expanded-row">
-                          <td colSpan="10">
-                            <div className="db-expanded-content compact">
-                              <div className="db-expanded-block">
-                                <div className="db-expanded-label">Synthèse</div>
-                                <div>{patient.synthese}</div>
-                              </div>
-
-                              <div className="db-expanded-block">
-                                <div className="db-expanded-label">Blocage</div>
-                                <div>{patient.blocage}</div>
-                              </div>
-
-                              <div className="db-expanded-block">
-                                <div className="db-expanded-label">
-                                  Administratif
-                                </div>
-                                <div>{patient.administratifPatient}</div>
-                              </div>
-
-                              <div className="db-expanded-block">
-                                <div className="db-expanded-label">Revue</div>
-                                <div>{formatDate(patient.prochaineRevue)}</div>
-                              </div>
-
-                              <div className="db-expanded-block">
-                                <div className="db-expanded-label">
-                                  Coordination
-                                </div>
-                                <div>
-                                  {patient.urgentPostItCount} urgent(s) ·{" "}
-                                  {patient.unresolvedPostItCount} ouvert(s)
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-
-                {filteredPatients.length === 0 && (
-                  <tr>
-                    <td colSpan="10" className="db-empty-row">
-                      Aucun patient ne correspond aux filtres.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section className="db-mobile-cards">
-          <div className="db-section-title">Patients prioritaires</div>
-
-          <div className="db-patient-cards-list compact">
-            {filteredPatients.map((patient) => {
-              const avoidableDays = patient.sortMedActive
-                ? diffInDays(patient.sortMedActivatedAt)
-                : null;
-              const isExpanded = expandedRows.includes(patient.id);
-
-              return (
-                <article className="db-patient-card compact" key={patient.id}>
-                  <div className="db-patient-card-top">
-                    <span className="db-priority-badge small">
-                      {patient.priorite}
-                    </span>
-                    <div className="db-card-actions compact">
-                      <button
-                        className="db-expand-btn compact"
-                        onClick={() => toggleExpandedRow(patient.id)}
-                      >
-                        {isExpanded ? "Fermer" : "Résumé"}
-                      </button>
-                      <Link
-                        to={`/patient/${patient.id}`}
-                        className="db-open-patient-btn compact"
-                      >
-                        Fiche
-                      </Link>
-                    </div>
-                  </div>
-
-                  <div className="db-identity-block compact">
-                    <Link
-                      to={`/patient/${patient.id}`}
-                      className="db-patient-link compact"
-                    >
-                      {patient.nom} {patient.prenom}
-                    </Link>
-                    <div className="db-identity-line compact">
-                      Né le {formatDate(patient.dateNaissance)} · {patient.age} ans
-                    </div>
-                    <div className="db-identity-line compact">
-                      INS {patient.ins} · IEP {patient.iep}
-                    </div>
-                    <div className="db-identity-line compact">
-                      Ch {patient.chambre} · Lit {patient.lit}
-                    </div>
-                  </div>
-
-                  <div className="db-location-block db-mobile-space">
-                    <div className="db-location-service compact">
-                      {patient.service}
-                    </div>
-                  </div>
-
-                  <div className="db-patient-card-tags compact">
-                    <button
-                      className={`db-sort-med-toggle compact ${
-                        patient.sortMedActive ? "active" : ""
-                      }`}
-                      onClick={() => toggleSortMed(patient.id)}
-                    >
-                      {patient.sortMedActive
-                        ? `SortMed J+${diffInDays(patient.sortMedActivatedAt)}`
-                        : "SortMed"}
-                    </button>
-
-                    <span className="db-frein-badge compact">
-                      {patient.freinPrincipal}
-                    </span>
-
-                    <span className="db-maturity-badge compact">
-                      {patient.maturiteSortie}
-                    </span>
-
-                    {avoidableDays === null ? (
-                      <span className="db-days-empty">—</span>
-                    ) : (
-                      <span
-                        className={`db-days-badge compact ${getDaysClass(
-                          avoidableDays
-                        )}`}
-                      >
-                        J+{avoidableDays}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="db-mobile-space">
-                    <div className="db-next-action-text compact">
-                      {patient.prochaineAction}
-                    </div>
-                    <div className="db-inline-meta compact">
-                      Responsable : {patient.responsableAction}
-                    </div>
-                  </div>
-
-                  {isExpanded && (
-                    <div className="db-mobile-expanded compact">
-                      <div className="db-expanded-block">
-                        <div className="db-expanded-label">Synthèse</div>
-                        <div>{patient.synthese}</div>
-                      </div>
-
-                      <div className="db-expanded-block">
-                        <div className="db-expanded-label">Blocage</div>
-                        <div>{patient.blocage}</div>
-                      </div>
-
-                      <div className="db-expanded-block">
-                        <div className="db-expanded-label">Administratif</div>
-                        <div>{patient.administratifPatient}</div>
-                      </div>
-
-                      <div className="db-expanded-block">
-                        <div className="db-expanded-label">Coordination</div>
-                        <div>
-                          {patient.urgentPostItCount} urgent(s) ·{" "}
-                          {patient.unresolvedPostItCount} ouvert(s)
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </article>
-              );
-            })}
-
-            {filteredPatients.length === 0 && (
-              <div className="db-empty-mobile">
-                Aucun patient ne correspond aux filtres.
-              </div>
-            )}
-          </div>
-        </section>
-      </main>
-    </div>
-  );
+<Link
+to={`/patient/${patient.id}`}
+className="open-patient-btn"
+>
+Ouvrir la fiche patient
+</Link>
+</div>
+)}
+</article>
+);
+})}
+</div>
+</section>
+</main>
+</div>
+);
 }
