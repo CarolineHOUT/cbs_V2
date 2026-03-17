@@ -1,124 +1,157 @@
-.pv-page {
-  background: #f4f7fb;
-  padding: 12px;
-  font-family: Arial;
+.pv2-page {
+background: #eef2f7;
+padding: 12px;
+font-family: Arial;
 }
 
-.pv-header {
-  background: #1d4ed8;
-  color: white;
-  padding: 12px;
-  border-radius: 12px;
+/* HEADER */
+.pv2-header {
+background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+color: white;
+padding: 14px;
+border-radius: 14px;
+margin-bottom: 10px;
 }
 
-.pv-title {
-  font-size: 22px;
-  font-weight: bold;
+/* IDENTITÉ */
+.pv2-identity {
+background: white;
+padding: 14px;
+border-radius: 14px;
+display: flex;
+justify-content: space-between;
+box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-.pv-sub {
-  font-size: 12px;
+.pv2-badge {
+text-align: right;
 }
 
-.pv-identity {
-  background: white;
-  padding: 12px;
-  border-radius: 12px;
-  margin-top: 10px;
-  display: flex;
-  justify-content: space-between;
+/* CRITIQUE */
+.pv2-critical {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 10px;
+margin-top: 12px;
 }
 
-.pv-service {
-  text-align: right;
+.crit {
+padding: 12px;
+border-radius: 12px;
+box-shadow: 0 3px 8px rgba(0,0,0,0.05);
 }
 
-.pv-critical {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: 10px;
+.crit span {
+font-size: 12px;
+color: #666;
 }
 
-.card {
-  padding: 10px;
-  border-radius: 10px;
+.crit strong {
+font-size: 16px;
 }
 
+/* COULEURS MÉTIER */
 .sortmed {
-  background: #fff2dd;
+background: #fff4e5;
 }
 
 .frein {
-  background: #fff8e5;
+background: #fff7cc;
 }
 
 .blocage {
-  background: #ffe5e5;
+background: #ffe5e5;
 }
 
 .action {
-  background: #e8f0ff;
+background: #e6f0ff;
 }
 
-.pv-risk {
-  margin-top: 10px;
-  padding: 10px;
-  border-left: 5px solid red;
-  background: #fff0f0;
+/* RISQUE */
+.pv2-risk {
+margin-top: 12px;
+padding: 14px;
+border-radius: 12px;
+background: #fff0f0;
+border: 1px solid #fca5a5;
 }
 
-.pv-kpi {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  margin-top: 10px;
-  gap: 8px;
+.risk-badge {
+font-weight: bold;
+color: #b91c1c;
+margin-bottom: 4px;
 }
 
-.pv-kpi div {
-  background: white;
-  padding: 10px;
-  border-radius: 10px;
+/* KPI */
+.pv2-kpi {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 10px;
+margin-top: 12px;
 }
 
-.pv-block {
-  background: white;
-  padding: 12px;
-  border-radius: 12px;
-  margin-top: 10px;
+.pv2-kpi div {
+background: white;
+padding: 12px;
+border-radius: 12px;
+box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-.highlight {
-  border: 1px solid #dbeafe;
+.danger {
+color: red;
+}
+
+/* SYNTHÈSE */
+.pv2-summary {
+margin-top: 12px;
+background: #e8f0ff;
+padding: 14px;
+border-radius: 12px;
+}
+
+/* ACTION */
+.pv2-actions {
+margin-top: 12px;
 }
 
 .action-card {
-  background: #eef4ff;
-  padding: 10px;
-  border-radius: 10px;
+background: white;
+padding: 12px;
+border-radius: 12px;
+margin-top: 6px;
 }
 
-.postit {
-  border: 1px solid #ddd;
-  padding: 10px;
-  border-radius: 10px;
-  margin-top: 10px;
+/* POST IT */
+.pv2-postit {
+margin-top: 12px;
 }
 
-.postit-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
+.postit-card {
+background: #fff8e5;
+padding: 12px;
+border-radius: 12px;
+margin-top: 10px;
+}
+
+.postit-head {
+display: flex;
+justify-content: space-between;
+font-size: 12px;
+}
+
+.urgent {
+color: red;
+font-weight: bold;
 }
 
 .response {
-  margin-top: 8px;
-  background: #f0f0f0;
-  padding: 6px;
-  border-radius: 6px;
+margin-top: 8px;
+background: #eee;
+padding: 6px;
+border-radius: 6px;
 }
 
 .reply-box textarea {
-  width: 100%;
-  margin-top: 6px;
+width: 100%;
+margin-top: 6px;
 }
