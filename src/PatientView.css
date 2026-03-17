@@ -1,15 +1,8 @@
-.pv2-page {
-background: red;
-min-height: 100vh;
+body {
+background: red !important;
 }
 
-.pv2-header {
-background: blue;
-color: white;
-padding: 20px;
+h1 {
+color: blue !important;
+font-size: 60px !important;
 }
-
-.pv2-hero {
-background: yellow;
-padding: 20px;
-margin: 20px;
