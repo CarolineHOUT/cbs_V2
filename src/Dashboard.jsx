@@ -481,10 +481,10 @@ export default function Dashboard() {
             <span>Tableau</span>
           </button>
 
-          <button className="db-sidebar-link">
-            <span className="db-sidebar-icon">🧑</span>
-            <span>Patients</span>
-          </button>
+          <Link to="/patients" className="pv-sidebar-link">
+  <span className="pv-sidebar-icon">🧑</span>
+  <span>Patients</span>
+</Link>
 
           <button className="db-sidebar-link">
             <span className="db-sidebar-icon">🤝</span>
